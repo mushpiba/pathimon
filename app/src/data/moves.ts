@@ -75,7 +75,7 @@ export const MOVES: Record<MoveId, MoveData> = {
     power: 11,
     accuracy: 0.92,
     description: '혈전과 장벽을 무너뜨려 방어를 깎는다.',
-    learnText: '퍼져 나가기 쉽게 숙주의 방어선을 흐린다.',
+    learnText: '확산하기 쉽게 숙주의 방어선을 흐린다.',
     effects: [{ kind: 'buff', stat: 'defense', pct: -25, turns: 3, target: 'enemy' }],
   },
   tsst: {
