@@ -1,0 +1,4 @@
+﻿# Build artifacts and local installs
+app/node_modules/
+app/dist/
+.superpowers/
