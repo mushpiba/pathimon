@@ -55,6 +55,7 @@ export function applyEffects(user: RuntimeMonster, enemy: RuntimeMonster, effect
         pushEffect(target, {
           kind: 'convert',
           power: effect.power,
+          turns: 99,
         });
         break;
       case 'heal':
@@ -72,17 +73,28 @@ export function tickEffects(monster: RuntimeMonster): number {
   const nextEffects: ActiveEffect[] = [];
 
   for (const effect of monster.effects) {
-    if (effect.kind === 'dot' || effect.kind === 'convert') {
+    let nextEffect = effect;
+
+    if (effect.kind === 'dot') {
       damage += effect.power ?? 0;
     }
 
-    const turns = effect.turns;
+    if (effect.kind === 'convert') {
+      damage += effect.power ?? 0;
+      nextEffect = {
+        ...effect,
+        power: (effect.power ?? 0) + 3,
+      };
+    }
+
+    const turns = nextEffect.turns;
     if (turns === undefined) {
+      nextEffects.push(nextEffect);
       continue;
     }
 
     if (turns - 1 > 0) {
-      nextEffects.push({ ...effect, turns: turns - 1 });
+      nextEffects.push({ ...nextEffect, turns: turns - 1 });
     }
   }
 
