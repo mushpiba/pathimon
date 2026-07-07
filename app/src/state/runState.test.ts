@@ -58,6 +58,39 @@ describe('run state loop', () => {
     expect(result.party.length).toBe(2);
   });
 
+  it('captures a fresh party member instead of the damaged battle clone', () => {
+    const battle = enterBattle(createInitialRunState(), 1);
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.hp = 1;
+    battle.enemy.effects.push({ kind: 'dot', power: 4, turns: 2 });
+    battle.enemy.stunned = true;
+    battle.enemy.fainted = true;
+
+    const result = resolveCapsuleAction(battle, 0);
+    const captured = result.party[1];
+
+    expect(captured.hp).toBe(captured.maxHp);
+    expect(captured.effects).toEqual([]);
+    expect(captured.stunned).toBe(false);
+    expect(captured.fainted).toBe(false);
+  });
+
+  it('applies confusion from enterotoxin when status chance is deterministic', () => {
+    const originalEffects = MOVES.enterotoxin.effects;
+    MOVES.enterotoxin.effects = [
+      { kind: 'status', status: 'confusion', chance: 1, turns: 2, target: 'enemy' },
+    ];
+
+    try {
+      const battle = enterBattle(createInitialRunState(), 1);
+      const result = resolvePlayerMove(battle, 'enterotoxin', 1);
+
+      expect(result.enemy?.effects).toContainEqual({ kind: 'confusion', turns: 2 });
+    } finally {
+      MOVES.enterotoxin.effects = originalEffects;
+    }
+  });
+
   it('does not spend capsules when capture is blocked against a boss', () => {
     const state = createInitialRunState();
     state.floor = TOTAL_FLOORS;

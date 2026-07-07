@@ -200,6 +200,20 @@ describe('battle engine', () => {
     ]);
   });
 
+  it('applies confusion effects and stun status primitives', () => {
+    const user = createMonster();
+    const enemy = createMonster();
+    const effects: EffectPrimitive[] = [
+      { kind: 'status', status: 'confusion', chance: 1, turns: 2, target: 'enemy' },
+      { kind: 'status', status: 'stun', chance: 1, target: 'enemy' },
+    ];
+
+    applyEffects(user, enemy, effects);
+
+    expect(enemy.effects).toContainEqual({ kind: 'confusion', turns: 2 });
+    expect(enemy.stunned).toBe(true);
+  });
+
   it('ticks damage-over-time effects, expires timed effects, and grows convert each tick', () => {
     const monster = createMonster({
       hp: 30,

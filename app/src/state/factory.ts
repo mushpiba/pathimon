@@ -43,7 +43,7 @@ export function createBossInstance(index = 0): RuntimeMonster {
     hp: boss.maxHp,
     attack: boss.attack,
     defense: boss.defense,
-    speed: boss.attack,
+    speed: 5,
     captureRate: 0,
     ability: boss.abilityPool[index % boss.abilityPool.length],
     moveset: boss.movePool.slice(0, 4),

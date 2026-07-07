@@ -2,6 +2,8 @@ import { tryCapture } from './capture';
 import { calculateDamage } from './damage';
 import { applyEffects } from './effects';
 import { MOVES } from '../data/moves';
+import { MONSTERS } from '../data/monsters';
+import { createMonsterInstance } from '../state/factory';
 import type { MoveId, RunState, RuntimeMonster } from '../types/game';
 
 const WIN_REWARD = 3;
@@ -72,7 +74,12 @@ export function resolveCapsuleAction(state: RunState, roll: number): RunState {
   nextState.capsules = result.capsules;
 
   if (result.kind === 'captured') {
-    nextState.party.push(cloneMonster(enemy));
+    const capturedData = MONSTERS.find((monster) => monster.id === enemy.templateId);
+    if (!capturedData) {
+      throw new Error(`Unknown captured monster: ${enemy.templateId}`);
+    }
+
+    nextState.party.push(createMonsterInstance(capturedData));
     return setWinState(nextState, `${enemy.name} was captured.`);
   }
 

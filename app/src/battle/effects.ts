@@ -62,6 +62,21 @@ export function applyEffects(user: RuntimeMonster, enemy: RuntimeMonster, effect
         target.hp += Math.round(target.maxHp * (effect.pct / 100));
         clampHp(target);
         break;
+      case 'status':
+        if (Math.random() > effect.chance) {
+          break;
+        }
+
+        if (effect.status === 'confusion') {
+          pushEffect(target, {
+            kind: 'confusion',
+            turns: effect.turns ?? 1,
+          });
+          break;
+        }
+
+        target.stunned = true;
+        break;
       default:
         break;
     }
