@@ -5,7 +5,7 @@ import { MOVES } from '../data/moves';
 import { createInitialRunState, enterBattle } from '../state/runState';
 import type { MoveId, RunState, RuntimeMonster } from '../types/game';
 import { COLORS, APP_WIDTH, APP_HEIGHT } from '../game/constants';
-import { formatMoveDetails, hpPct, statusSummary } from '../ui/battleUi';
+import { formatMoveDetails, hpPct, resolveMoveSelectionPress, statusSummary } from '../ui/battleUi';
 import { destroySceneChildren } from '../ui/sceneCleanup';
 import { addLabel, drawHpBar, drawPanel } from '../ui/draw';
 
@@ -16,6 +16,7 @@ interface BattleSceneData {
 export class BattleScene extends Phaser.Scene {
   private state!: RunState;
   private selectedMoveId!: MoveId;
+  private armedMoveId!: MoveId;
   private notice = '';
 
   constructor() {
@@ -25,6 +26,7 @@ export class BattleScene extends Phaser.Scene {
   init(data: BattleSceneData = {}): void {
     this.state = this.normalizeState(data.state);
     this.selectedMoveId = this.state.party[this.state.activeIndex].moveset[0];
+    this.armedMoveId = this.selectedMoveId;
     this.notice = this.state.lastLog;
   }
 
@@ -111,8 +113,15 @@ export class BattleScene extends Phaser.Scene {
         this.render();
       });
       rect.on('pointerdown', () => {
-        if (this.selectedMoveId !== moveId) {
-          this.selectedMoveId = moveId;
+        const press = resolveMoveSelectionPress({
+          armedMoveId: this.armedMoveId,
+          moveId,
+          selectedMoveId: this.selectedMoveId,
+        });
+        this.selectedMoveId = press.selectedMoveId;
+        this.armedMoveId = press.armedMoveId;
+
+        if (press.intent === 'preview') {
           this.render();
           return;
         }

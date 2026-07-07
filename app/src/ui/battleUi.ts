@@ -2,6 +2,28 @@ import { ATTACK_TYPE_LABELS } from '../data/labels';
 import { MOVES } from '../data/moves';
 import type { MoveId, RuntimeMonster } from '../types/game';
 
+interface MoveSelectionPressInput {
+  armedMoveId: MoveId;
+  moveId: MoveId;
+  selectedMoveId: MoveId;
+}
+
+interface MoveSelectionPressResult {
+  armedMoveId: MoveId;
+  intent: 'execute' | 'preview';
+  selectedMoveId: MoveId;
+}
+
+export function resolveMoveSelectionPress(input: MoveSelectionPressInput): MoveSelectionPressResult {
+  const canExecute = input.armedMoveId === input.moveId && input.selectedMoveId === input.moveId;
+
+  return {
+    armedMoveId: input.moveId,
+    intent: canExecute ? 'execute' : 'preview',
+    selectedMoveId: input.moveId,
+  };
+}
+
 export function hpPct(monster: RuntimeMonster): number {
   return monster.hp / monster.maxHp;
 }

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { RuntimeMonster } from '../types/game';
-import { effectLabels, formatMoveDetails, hpPct, statusSummary } from './battleUi';
+import {
+  effectLabels,
+  formatMoveDetails,
+  hpPct,
+  resolveMoveSelectionPress,
+  statusSummary,
+} from './battleUi';
 
 function createMonster(overrides: Partial<RuntimeMonster> = {}): RuntimeMonster {
   return {
@@ -62,5 +68,47 @@ describe('battle UI helpers', () => {
 
   it('uses a short fallback label when no status effects are active', () => {
     expect(statusSummary(createMonster())).toBe('상태: 정상');
+  });
+
+  it('previews a different move before arming it for execution', () => {
+    expect(
+      resolveMoveSelectionPress({
+        armedMoveId: 'streptokinase',
+        moveId: 'hyaluronidase',
+        selectedMoveId: 'streptokinase',
+      }),
+    ).toEqual({
+      intent: 'preview',
+      armedMoveId: 'hyaluronidase',
+      selectedMoveId: 'hyaluronidase',
+    });
+  });
+
+  it('keeps a hover-previewed move from executing on its first press', () => {
+    expect(
+      resolveMoveSelectionPress({
+        armedMoveId: 'streptokinase',
+        moveId: 'hyaluronidase',
+        selectedMoveId: 'hyaluronidase',
+      }),
+    ).toEqual({
+      intent: 'preview',
+      armedMoveId: 'hyaluronidase',
+      selectedMoveId: 'hyaluronidase',
+    });
+  });
+
+  it('executes a move only after it has already been previewed', () => {
+    expect(
+      resolveMoveSelectionPress({
+        armedMoveId: 'hyaluronidase',
+        moveId: 'hyaluronidase',
+        selectedMoveId: 'hyaluronidase',
+      }),
+    ).toEqual({
+      intent: 'execute',
+      armedMoveId: 'hyaluronidase',
+      selectedMoveId: 'hyaluronidase',
+    });
   });
 });
