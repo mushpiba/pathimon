@@ -28,3 +28,8 @@ export function effectLabels(monster: RuntimeMonster): string[] {
     return effect.kind;
   });
 }
+
+export function statusSummary(monster: RuntimeMonster): string {
+  const labels = effectLabels(monster);
+  return labels.length > 0 ? `상태: ${labels.join(', ')}` : '상태: 정상';
+}

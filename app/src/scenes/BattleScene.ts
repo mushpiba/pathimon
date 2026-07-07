@@ -5,7 +5,8 @@ import { MOVES } from '../data/moves';
 import { createInitialRunState, enterBattle } from '../state/runState';
 import type { MoveId, RunState, RuntimeMonster } from '../types/game';
 import { COLORS, APP_WIDTH, APP_HEIGHT } from '../game/constants';
-import { effectLabels, formatMoveDetails, hpPct } from '../ui/battleUi';
+import { formatMoveDetails, hpPct, statusSummary } from '../ui/battleUi';
+import { destroySceneChildren } from '../ui/sceneCleanup';
 import { addLabel, drawHpBar, drawPanel } from '../ui/draw';
 
 interface BattleSceneData {
@@ -28,6 +29,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => destroySceneChildren(this));
     this.render();
   }
 
@@ -51,7 +53,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private render(): void {
-    this.children.removeAll();
+    destroySceneChildren(this);
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, COLORS.ink).setOrigin(0);
 
     const player = this.state.party[this.state.activeIndex];
@@ -90,9 +92,7 @@ export class BattleScene extends Phaser.Scene {
     addLabel(this, x + 20, y + 108, `방어 특성: ${ABILITIES[monster.ability].name}`, 18);
     addLabel(this, x + 20, y + 138, 'HP', 16).setAlpha(0.85);
     drawHpBar(this, x + 64, y + 146, width - 90, hpPct(monster));
-
-    const labels = effectLabels(monster);
-    addLabel(this, x + 20, y + 160, `상태: ${labels.length > 0 ? labels.join(', ') : '상태 정상'}`, 16).setWordWrapWidth(width - 40);
+    addLabel(this, x + 20, y + 160, statusSummary(monster), 16).setWordWrapWidth(width - 40);
   }
 
   private drawMoveButtons(player: RuntimeMonster): void {

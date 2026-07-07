@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { advanceFromShop } from '../state/runState';
 import type { RunState } from '../types/game';
 import { APP_WIDTH, APP_HEIGHT, COLORS } from '../game/constants';
+import { destroySceneChildren } from '../ui/sceneCleanup';
 import { addLabel, drawPanel } from '../ui/draw';
 
 interface ShopSceneData {
@@ -25,11 +26,12 @@ export class ShopScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => destroySceneChildren(this));
     this.render();
   }
 
   private render(): void {
-    this.children.removeAll();
+    destroySceneChildren(this);
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, COLORS.ink).setOrigin(0);
 
     drawPanel(this, 72, 72, 880, 432);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RuntimeMonster } from '../types/game';
-import { effectLabels, formatMoveDetails, hpPct } from './battleUi';
+import { effectLabels, formatMoveDetails, hpPct, statusSummary } from './battleUi';
 
 function createMonster(overrides: Partial<RuntimeMonster> = {}): RuntimeMonster {
   return {
@@ -57,5 +57,10 @@ describe('battle UI helpers', () => {
       '지속피해',
       '개종',
     ]);
+    expect(statusSummary(monster)).toBe('상태: 공격 25%, 피해감소, 잠복, 지속피해, 개종');
+  });
+
+  it('uses a short fallback label when no status effects are active', () => {
+    expect(statusSummary(createMonster())).toBe('상태: 정상');
   });
 });
