@@ -17,7 +17,7 @@ export const MONSTERS: MonsterData[] = [
     speed: 9,
     captureRate: 0.5,
     ability: 'comp_evade',
-    learnset: ['streptokinase', 'hyaluronidase', 'enterotoxin'],
+    learnset: ['streptokinase', 'hyaluronidase', 'enterotoxin', 'alpha_toxin'],
   },
   {
     id: 'staph',

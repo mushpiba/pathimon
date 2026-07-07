@@ -126,6 +126,20 @@ describe('battle engine', () => {
     expect(result.damage).toBe(9);
   });
 
+  it('applies active attack and defense buffs to damage', () => {
+    const normal = calculateDamage(attacker, capsuleTarget, MOVES.hyaluronidase, 1).damage;
+    const buffedAttacker = createMonster({
+      effects: [{ kind: 'buff', stat: 'attack', pct: 50, turns: 2 }],
+    });
+    const hardenedDefender = createMonster({
+      ...capsuleTarget,
+      effects: [{ kind: 'buff', stat: 'defense', pct: 50, turns: 2 }],
+    });
+
+    expect(calculateDamage(buffedAttacker, capsuleTarget, MOVES.hyaluronidase, 1).damage).toBeGreaterThan(normal);
+    expect(calculateDamage(attacker, hardenedDefender, MOVES.hyaluronidase, 1).damage).toBeLessThan(normal);
+  });
+
   it('blocks capsule capture against bosses', () => {
     const result = tryCapture({ ...capsuleTarget, isBoss: true }, 3, 0.1);
 

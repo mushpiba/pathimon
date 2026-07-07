@@ -85,10 +85,33 @@ describe('run state loop', () => {
       const battle = enterBattle(createInitialRunState(), 1);
       const result = resolvePlayerMove(battle, 'enterotoxin', 1);
 
-      expect(result.enemy?.effects).toContainEqual({ kind: 'confusion', turns: 2 });
+      expect(result.enemy?.effects).toContainEqual({ kind: 'confusion', turns: 1 });
     } finally {
       MOVES.enterotoxin.effects = originalEffects;
     }
+  });
+
+  it('lets a surviving enemy take a turn after the player acts', () => {
+    const battle = enterBattle(createInitialRunState(), 1);
+    const startingHp = battle.party[0].hp;
+
+    const result = resolvePlayerMove(battle, 'coagulase', 1);
+
+    expect(result.phase).toBe('battle');
+    expect(result.party[0].hp).toBeLessThan(startingHp);
+    expect(result.lastLog).toContain('황색포도알균 used');
+  });
+
+  it('ticks round-end effects after both sides act', () => {
+    const battle = enterBattle(createInitialRunState(), 1);
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.effects.push({ kind: 'dot', power: 4, turns: 2 });
+    const startingEnemyHp = battle.enemy.hp;
+
+    const result = resolvePlayerMove(battle, 'coagulase', 1);
+
+    expect(result.enemy?.hp).toBe(startingEnemyHp - 4);
+    expect(result.enemy?.effects).toContainEqual({ kind: 'dot', power: 4, turns: 1 });
   });
 
   it('does not spend capsules when capture is blocked against a boss', () => {

@@ -1,6 +1,6 @@
 import { tryCapture } from './capture';
 import { calculateDamage } from './damage';
-import { applyEffects } from './effects';
+import { applyEffects, tickEffects } from './effects';
 import { MOVES } from '../data/moves';
 import { MONSTERS } from '../data/monsters';
 import { createMonsterInstance } from '../state/factory';
@@ -34,9 +34,9 @@ function setWinState(state: RunState, message: string): RunState {
   };
 }
 
-function markEnemyDamage(enemy: RuntimeMonster, damage: number): void {
-  enemy.hp = Math.max(0, enemy.hp - damage);
-  enemy.fainted = enemy.hp <= 0;
+function markDamage(monster: RuntimeMonster, damage: number): void {
+  monster.hp = Math.max(0, monster.hp - damage);
+  monster.fainted = monster.hp <= 0;
 }
 
 export function resolvePlayerMove(state: RunState, moveId: MoveId, variance = 1): RunState {
@@ -50,15 +50,45 @@ export function resolvePlayerMove(state: RunState, moveId: MoveId, variance = 1)
   }
 
   const result = calculateDamage(actor, enemy, move, variance);
-  markEnemyDamage(enemy, result.damage);
+  markDamage(enemy, result.damage);
   applyEffects(actor, enemy, move.effects);
 
   if (enemy.hp <= 0) {
     return setWinState(nextState, `${enemy.name} was defeated.`);
   }
 
+  let enemyLog = `${enemy.name} could not act.`;
+  if (enemy.stunned) {
+    enemy.stunned = false;
+    enemyLog = `${enemy.name} is stunned.`;
+  } else {
+    const enemyMoveId = enemy.moveset[0];
+    const enemyMove = enemyMoveId ? MOVES[enemyMoveId] : undefined;
+
+    if (enemyMove) {
+      const enemyResult = calculateDamage(enemy, actor, enemyMove, variance);
+      markDamage(actor, enemyResult.damage);
+      applyEffects(enemy, actor, enemyMove.effects);
+      enemyLog = `${enemy.name} used ${enemyMove.name}.`;
+    }
+  }
+
+  const actorEffectDamage = tickEffects(actor);
+  const enemyEffectDamage = tickEffects(enemy);
+
+  if (enemy.hp <= 0) {
+    return setWinState(nextState, `${enemy.name} was defeated by ongoing effects.`);
+  }
+
+  if (actor.hp <= 0) {
+    nextState.phase = 'defeat';
+    nextState.lastLog = `${actor.name} collapsed.`;
+    return nextState;
+  }
+
+  const effectLog = actorEffectDamage + enemyEffectDamage > 0 ? ' Ongoing effects dealt damage.' : '';
   nextState.phase = 'battle';
-  nextState.lastLog = `${actor.name} used ${move.name}.`;
+  nextState.lastLog = `${actor.name} used ${move.name}. ${enemyLog}${effectLog}`;
   return nextState;
 }
 

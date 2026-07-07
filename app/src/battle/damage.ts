@@ -17,6 +17,14 @@ function isInvulnerable(defender: RuntimeMonster): boolean {
   return defender.effects.some((effect) => effect.kind === 'invuln');
 }
 
+function resolveStat(monster: RuntimeMonster, stat: 'attack' | 'defense'): number {
+  const pct = monster.effects
+    .filter((effect) => effect.kind === 'buff' && effect.stat === stat)
+    .reduce((total, effect) => total + (effect.pct ?? 0), 0);
+
+  return Math.max(1, Math.round(monster[stat] * (1 + pct / 100)));
+}
+
 export function calculateDamage(
   attacker: RuntimeMonster,
   defender: RuntimeMonster,
@@ -34,7 +42,7 @@ export function calculateDamage(
     };
   }
 
-  const baseDamage = Math.max(1, attacker.attack + move.power - defender.defense);
+  const baseDamage = Math.max(1, resolveStat(attacker, 'attack') + move.power - resolveStat(defender, 'defense'));
   const totalDamage = baseDamage * multiplier.total * getIncomingFactor(defender) * variance;
 
   return {

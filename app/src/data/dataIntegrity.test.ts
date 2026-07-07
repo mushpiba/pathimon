@@ -3,6 +3,7 @@ import { ABILITIES } from './abilities';
 import { BOSSES } from './bosses';
 import { EFFECTIVENESS } from './effectiveness';
 import { MONSTERS, STARTER_ID, TOTAL_FLOORS } from './monsters';
+import { buildLoadout } from '../battle/loadout';
 import { MOVES } from './moves';
 
 describe('Pathimon data', () => {
@@ -12,6 +13,13 @@ describe('Pathimon data', () => {
     expect(starter?.name).toBe('화농성연쇄상구균');
     expect(starter?.scientificName).toBe('Streptococcus pyogenes');
     expect(starter?.scientificName.length).toBeGreaterThan(3);
+  });
+
+  it('gives the starter four visible battle moves', () => {
+    const starter = MONSTERS.find((monster) => monster.id === STARTER_ID);
+    if (!starter) throw new Error('starter missing');
+
+    expect(buildLoadout(starter)).toHaveLength(4);
   });
 
   it('matches the milestone monster, boss, and floor set exactly', () => {
