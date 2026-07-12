@@ -9,10 +9,57 @@ export const ABILITIES: Record<AbilityId, AbilityData> = {
   acidfast: { id: 'acidfast', name: '항산성막' },
   biofilm: { id: 'biofilm', name: '바이오필름' },
   antigen_var: { id: 'antigen_var', name: '항원변이' },
+  latency: { id: 'latency', name: '잠복' },
+  phagolysosome_block: { id: 'phagolysosome_block', name: '식포융합차단' },
+  oxidative_neutral: { id: 'oxidative_neutral', name: '활성산소중화' },
+  immune_cell_kill: { id: 'immune_cell_kill', name: '면역세포살해' },
+  large_resistance: { id: 'large_resistance', name: '대형저항' },
+  antigen_disguise: { id: 'antigen_disguise', name: '항원위장' },
   spore: { id: 'spore', name: '포자내성' },
   no_nucleic: { id: 'no_nucleic', name: '무핵산' },
   barrier: { id: 'barrier', name: '물리장벽' },
   comp_patrol: { id: 'comp_patrol', name: '보체순환' },
+  epithelial_barrier: {
+    id: 'epithelial_barrier',
+    name: '상피장벽',
+    resistTag: {
+      pathway: {
+        skin: 0.5,
+        transcutaneous: 0.5,
+      },
+    },
+  },
+  mucociliary: {
+    id: 'mucociliary',
+    name: '점액섬모',
+    resistTag: {
+      pathway: {
+        respiratory: 0.5,
+      },
+    },
+  },
+  gastric_acid: {
+    id: 'gastric_acid',
+    name: '위산',
+    resistTag: {
+      pathway: {
+        gut: 0.5,
+      },
+    },
+  },
+  microbiota_defense: {
+    id: 'microbiota_defense',
+    name: '정상균총',
+    resistTag: {
+      reservoir: {
+        microbiota: 0.5,
+      },
+    },
+  },
+  iron_limitation: { id: 'iron_limitation', name: '철제한' },
+  antitoxin: { id: 'antitoxin', name: '항독소' },
+  receptor_defect: { id: 'receptor_defect', name: '수용체결핍' },
+  immune_regulation: { id: 'immune_regulation', name: '면역조절' },
   mask: {
     id: 'mask',
     name: '점액섬모',

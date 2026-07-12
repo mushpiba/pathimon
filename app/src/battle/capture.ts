@@ -7,7 +7,7 @@ export type CaptureResult =
   | { kind: 'missed'; capsules: number; chance: number };
 
 export function tryCapture(enemy: RuntimeMonster, capsules: number, roll: number): CaptureResult {
-  if (enemy.isBoss) {
+  if (enemy.isBoss || enemy.isTrainer) {
     return { kind: 'blocked', capsules };
   }
 

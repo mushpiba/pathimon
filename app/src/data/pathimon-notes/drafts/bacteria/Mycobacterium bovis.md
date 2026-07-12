@@ -1,0 +1,79 @@
+# 패시몬 노트
+
+이름:
+학명: 우형결핵균(Mycobacterium bovis)
+타입: 세균
+태그:
+- structure: 항산성
+- location: 세포내/림프절
+- pathway: 동물성식품/동물접촉
+방어특성: 세포내생존
+
+이미지:
+- 대표 시각 특징: 소 결핵, 비살균 우유, 항산성균, 결핵균군 비교, BCG와의 연결
+- 기존과 겹치지 않게 할 요소: 현재 생성되어 있는 모든 기존 패시몬 이미지(app/public/images/pathimon 및 app/dist/images/pathimon 기준)의 실루엣, 색 조합, 장식 요소, 구도와 비교해 너무 유사하게 보이지 않도록 한다.
+- 캐릭터풍: 우유병 방패와 소뿔 모양을 가진 항산성 막대균 픽셀풍 몬스터
+- 실사풍: Mycobacterium bovis/BCG or bovine tuberculosis 교육용 참고형 이미지
+
+능력치:
+- HP: 86
+- 공격: 52
+- 방어: 82
+
+기술:
+- 이름: 동물성 경로
+  종류: 준비기
+  타입: 준비
+  위력: 0
+  명중: 100%
+  effect:
+  description: {name}이 동물 접촉이나 비살균 유제품 경로를 노린다.
+  learnText: M. bovis는 결핵균군과 zoonotic tuberculosis 맥락에서 언급될 수 있다.
+  결과:
+    - 확률: 100%
+      효과: 공격력 +1랭크
+      상태이상:
+      증상:
+      effect:
+      description: {name}이 동물성 경로로 체내에 들어왔다.
+      learnText: 결핵균군 후보는 전용 강의가 있으면 다시 승격 검토한다.
+
+- 이름: 항산성 버티기
+  종류: 공격기
+  타입: 방어
+  위력: 0
+  명중: 100%
+  effect:
+  description: {name}이 항산성 세포벽으로 살균 환경을 버틴다.
+  learnText: Mycobacterium 계열은 항산성과 세포내 생존이 공통 이미지다.
+  결과:
+    - 확률: 100%
+      단계:
+      위력:
+      효과: 무적(1)
+      상태이상:
+      증상:
+      effect:
+      description: {name}이 두꺼운 세포벽으로 버텼다.
+      learnText: 결핵균과 중복되므로 최종 반영 때 변이형으로 처리할 수 있다.
+
+- 이름: BCG 그림자
+  종류: 전용기
+  타입: 면역매개
+  위력: 0
+  명중: 100%
+  effect:
+  description: {name}이 약독화 백신의 그림자처럼 면역 기억을 흔든다.
+  learnText: BCG는 M. bovis에서 유래한 약독화 백신이라는 연결고리로 학습할 수 있다.
+  결과:
+    - 확률: 100%
+      효과: 공격력 +1랭크
+      상태이상: 면역 이상(2)
+      증상: 면역 이상
+      effect:
+      description: {name}이 결핵균군 면역 기억을 뒤흔들었다.
+      learnText: 병원체 패시몬으로 쓸지, 백신/보조 시스템 후보로 분리할지 검수 필요하다.
+
+메모:
+- 2차 보류 후보.
+- 출처 강의: 05, 17, 33

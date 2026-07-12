@@ -1,7 +1,11 @@
 import Phaser from 'phaser';
 import { BattleScene } from '../scenes/BattleScene';
 import { BossIntroScene } from '../scenes/BossIntroScene';
+import { DisclaimerScene } from '../scenes/DisclaimerScene';
+import { GameGuideScene } from '../scenes/GameGuideScene';
+import { ModeSelectScene } from '../scenes/ModeSelectScene';
 import { ShopScene } from '../scenes/ShopScene';
+import { StarterSelectScene } from '../scenes/StarterSelectScene';
 import { StoryScene } from '../scenes/StoryScene';
 import { TitleScene } from '../scenes/TitleScene';
 import { APP_HEIGHT, APP_WIDTH } from './constants';
@@ -13,10 +17,11 @@ export function createGameConfig(parent: string): Phaser.Types.Core.GameConfig {
     width: APP_WIDTH,
     height: APP_HEIGHT,
     backgroundColor: '#182131',
+    pixelArt: false,
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [TitleScene, StoryScene, BattleScene, ShopScene, BossIntroScene],
+    scene: [TitleScene, DisclaimerScene, StoryScene, GameGuideScene, ModeSelectScene, StarterSelectScene, BattleScene, ShopScene, BossIntroScene],
   };
 }

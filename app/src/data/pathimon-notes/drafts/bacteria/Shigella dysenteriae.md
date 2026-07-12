@@ -1,0 +1,105 @@
+# 패시몬 노트
+
+이름: 시가이질
+학명: 시가이질균(Shigella dysenteriae)
+타입: 세균
+태그:
+- structure: 그람음성
+- location: 세포내
+- pathway: 소화기/분변구강
+방어특성: 산저항
+메모:
+- 세균 타입이며 방어특성은 산저항이다.
+- 그람음성 구조와 세포내 위치가 핵심이다.
+- 소화기, 분변구강 경로로 감염될 수 있다.
+- 대장 침입와 시가 독소, 독소성 점막 괴사이 대표 병인이다.
+
+이미지:
+- 대표 시각 특징: Shiga toxin, 심한 이질, 혈성 설사, HUS 위험
+- 기존과 겹치지 않게 할 요소: 현재 생성되어 있는 모든 기존 패시몬 이미지(app/public/images/pathimon 및 app/dist/images/pathimon 기준)의 실루엣, 색 조합, 장식 요소, 구도와 비교해 너무 유사하게 보이지 않도록 한다.
+- 캐릭터풍: 붉은 대장 점막 위에서 시가 독소 왕관을 쓴 막대균 픽셀 몬스터
+- 실사풍: Shigella dysenteriae 또는 Shiga toxin 관련 이질 병태를 설명하는 교육용 참고형 이미지
+
+능력치:
+- HP: 72
+- 공격: 88
+- 방어: 48
+
+기술:
+- 이름: 대장 침입
+  종류: 준비기
+  타입: 준비
+  위력: 0
+  명중: 100%
+  effect:
+  description: {name}이 대장 점막으로 들어가 시가 독소 공격을 준비한다.
+  learnText: S. dysenteriae는 Shiga toxin과 심한 dysentery로 EHEC와 비교해 기억하기 좋다.
+  결과:
+    - 확률: 100%
+      효과: 공격력 +1랭크
+      상태이상:
+      증상:
+      effect:
+      description: {name}이 대장 점막 안쪽으로 파고들었다.
+      learnText: Shigella는 침습성 이질균이라는 큰 틀을 먼저 잡는다.
+
+- 이름: 시가 독소
+  종류: 공격기
+  타입: 독소
+  위력: 85
+  명중: 100%
+  effect:
+  description: {name}이 단백질 합성을 막는 시가 독소를 뿜는다.
+  learnText: Shiga toxin은 60S ribosome 억제와 HUS 위험으로 EHEC와 함께 정리한다.
+  결과:
+    - 확률: 100%
+      단계:
+      위력:
+      효과:
+      상태이상: 출혈
+      증상: 출혈
+      effect:
+      description: {name}의 시가 독소가 장 점막을 손상시켰다.
+      learnText: 혈성 설사는 출혈 상태이상으로 표현한다.
+
+- 이름: 독소성 점막 괴사
+  종류: 공격기
+  타입: 조직융해
+  위력: 70
+  명중: 100%
+  effect:
+  description: {name}이 독소와 침습으로 대장 점막을 괴사시킨다.
+  learnText: 심한 이질은 점막 손상, 궤양, 출혈 이미지가 강하다.
+  결과:
+    - 확률: 100%
+      단계:
+      위력:
+      효과:
+      상태이상: 괴사
+      증상: 괴사
+      effect:
+      description: {name}이 장 점막을 검붉게 무너뜨렸다.
+      learnText: 괴사는 최대 체력 상한 감소 상태로 전투에 반영된다.
+
+- 이름: HUS 그림자
+  종류: 전용기
+  타입: 독소
+  위력: 0
+  명중: 100%
+  effect:
+  description: {name}이 시가 독소 손상을 미세혈관 문제로 이어간다.
+  learnText: S. dysenteriae와 EHEC/STEC 모두 Shiga toxin - HUS 연결고리를 검수해야 한다.
+  결과:
+    - 확률: 100%
+      효과:
+      상태이상: 출혈, 혈압 이상
+      증상: 출혈, 혈압 이상
+      effect:
+      description: {name}이 독소성 미세혈관 손상을 남겼다.
+      learnText: HUS는 공식 상태이상에 없어 출혈과 혈압 이상 조합으로 표현했다.
+
+
+작업메모:
+- 후보 번호: 25
+- 출처 강의: 33
+- EHEC/STEC와 기술 컨셉이 겹치므로 최종 검수에서 위력/상태이상 차별화 필요.

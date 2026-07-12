@@ -1,10 +1,15 @@
 import type { MoveData, RuntimeMonster } from '../types/game';
 import { calculateMultiplier, type MultiplierResult } from './effectiveness';
+import { attackStatMultiplier, directDamageMultiplier } from '../data/statusConditions';
 
 export interface DamageResult {
   damage: number;
   multiplier: MultiplierResult;
   blockedByInvulnerability: boolean;
+}
+
+export function randomDamageVariance(random: () => number = Math.random): number {
+  return 0.85 + random() * 0.15;
 }
 
 function getIncomingFactor(defender: RuntimeMonster): number {
@@ -22,7 +27,8 @@ function resolveStat(monster: RuntimeMonster, stat: 'attack' | 'defense'): numbe
     .filter((effect) => effect.kind === 'buff' && effect.stat === stat)
     .reduce((total, effect) => total + (effect.pct ?? 0), 0);
 
-  return Math.max(1, Math.round(monster[stat] * (1 + pct / 100)));
+  const conditionMultiplier = stat === 'attack' ? attackStatMultiplier(monster) : 1;
+  return Math.max(1, Math.round(monster[stat] * (1 + pct / 100) * conditionMultiplier));
 }
 
 export function calculateDamage(
@@ -30,8 +36,9 @@ export function calculateDamage(
   defender: RuntimeMonster,
   move: MoveData,
   variance = 1,
+  multiplierOverride?: MultiplierResult,
 ): DamageResult {
-  const multiplier = calculateMultiplier(move, attacker, defender);
+  const multiplier = multiplierOverride ?? calculateMultiplier(move, attacker, defender);
   const blockedByInvulnerability = isInvulnerable(defender);
 
   if (move.power === 0 || multiplier.total === 0 || blockedByInvulnerability) {
@@ -42,8 +49,8 @@ export function calculateDamage(
     };
   }
 
-  const baseDamage = Math.max(1, resolveStat(attacker, 'attack') + move.power - resolveStat(defender, 'defense'));
-  const totalDamage = baseDamage * multiplier.total * getIncomingFactor(defender) * variance;
+  const baseDamage = move.power * (resolveStat(attacker, 'attack') / resolveStat(defender, 'defense'));
+  const totalDamage = baseDamage * multiplier.total * getIncomingFactor(defender) * directDamageMultiplier(defender) * variance;
 
   return {
     damage: Math.max(1, Math.round(totalDamage)),

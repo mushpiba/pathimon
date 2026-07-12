@@ -1,0 +1,99 @@
+# 패시몬 노트
+
+이름:
+학명: 트라코마 클라미디아(Chlamydia trachomatis)
+타입: 세균
+태그:
+- structure: 그람음성유사/절대세포내
+- location: 세포내봉입체
+- pathway: 성접촉/눈/점막
+방어특성: 세포내생존
+
+이미지:
+- 대표 시각 특징: EB/RB 순환, 봉입체, 트라코마 눈 병변, 비임균성 요도염
+- 기존과 겹치지 않게 할 요소: 현재 생성되어 있는 모든 기존 패시몬 이미지(app/public/images/pathimon 및 app/dist/images/pathimon 기준)의 실루엣, 색 조합, 장식 요소, 구도와 비교해 너무 유사하게 보이지 않도록 한다.
+- 캐릭터풍: 눈물방울 모양 봉입체 방 안에서 작은 감염소체가 두 형태로 바뀌는 픽셀풍 몬스터
+- 실사풍: Chlamydia trachomatis inclusion 또는 trachoma conjunctival scraping 교육용 참고형 이미지
+
+능력치:
+- HP: 64
+- 공격: 66
+- 방어: 56
+
+기술:
+- 이름: 점막 부착
+  종류: 준비기
+  타입: 준비
+  위력: 0
+  명중: 100%
+  effect:
+  description: {name}이 눈과 비뇨생식기 점막에 달라붙는다.
+  learnText: C. trachomatis는 트라코마와 비임균성 요도염의 대표 원인으로 연결된다.
+  결과:
+    - 확률: 100%
+      효과: 공격력 +1랭크
+      상태이상:
+      증상:
+      effect:
+      description: {name}이 점막 세포 안으로 들어갈 틈을 만들었다.
+      learnText: elementary body가 감염형으로 세포에 부착하는 과정을 준비기로 표현했다.
+
+- 이름: 비임균성 요도염
+  종류: 공격기
+  타입: 면역매개
+  위력: 55
+  명중: 100%
+  effect:
+  description: {name}이 점막 염증을 길게 끌고 간다.
+  learnText: C. trachomatis는 비임균성 요도염의 중요한 원인이다.
+  결과:
+    - 확률: 100%
+      단계:
+      위력:
+      효과:
+      상태이상: 부종
+      증상: 부종
+      effect:
+      description: {name}이 점막을 붓게 해 방어 흐름을 흔들었다.
+      learnText: 요도염/자궁경부염 같은 국소 점막 염증은 부종으로 임시 표현했다.
+
+- 이름: 트라코마 흉터
+  종류: 공격기
+  타입: 면역매개
+  위력: 70
+  명중: 100%
+  effect:
+  description: {name}이 반복 염증으로 눈 표면에 흉터를 남긴다.
+  learnText: 반복 감염에 의한 trachoma는 시야 손상과 연결된다.
+  결과:
+    - 확률: 100%
+      단계:
+      위력:
+      효과:
+      상태이상: 시력 이상
+      증상: 시력 이상
+      effect:
+      description: {name}이 눈 표면을 흐리게 만들었다.
+      learnText: 트라코마의 시야 손상은 공식 상태이상 시력 이상으로 표현한다.
+
+- 이름: 봉입체 순환
+  종류: 전용기
+  타입: 세포내
+  위력: 0
+  명중: 100%
+  effect:
+  description: {name}이 봉입체 안에서 EB와 RB 형태를 바꾼다.
+  learnText: EB/RB 순환은 Chlamydia 학습의 핵심 키워드다.
+  결과:
+    - 확률: 100%
+      효과: 2턴 무적
+      상태이상:
+      증상:
+      effect:
+      description: {name}이 봉입체 안으로 숨어 잠시 공격을 피했다.
+      learnText: 절대세포내 생활사는 전투상 무적 키워드로 임시 표현했다.
+
+메모:
+- 2차 보류 후보.
+- 출처 강의: 22
+- Chlamydia spp. 대표 노트와 중복될 수 있어 최종 반영 때 통합/분리 여부 검수 필요.

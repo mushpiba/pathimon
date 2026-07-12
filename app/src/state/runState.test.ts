@@ -1,8 +1,60 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCapsuleAction, resolvePlayerMove } from '../battle/turn';
+import type { MonsterData, RunState } from '../types/game';
+import {
+  cancelPendingCapture,
+  resolveCapsuleAction,
+  resolveCaptureRelease,
+  resolveForcedSwitchMonster,
+  resolvePassEncounter,
+  resolvePlayerMove,
+  resolveSwitchMonster,
+} from '../battle/turn';
 import { MOVES } from '../data/moves';
-import { STARTER_ID, TOTAL_FLOORS } from '../data/monsters';
-import { advanceFromShop, createInitialRunState, enterBattle } from './runState';
+import { createDistributedWildRoster, STARTER_ID, TOTAL_FLOORS, wildEncounterRoster } from '../data/monsters';
+import { NOTE_MONSTERS } from '../data/pathimonNoteData';
+import {
+  advanceFromShop,
+  canUseEvolutionStoneOnPartyMember,
+  createInitialRunState,
+  encounterKindForFloor,
+  enterBattle,
+  healPartyMember,
+  purchaseShopItem,
+  purchaseShopItemForPartyMember,
+  refreshMaintenanceInventory,
+} from './runState';
+
+const NOTE_MONSTERS_NEWEST_FIRST = [...NOTE_MONSTERS].reverse();
+
+function testMonster(id: string, category: string): MonsterData {
+  return {
+    id,
+    name: id,
+    scientificName: id,
+    category,
+    glyph: id.slice(0, 3).toUpperCase().padEnd(3, 'X'),
+    tags: {},
+    maxHp: 10,
+    attack: 5,
+    defense: 5,
+    speed: 5,
+    captureRate: 0.5,
+    ability: 'none',
+    learnset: ['alpha_toxin'],
+  };
+}
+
+function sequenceRandom(values: number[]): () => number {
+  let index = 0;
+  return () => values[index++] ?? 0.37;
+}
+
+function wildMonsterForRun(state: RunState, index = 0): MonsterData {
+  const monsterId = state.wildRosterIds?.[index];
+  const monster = wildEncounterRoster().find((candidate) => candidate.id === monsterId);
+  if (!monster) throw new Error(`wild monster missing: ${monsterId}`);
+  return monster;
+}
 
 describe('run state loop', () => {
   it('starts with one active starter and battle resources', () => {
@@ -10,18 +62,181 @@ describe('run state loop', () => {
 
     expect(state.floor).toBe(1);
     expect(state.money).toBe(0);
-    expect(state.capsules).toBe(3);
-    expect(state.party[0].name).toBe('화농성연쇄상구균');
+    expect(state.capsules).toBe(4);
+    expect(state.capsuleInventory.universal).toBe(4);
+    expect(state.capsuleInventory.bacteria).toBe(0);
+    expect(state.mode).toBe('challenge');
+    expect(state.visualStyle).toBe('character');
+    expect(state.party[0].name).toBe('탄저록스');
     expect(state.party[0].templateId).toBe(STARTER_ID);
     expect(state.phase).toBe('story');
   });
 
+  it('can start with the selected starter pathimon', () => {
+    const state = createInitialRunState('learning', 'micro', 'cereus');
+
+    expect(state.mode).toBe('learning');
+    expect(state.visualStyle).toBe('micro');
+    expect(state.party[0].name).toBe('세레우톡스');
+    expect(state.party[0].templateId).toBe('cereus');
+    expect(state.party).toHaveLength(1);
+  });
+
+  it('unlocks signature moves by default only in learning mode', () => {
+    const learning = createInitialRunState('learning', 'character', 'anthrax');
+    const challenge = createInitialRunState('challenge', 'character', 'anthrax');
+
+    expect(learning.party[0].signatureUnlocked).toBe(true);
+    expect(challenge.party[0].signatureUnlocked).toBe(false);
+  });
+
   it('enters a normal wild battle', () => {
-    const state = enterBattle(createInitialRunState(), 1);
+    const initial = createInitialRunState();
+    const firstWildPathimon = wildMonsterForRun(initial);
+    const state = enterBattle(initial);
 
     expect(state.phase).toBe('battle');
+    expect(state.encounterKind).toBe('wild');
     expect(state.enemy?.isBoss).toBe(false);
-    expect(state.enemy?.scientificName).toBe('Staphylococcus aureus');
+    expect(state.enemy?.abilities).toEqual([]);
+    expect(state.enemy?.scientificName).toBe(firstWildPathimon.scientificName);
+  });
+
+  it('keeps the selected microscope visual style through wild battles', () => {
+    const initial = createInitialRunState('challenge', 'micro');
+    const firstWildPathimon = wildMonsterForRun(initial);
+    const state = enterBattle(initial);
+
+    expect(state.enemy?.templateId).toBe(firstWildPathimon.id);
+    expect(state.visualStyle).toBe('micro');
+    expect(state.enemy?.assetPath).toBeUndefined();
+  });
+
+  it('routes every fifth floor to humans and every tenth floor to bosses', () => {
+    expect(encounterKindForFloor(1)).toBe('wild');
+    expect(encounterKindForFloor(5)).toBe('trainer');
+    expect(encounterKindForFloor(10)).toBe('boss');
+    expect(encounterKindForFloor(15)).toBe('trainer');
+    expect(encounterKindForFloor(20)).toBe('boss');
+  });
+
+  it('keeps late roster pathimon reachable through wild floor rotation', () => {
+    const seen = new Set<string>();
+    const run = createInitialRunState();
+
+    for (let floor = 1; floor <= TOTAL_FLOORS; floor += 1) {
+      if (encounterKindForFloor(floor) !== 'wild') continue;
+      const state = { ...run };
+      state.floor = floor;
+      const battle = enterBattle(state);
+      if (battle.enemy) seen.add(battle.enemy.templateId);
+    }
+
+    expect(seen).toContain('anthrax');
+    expect(seen).toContain('cereus');
+  });
+
+  it('creates one shuffled wild roster when a run starts', () => {
+    const baseRosterIds = wildEncounterRoster().map((monster) => monster.id);
+    const state = createInitialRunState(
+      'challenge',
+      'character',
+      'anthrax',
+      sequenceRandom([0.91, 0.12, 0.77, 0.34, 0.58, 0.03, 0.82, 0.25]),
+    );
+    const runRosterIds = state.wildRosterIds ?? [];
+
+    expect(runRosterIds).toHaveLength(baseRosterIds.length);
+    expect(new Set(runRosterIds).size).toBe(baseRosterIds.length);
+    expect([...runRosterIds].sort()).toEqual([...baseRosterIds].sort());
+    expect(runRosterIds).not.toEqual(baseRosterIds);
+  });
+
+  it('uses the run wild roster order across wild floors', () => {
+    const chosenIds = wildEncounterRoster()
+      .filter((monster) => monster.id !== STARTER_ID)
+      .slice(0, 3)
+      .map((monster) => monster.id)
+      .reverse();
+    const state = createInitialRunState();
+    state.wildRosterIds = chosenIds;
+
+    expect(enterBattle(state).enemy?.templateId).toBe(chosenIds[0]);
+    expect(enterBattle({ ...state, floor: 2 }).enemy?.templateId).toBe(chosenIds[1]);
+    expect(enterBattle({ ...state, floor: 3 }).enemy?.templateId).toBe(chosenIds[2]);
+  });
+
+  it('disperses same-type wild rosters when alternatives remain', () => {
+    const source = [
+      testMonster('bacteria-1', '세균'),
+      testMonster('bacteria-2', '세균'),
+      testMonster('bacteria-3', '세균'),
+      testMonster('bacteria-4', '세균'),
+      testMonster('virus-1', '바이러스'),
+      testMonster('virus-2', '바이러스'),
+      testMonster('virus-3', '바이러스'),
+      testMonster('virus-4', '바이러스'),
+      testMonster('parasite-1', '기생충'),
+      testMonster('parasite-2', '기생충'),
+      testMonster('parasite-3', '기생충'),
+      testMonster('parasite-4', '기생충'),
+    ];
+
+    const roster = createDistributedWildRoster(source, sequenceRandom([0.99, 0.02, 0.66, 0.18, 0.42]), 2);
+
+    expect(roster).toHaveLength(source.length);
+    expect(roster.map((monster) => monster.id).sort()).toEqual(source.map((monster) => monster.id).sort());
+    for (let index = 2; index < roster.length; index += 1) {
+      const recentTypes = roster.slice(index - 2, index + 1).map((monster) => monster.category);
+      expect(new Set(recentTypes).size).toBeGreaterThan(1);
+    }
+  });
+
+  it('keeps note-managed pathimon available in the wild encounter roster', () => {
+    const openingRouteIds = NOTE_MONSTERS_NEWEST_FIRST.map((monster) => monster.id);
+
+    expect(wildEncounterRoster().slice(0, openingRouteIds.length).map((monster) => monster.id)).toEqual(openingRouteIds);
+
+    const runRosterIds = createInitialRunState().wildRosterIds ?? [];
+    expect([...runRosterIds].sort()).toEqual([...openingRouteIds].sort());
+  });
+
+  it('heals the party at battle start only in learning mode', () => {
+    const learning = createInitialRunState('learning');
+    learning.party[0].hp = 1;
+    learning.party[0].effects.push({ kind: 'dot', power: 4, turns: 2 });
+    learning.party[0].stunned = true;
+    learning.party[0].fainted = true;
+
+    const learningBattle = enterBattle(learning);
+
+    expect(learningBattle.mode).toBe('learning');
+    expect(learningBattle.party[0].hp).toBe(learningBattle.party[0].maxHp);
+    expect(learningBattle.party[0].effects).toEqual([]);
+    expect(learningBattle.party[0].fainted).toBe(false);
+
+    const challenge = createInitialRunState('challenge');
+    challenge.party[0].hp = 1;
+
+    const challengeBattle = enterBattle(challenge);
+
+    expect(challengeBattle.mode).toBe('challenge');
+    expect(challengeBattle.party[0].hp).toBe(1);
+  });
+
+  it('resets once-per-battle signature use when a new battle starts', () => {
+    const challenge = createInitialRunState('challenge');
+    challenge.party[0].usedSignatureMoveIds = ['capsule_formation'];
+    challenge.party[0].effects.push({ kind: 'buff', stat: 'attack', pct: 25, turns: 3 });
+    challenge.party[0].statusConditions = { fever: 1 };
+    challenge.party[0].symptoms = ['기침'];
+
+    const battle = enterBattle(challenge);
+
+    expect(battle.party[0].usedSignatureMoveIds).toEqual([]);
+    expect(battle.party[0].effects).toHaveLength(1);
+    expect(battle.party[0].statusConditions).toEqual({ fever: 1 });
+    expect(battle.party[0].symptoms).toEqual(['기침']);
   });
 
   it('enters a boss intro at the final floor', () => {
@@ -31,35 +246,197 @@ describe('run state loop', () => {
     const result = enterBattle(state);
 
     expect(result.phase).toBe('bossIntro');
+    expect(result.encounterKind).toBe('boss');
     expect(result.enemy?.isBoss).toBe(true);
+    expect(result.enemy?.isTrainer).toBe(true);
     expect(result.enemy?.captureRate).toBe(0);
+    expect(result.enemy?.plannedMoveId).toBeTruthy();
   });
 
-  it('moves to shop and grants money after defeating the enemy', () => {
-    const battle = enterBattle(createInitialRunState(), 1);
+  it('moves to shop and grants money after defeating a human enemy', () => {
+    const state = createInitialRunState();
+    state.floor = 5;
+    const battle = enterBattle(state, 0);
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.hp = 1;
 
-    const result = resolvePlayerMove(battle, battle.party[0].moveset[0], 1);
+    const result = resolvePlayerMove(battle, 'hyaluronidase', 1);
 
     expect(result.phase).toBe('shop');
-    expect(result.money).toBeGreaterThan(0);
+    expect(result.shopInventory).toHaveLength(6);
+    expect(result.money).toBe(5);
   });
 
-  it('captures a normal enemy and spends one capsule', () => {
-    const battle = enterBattle(createInitialRunState(), 1);
+  it('adds money only after human encounters, so the tenth-floor shop starts with ten if unspent', () => {
+    const state = createInitialRunState();
+    state.floor = 10;
+    state.money = 5;
+    const battle = enterBattle(state, 0);
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.hp = 1;
+
+    const result = resolvePlayerMove(battle, 'hyaluronidase', 1);
+
+    expect(result.phase).toBe('shop');
+    expect(result.money).toBe(10);
+  });
+
+  it('skips the maintenance shop after learning-mode victories', () => {
+    const battle = enterBattle(createInitialRunState('learning'));
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.hp = 1;
+
+    const result = resolvePlayerMove(battle, 'cholera_toxin', 1);
+
+    expect(result.phase).toBe('floorClear');
+    expect(result.lastLog).toContain('학습 피드백');
+  });
+
+  it('captures a normal enemy and skips maintenance', () => {
+    const initial = createInitialRunState();
+    const battle = enterBattle(initial);
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.hp = 1;
 
     const result = resolveCapsuleAction(battle, 0);
 
-    expect(result.phase).toBe('shop');
-    expect(result.capsules).toBe(2);
+    expect(result.phase).toBe('floorClear');
+    expect(result.capsules).toBe(3);
+    expect(result.capsuleInventory.universal).toBe(3);
+    expect(result.money).toBe(0);
     expect(result.party.length).toBe(2);
   });
 
+  it('blocks capture before spending when the selected capsule does not match the pathogen tag', () => {
+    const battle = enterBattle(createInitialRunState());
+    battle.capsuleInventory.prion = 1;
+    battle.capsules = 5;
+
+    const result = resolveCapsuleAction(battle, 'prion', 0);
+
+    expect(result.phase).toBe('battle');
+    expect(result.lastLog).toContain('타입');
+    expect(result.capsuleInventory.prion).toBe(1);
+    expect(result.party).toHaveLength(1);
+  });
+
+  it('allows matching typed capsules to capture matching wild pathimon', () => {
+    const bacteria = wildEncounterRoster().find((monster) => monster.category === '세균');
+    if (!bacteria) throw new Error('bacteria missing');
+    const state = createInitialRunState();
+    state.wildRosterIds = [bacteria.id];
+    const battle = enterBattle(state);
+    battle.capsuleInventory.universal = 0;
+    battle.capsuleInventory.bacteria = 1;
+    battle.capsules = 1;
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.hp = 1;
+
+    const result = resolveCapsuleAction(battle, 'bacteria', 0);
+
+    expect(result.phase).toBe('floorClear');
+    expect(result.capsuleInventory.bacteria).toBe(0);
+    expect(result.capsules).toBe(0);
+    expect(result.party[1].templateId).toBe(bacteria.id);
+  });
+
+  it('can pass a wild pathimon encounter without fighting', () => {
+    const battle = enterBattle(createInitialRunState());
+    battle.party[0].effects.push({ kind: 'buff', stat: 'attack', pct: 25, turns: 3 });
+    battle.party[0].statusConditions = { fever: 1 };
+    battle.party[0].symptoms = ['기침'];
+    battle.party[0].usedSignatureMoveIds = ['capsule_formation'];
+
+    const result = resolvePassEncounter(battle);
+
+    expect(result.phase).toBe('floorClear');
+    expect(result.party).toHaveLength(1);
+    expect(result.party[0].effects).toEqual([]);
+    expect(result.party[0].statusConditions).toEqual({});
+    expect(result.party[0].symptoms).toEqual([]);
+    expect(result.party[0].usedSignatureMoveIds).toEqual([]);
+    expect(result.lastLog).toContain('지나갔다');
+  });
+
+  it('treats capsules as unlimited in learning mode', () => {
+    const battle = enterBattle(createInitialRunState('learning'));
+    battle.capsules = 0;
+    battle.capsuleInventory.universal = 0;
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.hp = 1;
+
+    const result = resolveCapsuleAction(battle, 0);
+
+    expect(result.phase).toBe('floorClear');
+    expect(result.capsules).toBe(0);
+    expect(result.capsuleInventory.universal).toBe(0);
+    expect(result.party.length).toBe(2);
+  });
+
+  it('uses pathogen-specific learning feedback instead of the generic type-matchup sentence', () => {
+    const initial = createInitialRunState('learning');
+    const firstWildPathimon = wildMonsterForRun(initial);
+    const battle = enterBattle(initial);
+
+    const result = resolvePlayerMove(battle, 'influenza_spread', 1);
+
+    expect(result.lastLog).toContain('학습 피드백');
+    expect(result.lastLog).toContain(firstWildPathimon.scientificName);
+    expect(result.lastLog).toContain(firstWildPathimon.category);
+    expect(result.lastLog).not.toContain('기술 타입과 방어특성/태그 상성이 피해량을 결정합니다.');
+  });
+
+  it('stacks move symptoms separately from battle effects', () => {
+    const state = createInitialRunState('challenge');
+    state.floor = 5;
+    const battle = enterBattle(state, 0);
+
+    const result = resolvePlayerMove(battle, 'cholera_toxin', 1);
+
+    expect(result.enemy?.symptoms).toContain('쌀뜨물 설사');
+    expect(result.enemy?.effects.length).toBeGreaterThan(0);
+  });
+
+  it('scales boss defense traits by each ten-floor bracket', () => {
+    const floor10 = createInitialRunState();
+    floor10.floor = 10;
+    const boss10 = enterBattle(floor10);
+
+    const floor20 = createInitialRunState();
+    floor20.floor = 20;
+    const boss20 = enterBattle(floor20);
+
+    expect(boss10.enemy?.abilities).toHaveLength(1);
+    expect(boss20.enemy?.abilities).toHaveLength(2);
+  });
+
+  it('uses the stored run boss roster for ten-floor boss encounters', () => {
+    const state = createInitialRunState('challenge', 'character', 'anthrax', () => 0, ['red', 'blue']);
+
+    state.floor = 10;
+    const floor10 = enterBattle(state);
+
+    state.floor = 20;
+    const floor20 = enterBattle(state);
+
+    expect(floor10.enemy?.templateId).toBe('red');
+    expect(floor20.enemy?.templateId).toBe('blue');
+  });
+
+  it('normal human enemies do not expose defense traits', () => {
+    const state = createInitialRunState();
+    state.floor = 5;
+
+    const battle = enterBattle(state, 0);
+
+    expect(battle.encounterKind).toBe('trainer');
+    expect(battle.enemy?.isTrainer).toBe(true);
+    expect(battle.enemy?.isBoss).toBe(false);
+    expect(battle.enemy?.abilities).toEqual([]);
+  });
+
   it('captures a fresh party member instead of the damaged battle clone', () => {
-    const battle = enterBattle(createInitialRunState(), 1);
+    const battle = enterBattle(createInitialRunState());
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.hp = 1;
     battle.enemy.effects.push({ kind: 'dot', power: 4, turns: 2 });
@@ -82,7 +459,7 @@ describe('run state loop', () => {
     ];
 
     try {
-      const battle = enterBattle(createInitialRunState(), 1);
+      const battle = enterBattle(createInitialRunState());
       const result = resolvePlayerMove(battle, 'enterotoxin', 1);
 
       expect(result.enemy?.effects).toContainEqual({ kind: 'confusion', turns: 1 });
@@ -92,18 +469,20 @@ describe('run state loop', () => {
   });
 
   it('lets a surviving enemy take a turn after the player acts', () => {
-    const battle = enterBattle(createInitialRunState(), 1);
+    const battle = enterBattle(createInitialRunState());
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.moveset = ['hiv_cd4'];
     const startingHp = battle.party[0].hp;
 
     const result = resolvePlayerMove(battle, 'coagulase', 1);
 
     expect(result.phase).toBe('battle');
     expect(result.party[0].hp).toBeLessThan(startingHp);
-    expect(result.lastLog).toContain('황색포도알균 used');
+    expect(result.lastLog).toContain('CD4');
   });
 
   it('ticks round-end effects after both sides act', () => {
-    const battle = enterBattle(createInitialRunState(), 1);
+    const battle = enterBattle(createInitialRunState());
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.effects.push({ kind: 'dot', power: 4, turns: 2 });
     const startingEnemyHp = battle.enemy.hp;
@@ -114,6 +493,136 @@ describe('run state loop', () => {
     expect(result.enemy?.effects).toContainEqual({ kind: 'dot', power: 4, turns: 1 });
   });
 
+  it('switches to a benched pathimon without a wild enemy attack', () => {
+    const firstBattle = enterBattle(createInitialRunState());
+    if (!firstBattle.enemy) throw new Error('enemy missing');
+    firstBattle.enemy.hp = 1;
+    const captured = resolveCapsuleAction(firstBattle, 0);
+    const secondBattle = advanceFromShop(captured);
+    const benchedHp = secondBattle.party[1].hp;
+
+    const result = resolveSwitchMonster(secondBattle, 1, 1);
+
+    expect(result.activeIndex).toBe(1);
+    expect(result.phase).toBe('battle');
+    expect(result.party[1].hp).toBe(benchedHp);
+    expect(result.lastLog).toContain('switched in');
+  });
+
+  it('switches to a benched pathimon and lets a human enemy act', () => {
+    const state = createInitialRunState('challenge');
+    state.floor = 5;
+    const battle = enterBattle(state, 0);
+    battle.party.push({ ...battle.party[0], templateId: 'hiv', name: '레트로잠' });
+    const benchedHp = battle.party[1].hp;
+
+    const result = resolveSwitchMonster(battle, 1, 1);
+
+    expect(result.encounterKind).toBe('trainer');
+    expect(result.activeIndex).toBe(1);
+    expect(result.party[1].hp).toBeLessThan(benchedHp);
+  });
+
+  it('asks which party member to release when capturing with a full party', () => {
+    const initial = createInitialRunState();
+    const firstWildPathimon = wildMonsterForRun(initial);
+    const battle = enterBattle(initial);
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.hp = 1;
+    while (battle.party.length < 6) {
+      battle.party.push({ ...battle.party[0], templateId: `reserve-${battle.party.length}`, name: `예비${battle.party.length}` });
+    }
+
+    const result = resolveCapsuleAction(battle, 0);
+
+    expect(result.phase).toBe('releaseCapture');
+    expect(result.party).toHaveLength(6);
+    expect(result.pendingCapture?.templateId).toBe(firstWildPathimon.id);
+    expect(result.lastLog).toContain('놓아줄');
+  });
+
+  it('replaces the selected party member with a pending capture', () => {
+    const initial = createInitialRunState();
+    const firstWildPathimon = wildMonsterForRun(initial);
+    const battle = enterBattle(initial);
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.hp = 1;
+    while (battle.party.length < 6) {
+      battle.party.push({ ...battle.party[0], templateId: `reserve-${battle.party.length}`, name: `예비${battle.party.length}` });
+    }
+    const fullPartyCapture = resolveCapsuleAction(battle, 0);
+
+    const result = resolveCaptureRelease(fullPartyCapture, 2);
+
+    expect(result.phase).toBe('floorClear');
+    expect(result.party).toHaveLength(6);
+    expect(result.party[2].templateId).toBe(firstWildPathimon.id);
+    expect(result.pendingCapture).toBeUndefined();
+  });
+
+  it('can give up a pending full-party capture', () => {
+    const battle = enterBattle(createInitialRunState());
+    if (!battle.enemy) throw new Error('enemy missing');
+    battle.enemy.hp = 1;
+    while (battle.party.length < 6) {
+      battle.party.push({ ...battle.party[0], templateId: `reserve-${battle.party.length}`, name: `예비${battle.party.length}` });
+    }
+    const fullPartyCapture = resolveCapsuleAction(battle, 0);
+
+    const result = cancelPendingCapture(fullPartyCapture);
+
+    expect(result.phase).toBe('floorClear');
+    expect(result.party).toHaveLength(6);
+    expect(result.pendingCapture).toBeUndefined();
+  });
+
+  it('asks for a replacement when the active pathimon faints and a reserve can battle', () => {
+    const firstBattle = enterBattle(createInitialRunState('challenge'));
+    if (!firstBattle.enemy) throw new Error('enemy missing');
+    firstBattle.enemy.hp = 1;
+    const captured = resolveCapsuleAction(firstBattle, 0);
+    const secondBattle = advanceFromShop(captured);
+    secondBattle.party[0].hp = 1;
+    if (secondBattle.enemy) {
+      secondBattle.enemy.hp = 999;
+      secondBattle.enemy.maxHp = 999;
+      secondBattle.enemy.moveset = ['hiv_cd4'];
+    }
+
+    const result = resolvePlayerMove(secondBattle, 'coagulase', 10);
+
+    expect(result.phase).toBe('forcedSwitch');
+    expect(result.activeIndex).toBe(0);
+    expect(result.lastLog).toContain('다음 패시몬');
+  });
+
+  it('sends out a replacement after a forced faint switch without giving the enemy a free turn', () => {
+    const firstBattle = enterBattle(createInitialRunState('challenge'));
+    if (!firstBattle.enemy) throw new Error('enemy missing');
+    firstBattle.enemy.hp = 1;
+    const captured = resolveCapsuleAction(firstBattle, 0);
+    const forced = advanceFromShop(captured);
+    forced.phase = 'forcedSwitch';
+    forced.party[0].hp = 0;
+    forced.party[0].fainted = true;
+    const reserveHp = forced.party[1].hp;
+
+    const result = resolveForcedSwitchMonster(forced, 1);
+
+    expect(result.phase).toBe('battle');
+    expect(result.activeIndex).toBe(1);
+    expect(result.party[1].hp).toBe(reserveHp);
+    expect(result.lastLog).toContain('나왔다');
+  });
+  it('keeps the active pathimon when switching to an invalid slot', () => {
+    const battle = enterBattle(createInitialRunState());
+
+    const result = resolveSwitchMonster(battle, 1, 1);
+
+    expect(result.activeIndex).toBe(0);
+    expect(result.lastLog).toContain('교체할 패시몬');
+  });
+
   it('does not spend capsules when capture is blocked against a boss', () => {
     const state = createInitialRunState();
     state.floor = TOTAL_FLOORS;
@@ -122,10 +631,268 @@ describe('run state loop', () => {
     const result = resolveCapsuleAction(battle, 0);
 
     expect(result.phase).toBe('battle');
-    expect(result.capsules).toBe(3);
+    expect(result.capsules).toBe(4);
     expect(result.party).toHaveLength(1);
   });
 
+  it('does not auto-heal when challenge mode advances from maintenance', () => {
+    const state = createInitialRunState('challenge');
+    state.phase = 'shop';
+    state.party[0].hp = 1;
+
+    const result = advanceFromShop(state);
+
+    expect(result.floor).toBe(2);
+    expect(result.phase).toBe('battle');
+    expect(result.party[0].hp).toBe(1);
+  });
+
+  it('builds a six-slot maintenance inventory and disables purchased direct items', () => {
+    const state = createInitialRunState('challenge');
+    state.floor = 5;
+    state.phase = 'shop';
+    state.money = 5;
+    state.shopInventory = undefined;
+
+    const first = purchaseShopItem(state, 'slot-potion-b');
+
+    expect(first.shopInventory).toHaveLength(6);
+    expect(first.shopInventory?.filter((item) => item.kind === 'capsule')).toHaveLength(1);
+    expect(first.shopInventory?.find((item) => item.id === 'slot-potion-b')?.purchased).toBe(true);
+    expect(first.money).toBe(2);
+  });
+
+  it('adds purchased maintenance capsules to the matching capsule inventory', () => {
+    const state = createInitialRunState('challenge');
+    state.floor = 5;
+    state.phase = 'shop';
+    state.money = 5;
+    state.shopInventory = undefined;
+    const inventory = purchaseShopItem(state, 'slot-capsule-a').shopInventory;
+    const capsule = inventory?.find((item) => item.id === 'slot-capsule-a');
+    if (!capsule?.capsuleId) throw new Error('capsule missing');
+
+    const result = purchaseShopItem(state, 'slot-capsule-a');
+
+    expect(result.capsuleInventory[capsule.capsuleId]).toBe(1);
+    expect(result.capsules).toBe(5);
+    expect(result.lastLog).toContain(capsule.name);
+  });
+
+  it('spends one money to refresh maintenance inventory slots', () => {
+    const state = createInitialRunState('challenge');
+    state.floor = 5;
+    state.phase = 'shop';
+    state.money = 2;
+    state.shopInventory = undefined;
+    const before = refreshMaintenanceInventory(state, 0);
+
+    const result = refreshMaintenanceInventory(before, 0.2);
+
+    expect(result.money).toBe(0);
+    expect(result.shopInventory).toHaveLength(6);
+    expect(result.shopInventory?.map((item) => item.name)).not.toEqual(before.shopInventory?.map((item) => item.name));
+    expect(result.shopInventory?.some((item) => item.purchased)).toBe(false);
+    expect(result.lastLog).toContain('새로고침');
+  });
+
+  it('asks for a party target before using a basic maintenance potion', () => {
+    const state = createInitialRunState('challenge');
+    state.floor = 5;
+    state.phase = 'shop';
+    state.money = 5;
+    state.party[0].hp = 1;
+
+    const result = purchaseShopItem(state, 'slot-potion-a');
+
+    expect(result.money).toBe(5);
+    expect(result.party[0].hp).toBe(1);
+    expect(result.shopInventory?.find((item) => item.id === 'slot-potion-a')?.purchased).toBe(false);
+    expect(result.lastLog).toContain('선택');
+  });
+
+  it('spends one money to heal the selected pathimon with a basic maintenance potion', () => {
+    const state = createInitialRunState('challenge');
+    state.floor = 5;
+    state.phase = 'shop';
+    state.money = 5;
+    state.party.push({ ...state.party[0], templateId: 'hiv', name: '레트로잠', hp: 1 });
+    state.party[0].hp = 1;
+
+    const result = purchaseShopItemForPartyMember(state, 'slot-potion-a', 0);
+
+    expect(result.money).toBe(4);
+    expect(result.party[0].hp).toBe(result.party[0].maxHp);
+    expect(result.party[1].hp).toBe(1);
+    expect(result.shopInventory?.find((item) => item.id === 'slot-potion-a')?.purchased).toBe(true);
+    expect(result.lastLog).toContain(state.party[0].name);
+  });
+
+  it('heals every owned pathimon when an advanced maintenance potion is purchased', () => {
+    const state = createInitialRunState('challenge');
+    state.floor = 5;
+    state.phase = 'shop';
+    state.money = 5;
+    state.party.push({ ...state.party[0], templateId: 'hiv', name: '레트로잠', hp: 1 });
+    state.party[0].hp = 1;
+
+    const result = purchaseShopItem(state, 'slot-potion-b');
+
+    expect(result.money).toBe(2);
+    expect(result.party.every((monster) => monster.hp === monster.maxHp)).toBe(true);
+    expect(result.lastLog).toContain('모든 패시몬');
+  });
+
+  it('asks for a party target before using rare candy', () => {
+    const state = createInitialRunState('challenge', 'character', ['anthrax', 'hiv']);
+    state.phase = 'shop';
+    state.money = 3;
+    state.activeIndex = 0;
+    state.shopInventory = undefined;
+
+    const result = purchaseShopItem(state, 'slot-rare-candy');
+
+    expect(result.money).toBe(3);
+    expect(result.party[0].signatureUnlocked).toBe(false);
+    expect(result.shopInventory?.find((item) => item.id === 'slot-rare-candy')?.purchased).toBe(false);
+    expect(result.lastLog).toContain('선택');
+  });
+
+  it('uses rare candy to unlock only the selected pathimon signature move', () => {
+    const state = createInitialRunState('challenge', 'character', ['anthrax', 'hiv']);
+    state.phase = 'shop';
+    state.money = 3;
+    state.activeIndex = 1;
+    state.shopInventory = undefined;
+
+    const result = purchaseShopItemForPartyMember(state, 'slot-rare-candy', 0);
+
+    expect(result.money).toBe(0);
+    expect(result.party[0].signatureUnlocked).toBe(true);
+    expect(result.party[1].signatureUnlocked).toBe(false);
+    expect(result.shopInventory?.find((item) => item.id === 'slot-rare-candy')?.purchased).toBe(true);
+    expect(result.lastLog).toContain('전용기');
+  });
+
+  it('keeps money unchanged when an evolution stone is used on a non-evolving pathimon', () => {
+    const state = createInitialRunState('challenge', 'character', 'anthrax');
+    state.phase = 'shop';
+    state.money = 3;
+
+    const result = purchaseShopItemForPartyMember(state, 'slot-evolution-stone', 0);
+
+    expect(result.money).toBe(3);
+    expect(result.party[0].templateId).toBe('anthrax');
+    expect(result.shopInventory?.find((item) => item.id === 'slot-evolution-stone')?.purchased).toBe(false);
+    expect(result.lastLog).toContain('진화할 수 없습니다');
+  });
+
+  it('uses an evolution stone to evolve a selected pathimon when an evolution is available', () => {
+    const larva: MonsterData = {
+      id: 'trichinella-larva',
+      name: 'Trichinella spiralis-유충',
+      scientificName: '선모충 (Trichinella spiralis)',
+      category: '연충',
+      glyph: 'TRL',
+      tags: { wall: 'nematode', stage: 'larva_adult' },
+      maxHp: 30,
+      attack: 5,
+      defense: 3,
+      speed: 4,
+      captureRate: 0.3,
+      ability: 'large_resistance',
+      learnset: ['ascaris_migration'],
+      prep: 'ascaris_migration',
+      evolvesTo: 'trichinella-adult',
+    };
+    const adult: MonsterData = {
+      ...larva,
+      id: 'trichinella-adult',
+      name: 'Trichinella spiralis-성충',
+      glyph: 'TRA',
+      maxHp: 60,
+      attack: 9,
+      learnset: ['ascaris_obstruction'],
+      prep: 'ascaris_obstruction',
+      evolvesTo: undefined,
+    };
+    const state = createInitialRunState('challenge');
+    state.phase = 'shop';
+    state.money = 3;
+    state.party[0] = {
+      ...state.party[0],
+      templateId: larva.id,
+      name: larva.name,
+      scientificName: larva.scientificName,
+      category: larva.category,
+      glyph: larva.glyph,
+      tags: { ...larva.tags },
+      maxHp: larva.maxHp,
+      hp: 12,
+      attack: larva.attack,
+      defense: larva.defense,
+      speed: larva.speed,
+      captureRate: larva.captureRate,
+      ability: larva.ability,
+      moveset: [...larva.learnset],
+      moveSlots: [larva.prep ?? null, null, null, null],
+      signatureUnlocked: false,
+    };
+
+    const result = purchaseShopItemForPartyMember(state, 'slot-evolution-stone', 0, [larva, adult]);
+
+    expect(result.money).toBe(0);
+    expect(result.party[0].templateId).toBe('trichinella-adult');
+    expect(result.party[0].name).toBe('Trichinella spiralis-성충');
+    expect(result.party[0].hp).toBe(12);
+    expect(result.party[0].moveSlots?.[0]).toBe('ascaris_obstruction');
+    expect(result.party[0].signatureUnlocked).toBe(false);
+    expect(result.lastLog).toContain('진화');
+  });
+
+  it('enables evolution stones for note-derived parasite stage forms', () => {
+    const state = createInitialRunState('challenge', 'character', 'ascaris');
+    state.phase = 'shop';
+    state.money = 3;
+
+    expect(canUseEvolutionStoneOnPartyMember(state, 0)).toBe(true);
+
+    const result = purchaseShopItemForPartyMember(state, 'slot-evolution-stone', 0);
+
+    expect(result.money).toBe(0);
+    expect(result.party[0].templateId).toBe('ascaris_larva');
+    expect(result.party[0].name).toContain('유충');
+    expect(result.party[0].attack).toBeGreaterThan(state.party[0].attack);
+    expect(result.lastLog).toContain('진화');
+  });
+
+  it('spends one money to fully heal a selected pathimon in maintenance', () => {
+    const state = createInitialRunState('challenge');
+    state.money = 2;
+    state.party[0].hp = 1;
+    state.party[0].effects.push({ kind: 'dot', power: 4, turns: 2 });
+    state.party[0].stunned = true;
+
+    const result = healPartyMember(state, 0);
+
+    expect(result.money).toBe(1);
+    expect(result.party[0].hp).toBe(result.party[0].maxHp);
+    expect(result.party[0].effects).toEqual([]);
+    expect(result.party[0].stunned).toBe(false);
+    expect(result.lastLog).toContain('회복');
+  });
+
+  it('keeps money and hp unchanged when maintenance healing is unaffordable', () => {
+    const state = createInitialRunState('challenge');
+    state.money = 0;
+    state.party[0].hp = 1;
+
+    const result = healPartyMember(state, 0);
+
+    expect(result.money).toBe(0);
+    expect(result.party[0].hp).toBe(1);
+    expect(result.lastLog).toContain('자금');
+  });
   it('advances from shop to the next battle floor', () => {
     const state = createInitialRunState();
     state.phase = 'shop';
@@ -136,8 +903,20 @@ describe('run state loop', () => {
     expect(result.phase).toBe('battle');
   });
 
+  it('keeps the current lead pathimon after maintenance advances to the next floor', () => {
+    const state = createInitialRunState('challenge', 'character', ['anthrax', 'cereus']);
+    state.phase = 'shop';
+    state.activeIndex = 1;
+
+    const result = advanceFromShop(state);
+
+    expect(result.floor).toBe(2);
+    expect(result.activeIndex).toBe(1);
+    expect(result.party[result.activeIndex].templateId).toBe('cereus');
+  });
+
   it('can expose move descriptions through move data', () => {
-    expect(MOVES.streptokinase.description).toContain('혈전');
-    expect(MOVES.streptokinase.learnText).toContain('확산');
+    expect(MOVES.influenza_spread.description).toContain('뉴라미니다제');
+    expect(MOVES.cholera_toxin.learnText).toContain('쌀뜨물');
   });
 });

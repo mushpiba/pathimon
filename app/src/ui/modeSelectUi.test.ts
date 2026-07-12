@@ -1,0 +1,32 @@
+import { describe, expect, it } from 'vitest';
+import {
+  modeSelectButtonOptions,
+  resolveModeSelectChoice,
+  shouldStartRun,
+} from './modeSelectUi';
+
+describe('mode select UI helpers', () => {
+  it('shows two run modes and two visual styles as four selectable buttons', () => {
+    expect(modeSelectButtonOptions().map((option) => option.label)).toEqual([
+      '학습모드',
+      '도전모드',
+      '캐릭터풍',
+      '실사풍',
+    ]);
+  });
+
+  it('does not start until both a run mode and a visual style are selected', () => {
+    const options = modeSelectButtonOptions();
+    const learning = options.find((option) => option.kind === 'mode' && option.value === 'learning');
+    const micro = options.find((option) => option.kind === 'visualStyle' && option.value === 'micro');
+    if (!learning || !micro) throw new Error('mode select options missing');
+
+    const modeOnly = resolveModeSelectChoice({}, learning);
+    expect(modeOnly).toEqual({ mode: 'learning' });
+    expect(shouldStartRun(modeOnly)).toBe(false);
+
+    const complete = resolveModeSelectChoice(modeOnly, micro);
+    expect(complete).toEqual({ mode: 'learning', visualStyle: 'micro' });
+    expect(shouldStartRun(complete)).toBe(true);
+  });
+});

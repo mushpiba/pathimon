@@ -1,9 +1,21 @@
 import Phaser from 'phaser';
-import { advanceFromShop } from '../state/runState';
-import type { RunState } from '../types/game';
+import { formatCapsuleInventory } from '../data/capsules';
+import { shopItemAssetPaths } from '../data/shop';
+import {
+  advanceFromShop,
+  canHealPartyMember,
+  canUseEvolutionStoneOnPartyMember,
+  canUseRareCandyOnPartyMember,
+  ensureMaintenanceInventory,
+  evolutionTargetForMonster,
+  purchaseShopItem,
+  purchaseShopItemForPartyMember,
+  refreshMaintenanceInventory,
+} from '../state/runState';
+import type { RunState, ShopItem } from '../types/game';
 import { APP_WIDTH, APP_HEIGHT, COLORS } from '../game/constants';
 import { destroySceneChildren } from '../ui/sceneCleanup';
-import { addLabel, drawPanel } from '../ui/draw';
+import { addBoxLabel, addLabel, drawPanel } from '../ui/draw';
 
 interface ShopSceneData {
   state?: RunState;
@@ -12,6 +24,7 @@ interface ShopSceneData {
 export class ShopScene extends Phaser.Scene {
   private state!: RunState;
   private note = '';
+  private selectedTargetItem?: ShopItem;
 
   constructor() {
     super('ShopScene');
@@ -21,8 +34,20 @@ export class ShopScene extends Phaser.Scene {
     if (!data.state) {
       throw new Error('ShopScene requires state');
     }
-    this.state = data.state;
+
+    this.state = {
+      ...data.state,
+      shopInventory: ensureMaintenanceInventory(data.state),
+    };
     this.note = data.state.lastLog;
+  }
+
+  preload(): void {
+    shopItemAssetPaths().forEach((path) => {
+      if (!this.textures.exists(path)) {
+        this.load.image(path, path);
+      }
+    });
   }
 
   create(): void {
@@ -34,34 +59,28 @@ export class ShopScene extends Phaser.Scene {
     destroySceneChildren(this);
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, COLORS.ink).setOrigin(0);
 
-    drawPanel(this, 72, 72, 880, 432);
-    addLabel(this, 104, 104, '정비 구역', 32);
-    addLabel(this, 104, 152, `보유 자금: ${this.state.money}`, 24);
-    addLabel(this, 104, 188, `캡슐: ${this.state.capsules}`, 22);
-    addLabel(this, 104, 226, this.note || '다음 층을 준비하세요.', 18).setAlpha(0.9);
+    drawPanel(this, 48, 46, 928, 476);
+    addLabel(this, 82, 76, '정비 구역', 32);
+    this.drawFloorBadge();
+    addLabel(this, 82, 118, `보유 자금: ${this.state.money}`, 21);
+    addBoxLabel(this, 82, 146, `캡슐: ${formatCapsuleInventory(this.state.capsuleInventory)}`, {
+      width: 710,
+      height: 18,
+      size: 14,
+      minSize: 10,
+      maxLines: 1,
+    }).setAlpha(0.9);
+    addBoxLabel(this, 82, 168, this.note || '사람 전투 이후 한 번만 구매할 수 있습니다.', {
+      width: 720,
+      height: 42,
+      size: 16,
+      minSize: 11,
+      maxLines: 2,
+    }).setAlpha(0.9);
 
-    this.createButton(104, 294, 210, 58, '패시몬 각성', () => {
-      this.note = '각성은 아직 준비 중입니다.';
-      this.render();
-    });
-    this.createButton(336, 294, 210, 58, '패시몬 진화', () => {
-      this.note = '진화는 아직 준비 중입니다.';
-      this.render();
-    });
-    this.createButton(568, 294, 210, 58, '캡슐 구입', () => {
-      if (this.state.money <= 0) {
-        this.note = '자금이 부족합니다.';
-      } else {
-        this.state = {
-          ...this.state,
-          money: Math.max(0, this.state.money - 1),
-          capsules: this.state.capsules + 1,
-        };
-        this.note = '캡슐을 보충했습니다.';
-      }
-      this.render();
-    });
-    this.createButton(336, 382, 210, 64, '다음 층', () => {
+    this.state.shopInventory?.forEach((item, index) => this.drawShopItem(item, index));
+
+    this.createButton(802, 456, 138, 44, '다음 층', () => {
       const nextState = advanceFromShop(this.state);
       if (nextState.phase === 'bossIntro') {
         this.scene.start('BossIntroScene', { state: nextState });
@@ -69,15 +88,165 @@ export class ShopScene extends Phaser.Scene {
       }
       this.scene.start('BattleScene', { state: nextState });
     });
+
+    this.createButton(802, 506, 138, 34, '새로고침 ₩1', () => {
+      this.state = refreshMaintenanceInventory(this.state);
+      this.note = this.state.lastLog;
+      this.selectedTargetItem = undefined;
+      this.render();
+    });
+
+    if (this.selectedTargetItem) {
+      this.drawPartySelection(this.selectedTargetItem);
+    }
   }
 
-  private createButton(x: number, y: number, width: number, height: number, label: string, onClick: () => void): void {
-    const rect = this.add.rectangle(x, y, width, height, COLORS.panelDark).setOrigin(0);
-    rect.setStrokeStyle(2, COLORS.line);
-    rect.setInteractive({ useHandCursor: true });
-    rect.on('pointerover', () => rect.setFillStyle(COLORS.line));
-    rect.on('pointerout', () => rect.setFillStyle(COLORS.panelDark));
-    rect.on('pointerdown', onClick);
-    addLabel(this, x + width / 2, y + height / 2, label, 22).setOrigin(0.5);
+  private drawFloorBadge(): void {
+    const x = APP_WIDTH - 174;
+    const y = 72;
+    this.add.rectangle(x, y, 118, 34, 0x20202c, 0.9)
+      .setOrigin(0)
+      .setStrokeStyle(2, 0x72d6ff, 0.86);
+    addBoxLabel(this, x + 59, y + 17, `${this.state.floor}층`, {
+      width: 98,
+      height: 22,
+      size: 17,
+      minSize: 12,
+      maxLines: 1,
+      align: 'center',
+      origin: [0.5, 0.5],
+    });
+  }
+
+  private drawShopItem(item: ShopItem, index: number): void {
+    const column = index % 3;
+    const row = Math.floor(index / 3);
+    const x = 82 + column * 300;
+    const y = 198 + row * 126;
+    const width = 270;
+    const height = 104;
+
+    drawPanel(this, x, y, width, height).setAlpha(item.purchased ? 0.55 : 0.98);
+    this.add.image(x + 44, y + 48, item.imagePath).setOrigin(0.5).setDisplaySize(42, 42).setAlpha(item.purchased ? 0.38 : 1);
+    addBoxLabel(this, x + 82, y + 12, item.name, { width: 168, height: 22, size: 17, minSize: 12, maxLines: 1 })
+      .setAlpha(item.purchased ? 0.48 : 1);
+    addBoxLabel(this, x + 82, y + 38, item.description, { width: 168, height: 28, size: 11, minSize: 9, maxLines: 2 })
+      .setAlpha(item.purchased ? 0.4 : 0.82);
+    if (item.kind === 'capsule' && item.capsuleId) {
+      addLabel(this, x + 24, y + 74, `보유 ${this.state.capsuleInventory[item.capsuleId] ?? 0}`, 11).setAlpha(item.purchased ? 0.4 : 0.78);
+    }
+
+    const label = item.purchased ? '구매 완료' : item.price > 0 ? `구매 ₩${item.price}` : '확인';
+    this.createButton(x + 154, y + 68, 96, 26, label, () => {
+      if (item.kind === 'potion' || item.kind === 'rareCandy' || item.kind === 'evolutionStone') {
+        this.startPartySelection(item);
+        return;
+      }
+      this.state = purchaseShopItem(this.state, item.id);
+      this.note = this.state.lastLog;
+      this.render();
+    }, item.purchased);
+
+    if (item.purchased) {
+      this.add.rectangle(x, y, width, height, 0x000000, 0.35).setOrigin(0);
+    }
+  }
+
+  private startPartySelection(item: ShopItem): void {
+    if (item.price > this.state.money) {
+      this.note = '자금이 부족합니다.';
+      this.render();
+      return;
+    }
+
+    this.selectedTargetItem = item;
+    this.note = `${item.name}을 사용할 패시몬을 선택하세요.`;
+    this.render();
+  }
+
+  private drawPartySelection(item: ShopItem): void {
+    this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, 0x000000, 0.58).setOrigin(0).setInteractive();
+    drawPanel(this, 210, 94, 604, 430);
+    addLabel(this, 246, 126, item.name, 25);
+    addLabel(this, 246, 160, '패시몬 선택', 18).setAlpha(0.84);
+
+    this.state.party.forEach((monster, index) => {
+      const y = 200 + index * 46;
+      const enabled = this.canUseTargetedItem(item, index);
+      const action = this.targetActionLabel(item, index);
+      const hpText = `HP ${monster.hp}/${monster.maxHp}`;
+
+      drawPanel(this, 246, y, 520, 36).setAlpha(enabled ? 0.95 : 0.45);
+      addBoxLabel(this, 266, y + 8, monster.name, { width: 180, height: 18, size: 14, minSize: 10, maxLines: 1 })
+        .setAlpha(enabled ? 1 : 0.48);
+      addLabel(this, 452, y + 9, hpText, 13).setAlpha(enabled ? 0.9 : 0.45);
+      this.createButton(616, y + 5, 128, 26, action, () => {
+        this.state = purchaseShopItemForPartyMember(this.state, item.id, index);
+        this.note = this.state.lastLog;
+        this.selectedTargetItem = undefined;
+        this.render();
+      }, !enabled);
+    });
+
+    this.createButton(614, 474, 130, 32, '취소', () => {
+      this.selectedTargetItem = undefined;
+      this.note = '선택을 취소했습니다.';
+      this.render();
+    });
+  }
+
+  private canUseTargetedItem(item: ShopItem, partyIndex: number): boolean {
+    const monster = this.state.party[partyIndex];
+    if (!monster) return false;
+    if (item.kind === 'potion') return canHealPartyMember(monster);
+    if (item.kind === 'rareCandy') return canUseRareCandyOnPartyMember(this.state, partyIndex);
+    if (item.kind === 'evolutionStone') return canUseEvolutionStoneOnPartyMember(this.state, partyIndex);
+    return false;
+  }
+
+  private targetActionLabel(item: ShopItem, partyIndex: number): string {
+    const monster = this.state.party[partyIndex];
+    if (!monster) return '선택 불가';
+    if (item.kind === 'potion') return canHealPartyMember(monster) ? '회복' : '회복 불필요';
+    if (item.kind === 'rareCandy') return monster.signatureUnlocked ? '이미 해금' : '전용기 해금';
+    if (item.kind === 'evolutionStone') {
+      const evolutionTarget = evolutionTargetForMonster(monster);
+      if (evolutionTarget) return '진화';
+      return '진화 불가';
+    }
+    return '선택 불가';
+  }
+
+  private createButton(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    label: string,
+    onClick: () => void,
+    disabled = false,
+  ): void {
+    const rect = this.add.rectangle(x, y, width, height, disabled ? COLORS.ink : COLORS.panelDark).setOrigin(0);
+    rect.setStrokeStyle(2, disabled ? COLORS.panel : COLORS.line);
+
+    if (!disabled) {
+      rect.setInteractive({ useHandCursor: true });
+      rect.on('pointerover', () => rect.setFillStyle(COLORS.line));
+      rect.on('pointerout', () => rect.setFillStyle(COLORS.panelDark));
+      rect.on('pointerdown', onClick);
+    } else {
+      rect.setAlpha(0.5);
+    }
+
+    addBoxLabel(this, x + width / 2, y + height / 2, label, {
+      width: width - 14,
+      height: height - 6,
+      size: 14,
+      minSize: 9,
+      maxLines: 2,
+      align: 'center',
+      origin: [0.5, 0.5],
+    })
+      .setAlpha(disabled ? 0.55 : 1);
   }
 }

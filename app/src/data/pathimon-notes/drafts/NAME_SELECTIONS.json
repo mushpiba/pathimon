@@ -1,0 +1,1016 @@
+﻿{
+    "choiceLegend":  {
+                         "1":  "a",
+                         "2":  "b",
+                         "3":  "c",
+                         "4":  "d",
+                         "5":  "e",
+                         "6":  "f",
+                         "7":  "g"
+                     },
+    "selections":  [
+                       {
+                           "number":  1,
+                           "file":  "../Bacillus anthracis.md",
+                           "scientific":  "탄저균(Bacillus anthracis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "탄저록스",
+                           "candidates":  {
+                                              "a":  "탄저록스",
+                                              "b":  "흑딱스",
+                                              "c":  "협막탄",
+                                              "d":  "아포록스",
+                                              "e":  "탄저스포",
+                                              "f":  "까망딱딱",
+                                              "g":  "탄탄저"
+                                          }
+                       },
+                       {
+                           "number":  2,
+                           "file":  "../Bacillus cereus.md",
+                           "scientific":  "세레우스균(Bacillus cereus)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "세레우톡스",
+                           "candidates":  {
+                                              "a":  "세레우톡스",
+                                              "b":  "볶음톡스",
+                                              "c":  "쌀알세루",
+                                              "d":  "구토세루",
+                                              "e":  "세레포자",
+                                              "f":  "밥알톡톡",
+                                              "g":  "세룩세룩"
+                                          }
+                       },
+                       {
+                           "number":  3,
+                           "file":  "bacteria/Listeria monocytogenes.md",
+                           "scientific":  "리스테리아균(Listeria monocytogenes)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "리스냉장",
+                           "candidates":  {
+                                              "a":  "리스냉장",
+                                              "b":  "태반리스",
+                                              "c":  "세포리스",
+                                              "d":  "냉장테리",
+                                              "e":  "리스잠입",
+                                              "f":  "냉장고스트",
+                                              "g":  "리스테리야"
+                                          }
+                       },
+                       {
+                           "number":  4,
+                           "file":  "bacteria/Corynebacterium diphtheriae.md",
+                           "scientific":  "디프테리아균(Corynebacterium diphtheriae)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "디프막스",
+                           "candidates":  {
+                                              "a":  "디프막스",
+                                              "b":  "목막테라",
+                                              "c":  "회색막스",
+                                              "d":  "코리독스",
+                                              "e":  "독소디프",
+                                              "f":  "목도리독",
+                                              "g":  "디프디프"
+                                          }
+                       },
+                       {
+                           "number":  5,
+                           "file":  "bacteria/Clostridioides difficile.md",
+                           "scientific":  "클로스트리디오이데스 디피실레(Clostridioides difficile)",
+                           "choiceNumber":  7,
+                           "choiceLetter":  "g",
+                           "selectedName":  "디피실룩",
+                           "candidates":  {
+                                              "a":  "디피실독",
+                                              "b":  "위막디프",
+                                              "c":  "항생디프",
+                                              "d":  "막설디프",
+                                              "e":  "디프스포",
+                                              "f":  "배탈막막",
+                                              "g":  "디피실룩"
+                                          }
+                       },
+                       {
+                           "number":  6,
+                           "file":  "bacteria/Clostridium tetani.md",
+                           "scientific":  "파상풍균(Clostridium tetani)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "파상톡스",
+                           "candidates":  {
+                                              "a":  "테탄경직",
+                                              "b":  "파상톡스",
+                                              "c":  "신경테탄",
+                                              "d":  "경련테타",
+                                              "e":  "녹슨테탄",
+                                              "f":  "삐걱테탄",
+                                              "g":  "딱굳테타"
+                                          }
+                       },
+                       {
+                           "number":  7,
+                           "file":  "bacteria/Clostridium botulinum.md",
+                           "scientific":  "보툴리눔균(Clostridium botulinum)",
+                           "choiceNumber":  5,
+                           "choiceLetter":  "e",
+                           "selectedName":  "보툴독스",
+                           "candidates":  {
+                                              "a":  "보툴마비",
+                                              "b":  "보틀톡신",
+                                              "c":  "신경보툴",
+                                              "d":  "마비리눔",
+                                              "e":  "보툴독스",
+                                              "f":  "축처진보틀",
+                                              "g":  "보툴뿌웅"
+                                          }
+                       },
+                       {
+                           "number":  8,
+                           "file":  "bacteria/Staphylococcus aureus.md",
+                           "scientific":  "황색포도알균(Staphylococcus aureus)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "황금포도",
+                           "candidates":  {
+                                              "a":  "황금포도",
+                                              "b":  "아우레톡스",
+                                              "c":  "포도농양",
+                                              "d":  "스타포론",
+                                              "e":  "황포알",
+                                              "f":  "포도알짱",
+                                              "g":  "황금몽글"
+                                          }
+                       },
+                       {
+                           "number":  9,
+                           "file":  "bacteria/Streptococcus pyogenes.md",
+                           "scientific":  "화농성연쇄상구균(Streptococcus pyogenes)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "화농체인",
+                           "candidates":  {
+                                              "a":  "화농체인",
+                                              "b":  "파이오체인",
+                                              "c":  "목칼연쇄",
+                                              "d":  "독소연쇄",
+                                              "e":  "스트렙파이",
+                                              "f":  "사슬펑펑",
+                                              "g":  "체인뿅"
+                                          }
+                       },
+                       {
+                           "number":  10,
+                           "file":  "bacteria/Streptococcus pneumoniae.md",
+                           "scientific":  "폐렴구균(Streptococcus pneumoniae)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "폐렴쌍알",
+                           "candidates":  {
+                                              "a":  "폐렴쌍알",
+                                              "b":  "뉴모쉴드",
+                                              "c":  "란셋코코",
+                                              "d":  "협막뉴모",
+                                              "e":  "폐쉴드",
+                                              "f":  "콧물란셋",
+                                              "g":  "뉴모뉴모"
+                                          }
+                       },
+                       {
+                           "number":  11,
+                           "file":  "bacteria/Escherichia coli.md",
+                           "scientific":  "대장균(Escherichia coli)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "대장콜리",
+                           "candidates":  {
+                                              "a":  "콜리몽",
+                                              "b":  "대장콜리",
+                                              "c":  "이콜리온",
+                                              "d":  "장콜리",
+                                              "e":  "콜리베이",
+                                              "f":  "장난콜리",
+                                              "g":  "꼬마콜리"
+                                          }
+                       },
+                       {
+                           "number":  12,
+                           "file":  "bacteria/ETEC.md",
+                           "scientific":  "장독소원성 대장균(ETEC, Enterotoxigenic E. coli)",
+                           "choiceNumber":  5,
+                           "choiceLetter":  "e",
+                           "selectedName":  "장독콜리",
+                           "candidates":  {
+                                              "a":  "독소콜리",
+                                              "b":  "여행콜리",
+                                              "c":  "물콜리",
+                                              "d":  "이텍독소",
+                                              "e":  "장독콜리",
+                                              "f":  "물줄줄콜리",
+                                              "g":  "여행배탈"
+                                          }
+                       },
+                       {
+                           "number":  13,
+                           "file":  "bacteria/EPEC.md",
+                           "scientific":  "장병원성 대장균(EPEC, Enteropathogenic E. coli)",
+                           "choiceNumber":  4,
+                           "choiceLetter":  "d",
+                           "selectedName":  "장붙콜리",
+                           "candidates":  {
+                                              "a":  "받침콜리",
+                                              "b":  "상피삭제",
+                                              "c":  "이펙받침",
+                                              "d":  "장붙콜리",
+                                              "e":  "페디콜리",
+                                              "f":  "발판콜리",
+                                              "g":  "붙어콜리"
+                                          }
+                       },
+                       {
+                           "number":  14,
+                           "file":  "bacteria/EAEC.md",
+                           "scientific":  "장응집성 대장균(EAEC, Enteroaggregative E. coli)",
+                           "choiceNumber":  4,
+                           "choiceLetter":  "d",
+                           "selectedName":  "장벽돌",
+                           "candidates":  {
+                                              "a":  "응집콜리",
+                                              "b":  "벽돌콜리",
+                                              "c":  "이에이콜",
+                                              "d":  "장벽돌",
+                                              "e":  "집합콜리",
+                                              "f":  "다닥콜리",
+                                              "g":  "콜리떼"
+                                          }
+                       },
+                       {
+                           "number":  15,
+                           "file":  "bacteria/EHEC_STEC E. coli O157_H7.md",
+                           "scientific":  "장출혈성/시가독소 생성 대장균(EHEC/STEC, E. coli O157:H7)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "시가콜리",
+                           "candidates":  {
+                                              "a":  "시가콜리",
+                                              "b":  "혈변콜리",
+                                              "c":  "오일오칠",
+                                              "d":  "출혈콜리",
+                                              "e":  "햄버콜리",
+                                              "f":  "피철철콜리",
+                                              "g":  "오칠톡스"
+                                          }
+                       },
+                       {
+                           "number":  16,
+                           "file":  "bacteria/EIEC.md",
+                           "scientific":  "장침습성 대장균(EIEC, Enteroinvasive E. coli)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "장침콜리",
+                           "candidates":  {
+                                              "a":  "침투콜리",
+                                              "b":  "장침콜리",
+                                              "c":  "이이에침투",
+                                              "d":  "점막이엑",
+                                              "e":  "침입콜리",
+                                              "f":  "콜리돌격",
+                                              "g":  "파고콜리"
+                                          }
+                       },
+                       {
+                           "number":  17,
+                           "file":  "bacteria/UPEC.md",
+                           "scientific":  "요로병원성 대장균(UPEC, Uropathogenic E. coli)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "요로콜리",
+                           "candidates":  {
+                                              "a":  "요로콜리",
+                                              "b":  "방광콜리",
+                                              "c":  "유피콜리",
+                                              "d":  "방광갈고",
+                                              "e":  "요콜리",
+                                              "f":  "쉬콜리",
+                                              "g":  "방광똑똑"
+                                          }
+                       },
+                       {
+                           "number":  18,
+                           "file":  "bacteria/Salmonella Typhi.md",
+                           "scientific":  "장티푸스균(Salmonella Typhi)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "장티살모",
+                           "candidates":  {
+                                              "a":  "티포열",
+                                              "b":  "장티살모",
+                                              "c":  "로즈티포",
+                                              "d":  "장티포",
+                                              "e":  "티피열",
+                                              "f":  "열꽃살모",
+                                              "g":  "티포티포"
+                                          }
+                       },
+                       {
+                           "number":  19,
+                           "file":  "bacteria/Salmonella Paratyphi.md",
+                           "scientific":  "파라티푸스균(Salmonella Paratyphi)",
+                           "choiceNumber":  7,
+                           "choiceLetter":  "g",
+                           "selectedName":  "파라파라",
+                           "candidates":  {
+                                              "a":  "파라티포",
+                                              "b":  "준티살모",
+                                              "c":  "파라열모",
+                                              "d":  "티포파라",
+                                              "e":  "파라티열",
+                                              "f":  "옆집티포",
+                                              "g":  "파라파라"
+                                          }
+                       },
+                       {
+                           "number":  20,
+                           "file":  "bacteria/Salmonella Enteritidis.md",
+                           "scientific":  "장염살모넬라균(Salmonella Enteritidis)",
+                           "choiceNumber":  3,
+                           "choiceLetter":  "c",
+                           "selectedName":  "에그넬라",
+                           "candidates":  {
+                                              "a":  "달걀살모",
+                                              "b":  "장염살모",
+                                              "c":  "에그넬라",
+                                              "d":  "엔테리달걀",
+                                              "e":  "살모에그",
+                                              "f":  "계란톡톡",
+                                              "g":  "에그살모"
+                                          }
+                       },
+                       {
+                           "number":  21,
+                           "file":  "bacteria/Salmonella Typhimurium.md",
+                           "scientific":  "쥐티푸스균(Salmonella Typhimurium)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "쥐살모",
+                           "candidates":  {
+                                              "a":  "티피뮤리",
+                                              "b":  "쥐살모",
+                                              "c":  "뮤리살모",
+                                              "d":  "뮤리넬라",
+                                              "e":  "쥐티포",
+                                              "f":  "치즈살모",
+                                              "g":  "찍찍살모"
+                                          }
+                       },
+                       {
+                           "number":  22,
+                           "file":  "bacteria/Shigella spp.md",
+                           "scientific":  "이질균속(Shigella spp.)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "시겔러시",
+                           "candidates":  {
+                                              "a":  "시겔러시",
+                                              "b":  "이질스핀",
+                                              "c":  "장침시겔",
+                                              "d":  "이질돌격",
+                                              "e":  "시겔침",
+                                              "f":  "돌진시겔",
+                                              "g":  "시겔시끌"
+                                          }
+                       },
+                       {
+                           "number":  23,
+                           "file":  "bacteria/Shigella flexneri.md",
+                           "scientific":  "플렉스너이질균(Shigella flexneri)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "플렉시겔",
+                           "candidates":  {
+                                              "a":  "플렉시겔",
+                                              "b":  "굴절이질",
+                                              "c":  "장침플렉",
+                                              "d":  "플렉스이질",
+                                              "e":  "플렉스침투",
+                                              "f":  "플렉스겔",
+                                              "g":  "휘릭시겔"
+                                          }
+                       },
+                       {
+                           "number":  24,
+                           "file":  "bacteria/Shigella sonnei.md",
+                           "scientific":  "손네이질균(Shigella sonnei)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "손네이질",
+                           "candidates":  {
+                                              "a":  "손네이질",
+                                              "b":  "소니겔라",
+                                              "c":  "장손네",
+                                              "d":  "손네겔",
+                                              "e":  "소네이질",
+                                              "f":  "손네손네",
+                                              "g":  "소니시겔"
+                                          }
+                       },
+                       {
+                           "number":  25,
+                           "file":  "bacteria/Shigella dysenteriae.md",
+                           "scientific":  "시가이질균(Shigella dysenteriae)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "시가이질",
+                           "candidates":  {
+                                              "a":  "시가이질",
+                                              "b":  "혈성이질",
+                                              "c":  "독시겔라",
+                                              "d":  "시가디센",
+                                              "e":  "독성이질",
+                                              "f":  "피식시겔",
+                                              "g":  "시가시가"
+                                          }
+                       },
+                       {
+                           "number":  26,
+                           "file":  "bacteria/Yersinia pestis.md",
+                           "scientific":  "페스트균(Yersinia pestis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "페스틱",
+                           "candidates":  {
+                                              "a":  "페스틱",
+                                              "b":  "흑사벼룩",
+                                              "c":  "림프페스트",
+                                              "d":  "페스트벼룩",
+                                              "e":  "흑림프",
+                                              "f":  "까만페스",
+                                              "g":  "벼룩펑"
+                                          }
+                       },
+                       {
+                           "number":  27,
+                           "file":  "bacteria/Klebsiella pneumoniae.md",
+                           "scientific":  "폐렴막대균(Klebsiella pneumoniae)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "폐렴클렙",
+                           "candidates":  {
+                                              "a":  "클렙젤리",
+                                              "b":  "폐렴클렙",
+                                              "c":  "협막젤리",
+                                              "d":  "클렙쉴드",
+                                              "e":  "폐젤리",
+                                              "f":  "끈적클렙",
+                                              "g":  "젤리막대"
+                                          }
+                       },
+                       {
+                           "number":  28,
+                           "file":  "bacteria/Hypervirulent Klebsiella pneumoniae.md",
+                           "scientific":  "고병원성 폐렴막대균(Hypervirulent Klebsiella pneumoniae, hvKP)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "하이퍼클렙",
+                           "candidates":  {
+                                              "a":  "하이퍼클렙",
+                                              "b":  "끈끈클렙",
+                                              "c":  "간농클렙",
+                                              "d":  "하클렙젤",
+                                              "e":  "과점클렙",
+                                              "f":  "과끈젤리",
+                                              "g":  "하이퍼끈"
+                                          }
+                       },
+                       {
+                           "number":  29,
+                           "file":  "bacteria/CRE.md",
+                           "scientific":  "카바페넴내성 장내세균과(CRE, Carbapenem-resistant Enterobacteriaceae)",
+                           "choiceNumber":  7,
+                           "choiceLetter":  "g",
+                           "selectedName":  "철벽크레",
+                           "candidates":  {
+                                              "a":  "카바쉴드",
+                                              "b":  "내성크레",
+                                              "c":  "크레블록",
+                                              "d":  "카바내성",
+                                              "e":  "크레철갑",
+                                              "f":  "약안먹크레",
+                                              "g":  "철벽크레"
+                                          }
+                       },
+                       {
+                           "number":  30,
+                           "file":  "bacteria/Mycobacterium tuberculosis.md",
+                           "scientific":  "결핵균(Mycobacterium tuberculosis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "결핵잠",
+                           "candidates":  {
+                                              "a":  "결핵잠",
+                                              "b":  "폐그라눔",
+                                              "c":  "튜버록",
+                                              "d":  "결핵그라",
+                                              "e":  "튜버잠",
+                                              "f":  "콜록잠복",
+                                              "g":  "폐동굴이"
+                                          }
+                       },
+                       {
+                           "number":  31,
+                           "file":  "virus/HIV.md",
+                           "scientific":  "인간면역결핍바이러스(HIV, Human immunodeficiency virus)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "레트로잠",
+                           "candidates":  {
+                                              "a":  "레트로잠",
+                                              "b":  "씨디포식",
+                                              "c":  "면역도둑",
+                                              "d":  "에이치잠",
+                                              "e":  "씨디도둑",
+                                              "f":  "면역슬쩍",
+                                              "g":  "씨디뺏쥐"
+                                          }
+                       },
+                       {
+                           "number":  32,
+                           "file":  "nematode/Ascaris lumbricoides.md",
+                           "scientific":  "회충(Ascaris lumbricoides)",
+                           "choiceNumber":  6,
+                           "choiceLetter":  "f",
+                           "selectedName":  "빙글회충",
+                           "candidates":  {
+                                              "a":  "회충루프",
+                                              "b":  "장폐회충",
+                                              "c":  "폐행루프",
+                                              "d":  "회충나선",
+                                              "e":  "장폐루프",
+                                              "f":  "빙글회충",
+                                              "g":  "루프룽"
+                                          }
+                       },
+                       {
+                           "number":  33,
+                           "file":  "nematode/Anisakis simplex.md",
+                           "scientific":  "고래회충(Anisakis simplex)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "아니사키",
+                           "candidates":  {
+                                              "a":  "아니사키",
+                                              "b":  "회충초밥",
+                                              "c":  "위벽송곳",
+                                              "d":  "아니위벽",
+                                              "e":  "고래송곳",
+                                              "f":  "초밥콕",
+                                              "g":  "아니쏙"
+                                          }
+                       },
+                       {
+                           "number":  34,
+                           "file":  "nematode/Toxocara canis.md",
+                           "scientific":  "개회충(Toxocara canis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "개톡소라",
+                           "candidates":  {
+                                              "a":  "개톡소라",
+                                              "b":  "유충카니스",
+                                              "c":  "눈개회",
+                                              "d":  "카니스유충",
+                                              "e":  "개회눈",
+                                              "f":  "멍톡소",
+                                              "g":  "멍눈회"
+                                          }
+                       },
+                       {
+                           "number":  35,
+                           "file":  "nematode/Trichuris trichiura.md",
+                           "scientific":  "편충(Trichuris trichiura)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "편충채찍",
+                           "candidates":  {
+                                              "a":  "편충채찍",
+                                              "b":  "트리쿠리",
+                                              "c":  "직장편충",
+                                              "d":  "트리치채찍",
+                                              "e":  "편충꼬리",
+                                              "f":  "채찍편이",
+                                              "g":  "휘릭편충"
+                                          }
+                       },
+                       {
+                           "number":  36,
+                           "file":  "nematode/Capillaria hepatica.md",
+                           "scientific":  "간모세선충(Capillaria hepatica)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "간모세라",
+                           "candidates":  {
+                                              "a":  "간모세라",
+                                              "b":  "헤파카필",
+                                              "c":  "간실선충",
+                                              "d":  "간카필",
+                                              "e":  "모세간충",
+                                              "f":  "간간카필",
+                                              "g":  "모세꼬물"
+                                          }
+                       },
+                       {
+                           "number":  37,
+                           "file":  "nematode/Capillaria philippinensis.md",
+                           "scientific":  "장모세선충(Capillaria philippinensis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "장모세라",
+                           "candidates":  {
+                                              "a":  "장모세라",
+                                              "b":  "필리핀선",
+                                              "c":  "탈수카필",
+                                              "d":  "필리장충",
+                                              "e":  "장카필",
+                                              "f":  "물줄카필",
+                                              "g":  "장모쫄"
+                                          }
+                       },
+                       {
+                           "number":  38,
+                           "file":  "nematode/Trichinella spiralis.md",
+                           "scientific":  "선모충(Trichinella spiralis)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "근육스피라",
+                           "candidates":  {
+                                              "a":  "선모나선",
+                                              "b":  "근육스피라",
+                                              "c":  "트리키근",
+                                              "d":  "트리근육",
+                                              "e":  "선모스핀",
+                                              "f":  "근육빙글",
+                                              "g":  "트리쫀득"
+                                          }
+                       },
+                       {
+                           "number":  39,
+                           "file":  "nematode/Strongyloides stercoralis.md",
+                           "scientific":  "분선충(Strongyloides stercoralis)",
+                           "choiceNumber":  3,
+                           "choiceLetter":  "c",
+                           "selectedName":  "과감염충",
+                           "candidates":  {
+                                              "a":  "분선루프",
+                                              "b":  "자가스롱",
+                                              "c":  "과감염충",
+                                              "d":  "스롱자가",
+                                              "e":  "분선과감",
+                                              "f":  "혼자번식",
+                                              "g":  "스롱스롱"
+                                          }
+                       },
+                       {
+                           "number":  40,
+                           "file":  "nematode/Ancylostoma duodenale.md",
+                           "scientific":  "두비니구충(Ancylostoma duodenale)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "갈고리구충",
+                           "candidates":  {
+                                              "a":  "갈고리구충",
+                                              "b":  "흡혈두비",
+                                              "c":  "훅웜갈고",
+                                              "d":  "두비훅",
+                                              "e":  "갈고흡혈",
+                                              "f":  "피쪽훅",
+                                              "g":  "갈고리꾹"
+                                          }
+                       },
+                       {
+                           "number":  41,
+                           "file":  "nematode/Necator americanus.md",
+                           "scientific":  "아메리카구충(Necator americanus)",
+                           "choiceNumber":  3,
+                           "choiceLetter":  "c",
+                           "selectedName":  "아메훅",
+                           "candidates":  {
+                                              "a":  "네카토흡혈",
+                                              "b":  "절단구충",
+                                              "c":  "아메훅",
+                                              "d":  "네카절단",
+                                              "e":  "아메리흡혈",
+                                              "f":  "피빨네카",
+                                              "g":  "절단훅훅"
+                                          }
+                       },
+                       {
+                           "number":  42,
+                           "file":  "nematode/Enterobius vermicularis.md",
+                           "scientific":  "요충(Enterobius vermicularis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "요충나이트",
+                           "candidates":  {
+                                              "a":  "요충나이트",
+                                              "b":  "항문가려",
+                                              "c":  "핀웜달",
+                                              "d":  "핀웜밤",
+                                              "e":  "요충가려",
+                                              "f":  "밤간질",
+                                              "g":  "핀핀밤"
+                                          }
+                       },
+                       {
+                           "number":  43,
+                           "file":  "nematode/Wuchereria bancrofti.md",
+                           "scientific":  "반크로프트사상충(Wuchereria bancrofti)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "반크림프",
+                           "candidates":  {
+                                              "a":  "반크림프",
+                                              "b":  "코끼리부종",
+                                              "c":  "우체사상",
+                                              "d":  "우체림프",
+                                              "e":  "반크부종",
+                                              "f":  "코끼붓",
+                                              "g":  "림프뚱"
+                                          }
+                       },
+                       {
+                           "number":  44,
+                           "file":  "nematode/Brugia malayi.md",
+                           "scientific":  "말레이사상충(Brugia malayi)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "말레이림프",
+                           "candidates":  {
+                                              "a":  "말레이림프",
+                                              "b":  "브루지부종",
+                                              "c":  "림프말라",
+                                              "d":  "브루림프",
+                                              "e":  "말라부종",
+                                              "f":  "말랑부종",
+                                              "g":  "브루둥둥"
+                                          }
+                       },
+                       {
+                           "number":  45,
+                           "file":  "nematode/Onchocerca volvulus.md",
+                           "scientific":  "회선사상충(Onchocerca volvulus)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "회선블랙",
+                           "candidates":  {
+                                              "a":  "강변눈충",
+                                              "b":  "회선블랙",
+                                              "c":  "온코가려",
+                                              "d":  "온코눈",
+                                              "e":  "강변블랙",
+                                              "f":  "눈빙글",
+                                              "g":  "온코콕"
+                                          }
+                       },
+                       {
+                           "number":  46,
+                           "file":  "nematode/Loa loa.md",
+                           "scientific":  "로아사상충(Loa loa)",
+                           "choiceNumber":  7,
+                           "choiceLetter":  "g",
+                           "selectedName":  "로아로아",
+                           "candidates":  {
+                                              "a":  "로아아이",
+                                              "b":  "눈길로아",
+                                              "c":  "칼라바루",
+                                              "d":  "로아눈길",
+                                              "e":  "칼라바아이",
+                                              "f":  "눈앞로아",
+                                              "g":  "로아로아"
+                                          }
+                       },
+                       {
+                           "number":  47,
+                           "file":  "nematode/Thelazia callipaeda.md",
+                           "scientific":  "동양안충(Thelazia callipaeda)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "눈물안충",
+                           "candidates":  {
+                                              "a":  "눈물안충",
+                                              "b":  "텔라지아",
+                                              "c":  "안충반짝",
+                                              "d":  "텔라눈물",
+                                              "e":  "동양안반짝",
+                                              "f":  "눈물찡",
+                                              "g":  "텔라반짝"
+                                          }
+                       },
+                       {
+                           "number":  48,
+                           "file":  "nematode/Dracunculus medinensis.md",
+                           "scientific":  "메디나충(Dracunculus medinensis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "메디나실",
+                           "candidates":  {
+                                              "a":  "메디나실",
+                                              "b":  "물집드라",
+                                              "c":  "기니드라",
+                                              "d":  "드라수포",
+                                              "e":  "메디나물",
+                                              "f":  "수포쭉",
+                                              "g":  "드라실룩"
+                                          }
+                       },
+                       {
+                           "number":  49,
+                           "file":  "trematode/Clonorchis sinensis.md",
+                           "scientific":  "간흡충(Clonorchis sinensis)",
+                           "choiceNumber":  7,
+                           "choiceLetter":  "g",
+                           "selectedName":  "간쏙클로",
+                           "candidates":  {
+                                              "a":  "간흡길",
+                                              "b":  "담관클로",
+                                              "c":  "간디스토",
+                                              "d":  "클로담관",
+                                              "e":  "간흡시넨",
+                                              "f":  "담관쏙",
+                                              "g":  "간쏙클로"
+                                          }
+                       },
+                       {
+                           "number":  50,
+                           "file":  "trematode/Fasciola hepatica.md",
+                           "scientific":  "간질(Fasciola hepatica)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "간질리아",
+                           "candidates":  {
+                                              "a":  "간질리아",
+                                              "b":  "담관파시",
+                                              "c":  "헤파흡",
+                                              "d":  "파시간",
+                                              "e":  "헤파담관",
+                                              "f":  "간질꿀꺽",
+                                              "g":  "파시파시"
+                                          }
+                       },
+                       {
+                           "number":  51,
+                           "file":  "trematode/Paragonimus westermani.md",
+                           "scientific":  "폐흡충(Paragonimus westermani)",
+                           "choiceNumber":  5,
+                           "choiceLetter":  "e",
+                           "selectedName":  "게폐흡",
+                           "candidates":  {
+                                              "a":  "폐흡게",
+                                              "b":  "객혈파라",
+                                              "c":  "웨스터폐",
+                                              "d":  "파라고폐",
+                                              "e":  "게폐흡",
+                                              "f":  "게딱폐",
+                                              "g":  "파라콜록"
+                                          }
+                       },
+                       {
+                           "number":  52,
+                           "file":  "trematode/Schistosoma spp.md",
+                           "scientific":  "주혈흡충(Schistosoma spp.)",
+                           "choiceNumber":  3,
+                           "choiceLetter":  "c",
+                           "selectedName":  "달팽혈충",
+                           "candidates":  {
+                                              "a":  "혈흡충돌",
+                                              "b":  "쉬스토혈",
+                                              "c":  "달팽혈충",
+                                              "d":  "쉬스토달팽",
+                                              "e":  "주혈나선",
+                                              "f":  "피돌쉬스",
+                                              "g":  "달팽퐁"
+                                          }
+                       },
+                       {
+                           "number":  53,
+                           "file":  "cestode/Sparganum Spirometra spp.md",
+                           "scientific":  "스파르가눔(Sparganum, Spirometra spp.)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "스파르강",
+                           "candidates":  {
+                                              "a":  "스파르강",
+                                              "b":  "이동리본",
+                                              "c":  "스피로유충",
+                                              "d":  "스파르유랑",
+                                              "e":  "스피로리본",
+                                              "f":  "리본쑥",
+                                              "g":  "스파르쑥"
+                                          }
+                       },
+                       {
+                           "number":  54,
+                           "file":  "cestode/Taenia solium.md",
+                           "scientific":  "유구조충(Taenia solium)",
+                           "choiceNumber":  6,
+                           "choiceLetter":  "f",
+                           "selectedName":  "리본돼지",
+                           "candidates":  {
+                                              "a":  "돼지리본",
+                                              "b":  "유구태니",
+                                              "c":  "낭미솔리",
+                                              "d":  "솔리낭미",
+                                              "e":  "돼지태니",
+                                              "f":  "리본돼지",
+                                              "g":  "솔리솔리"
+                                          }
+                       },
+                       {
+                           "number":  55,
+                           "file":  "bacteria/Mycoplasma hominis.md",
+                           "scientific":  "마이코플라스마 호미니스(Mycoplasma hominis)",
+                           "choiceNumber":  6,
+                           "choiceLetter":  "f",
+                           "selectedName":  "벽없호미",
+                           "candidates":  {
+                                              "a":  "호미니플라",
+                                              "b":  "무벽호미",
+                                              "c":  "점막플라",
+                                              "d":  "호미플라",
+                                              "e":  "무벽호미니",
+                                              "f":  "벽없호미",
+                                              "g":  "흐물플라"
+                                          }
+                       },
+                       {
+                           "number":  56,
+                           "file":  "bacteria/Mycoplasma spp.md",
+                           "scientific":  "마이코플라스마속(Mycoplasma spp.)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "마이코막",
+                           "candidates":  {
+                                              "a":  "마이코막",
+                                              "b":  "무벽플라",
+                                              "c":  "미니플라",
+                                              "d":  "플라막없",
+                                              "e":  "마이코작",
+                                              "f":  "벽없플라",
+                                              "g":  "말랑코플라"
+                                          }
+                       },
+                       {
+                           "number":  57,
+                           "file":  "bacteria/Ureaplasma urealyticum.md",
+                           "scientific":  "유레아플라스마 유레아리티쿰(Ureaplasma urealyticum)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "유레아플라",
+                           "candidates":  {
+                                              "a":  "유레아플라",
+                                              "b":  "요소플라",
+                                              "c":  "요도리아",
+                                              "d":  "유레아요도",
+                                              "e":  "요소라마",
+                                              "f":  "요소톡톡",
+                                              "g":  "유레플룽"
+                                          }
+                       },
+                       {
+                           "number":  58,
+                           "file":  "bacteria/Gardnerella vaginalis.md",
+                           "scientific":  "가드네렐라균(Gardnerella vaginalis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "가드네라",
+                           "candidates":  {
+                                              "a":  "가드네라",
+                                              "b":  "단서가드",
+                                              "c":  "질균가든",
+                                              "d":  "가드질정",
+                                              "e":  "클루가드",
+                                              "f":  "가든단서",
+                                              "g":  "가드가든"
+                                          }
+                       },
+                       {
+                           "number":  59,
+                           "file":  "bacteria/Nocardia spp.md",
+                           "scientific":  "노카르디아속(Nocardia spp.)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "노카가지",
+                           "candidates":  {
+                                              "a":  "노카가지",
+                                              "b":  "산성노카",
+                                              "c":  "뇌농노카",
+                                              "d":  "산성가지",
+                                              "e":  "노카가닥",
+                                              "f":  "가지노카",
+                                              "g":  "노카노카"
+                                          }
+                       }
+                   ]
+}
