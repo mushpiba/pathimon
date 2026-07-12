@@ -218,7 +218,7 @@ export function enterBattle(state: RunState, enemyIndex?: number): RunState {
   }
 
   const enemyData = selectWildMonster(enemyIndex, nextState.floor, nextState.wildRosterIds);
-  nextState.enemy = createMonsterInstance(enemyData, { defenseTraits: false });
+  nextState.enemy = createMonsterInstance(enemyData);
   nextState.phase = 'battle';
   nextState.lastLog = `${nextState.enemy.name}이 나타났다.`;
   return nextState;

@@ -98,7 +98,7 @@ describe('run state loop', () => {
     expect(state.phase).toBe('battle');
     expect(state.encounterKind).toBe('wild');
     expect(state.enemy?.isBoss).toBe(false);
-    expect(state.enemy?.abilities).toEqual([]);
+    expect(state.enemy?.abilities).toEqual(firstWildPathimon.abilities ?? [firstWildPathimon.ability]);
     expect(state.enemy?.scientificName).toBe(firstWildPathimon.scientificName);
   });
 
