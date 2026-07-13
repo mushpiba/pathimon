@@ -5,6 +5,7 @@ export type PathimonLaunchZone = 'upperLeft' | 'lowerRight';
 
 export interface PathimonScreensaverItem {
   assetPath: string;
+  collisionGroup: number;
   delayMs: number;
   durationMs: number;
   endX: number;
@@ -37,7 +38,8 @@ export function pathimonScreensaverSpritePool(): string[] {
 }
 
 export function pathimonScreensaverSpriteCount(random: RandomSource = Math.random): number {
-  return MIN_VISIBLE_PATHIMON + Math.floor(random() * (MAX_VISIBLE_PATHIMON - MIN_VISIBLE_PATHIMON + 1));
+  const pairCount = Math.floor(random() * 3);
+  return MIN_VISIBLE_PATHIMON + pairCount * 2;
 }
 
 function randomRange(min: number, max: number, random: RandomSource): number {
@@ -48,47 +50,65 @@ function randomIndex(length: number, random: RandomSource): number {
   return Math.min(length - 1, Math.max(0, Math.floor(random() * length)));
 }
 
-function launchPoint(zone: PathimonLaunchZone, width: number, height: number, random: RandomSource): { x: number; y: number } {
-  const horizontalEdge = random() < 0.5;
-  if (zone === 'upperLeft') {
-    if (horizontalEdge) return { x: randomRange(width * 0.05, width * 0.42, random), y: randomRange(height * 0.06, height * 0.16, random) };
-    return { x: randomRange(width * 0.05, width * 0.15, random), y: randomRange(height * 0.14, height * 0.48, random) };
-  }
-
-  if (horizontalEdge) return { x: randomRange(width * 0.58, width * 0.95, random), y: randomRange(height * 0.84, height * 0.94, random) };
-  return { x: randomRange(width * 0.85, width * 0.95, random), y: randomRange(height * 0.52, height * 0.86, random) };
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
 }
 
-function exitPoint(zone: PathimonLaunchZone, width: number, height: number, margin: number, random: RandomSource): { x: number; y: number } {
+function launchPoint(
+  zone: PathimonLaunchZone,
+  width: number,
+  height: number,
+  margin: number,
+  random: RandomSource,
+): { x: number; y: number } {
   const horizontalEdge = random() < 0.5;
   if (zone === 'upperLeft') {
-    if (horizontalEdge) return { x: randomRange(-margin, width * 0.38, random), y: -margin };
-    return { x: -margin, y: randomRange(height * 0.08, height * 0.52, random) };
+    if (horizontalEdge) return { x: randomRange(width * 0.04, width * 0.42, random), y: -margin };
+    return { x: -margin, y: randomRange(height * 0.08, height * 0.42, random) };
   }
 
-  if (horizontalEdge) return { x: randomRange(width * 0.62, width + margin, random), y: height + margin };
-  return { x: width + margin, y: randomRange(height * 0.48, height * 0.92, random) };
+  if (horizontalEdge) return { x: width + margin, y: randomRange(height * 0.16, height * 0.48, random) };
+  return { x: randomRange(width * 0.58, width * 0.96, random), y: -margin };
 }
 
-export function createPathimonScreensaverItem(
+function exitPoint(
+  zone: PathimonLaunchZone,
+  width: number,
+  height: number,
+  margin: number,
+  random: RandomSource,
+): { x: number; y: number } {
+  const horizontalEdge = random() < 0.5;
+  if (zone === 'upperLeft') {
+    if (horizontalEdge) return { x: randomRange(-margin, width * 0.36, random), y: -margin };
+    return { x: -margin, y: randomRange(height * 0.06, height * 0.46, random) };
+  }
+
+  if (horizontalEdge) return { x: width + margin, y: randomRange(height * 0.12, height * 0.46, random) };
+  return { x: randomRange(width * 0.62, width + margin, random), y: -margin };
+}
+
+function createPairItem(
   options: PathimonScreensaverOptions,
-  launchZone?: PathimonLaunchZone,
+  zone: PathimonLaunchZone,
+  collisionGroup: number,
+  shared: { delayMs: number; durationMs: number; impactX: number; impactY: number },
+  random: RandomSource,
 ): PathimonScreensaverItem {
-  const random = options.random ?? Math.random;
   const sprites = options.sprites?.length ? options.sprites : pathimonScreensaverSpritePool();
-  const margin = Math.max(96, Math.min(options.width, options.height) * 0.22);
-  const zone = launchZone ?? (random() < 0.5 ? 'upperLeft' : 'lowerRight');
-  const start = launchPoint(zone, options.width, options.height, random);
+  const margin = Math.max(128, Math.min(options.width, options.height) * 0.28);
+  const start = launchPoint(zone, options.width, options.height, margin, random);
   const end = exitPoint(zone, options.width, options.height, margin, random);
 
   return {
     assetPath: sprites[randomIndex(sprites.length, random)]!,
-    delayMs: Math.round(randomRange(0, 650, random)),
-    durationMs: Math.round(randomRange(3600, 5600, random)),
+    collisionGroup,
+    delayMs: shared.delayMs,
+    durationMs: shared.durationMs,
     endX: end.x,
     endY: end.y,
-    impactX: randomRange(options.width * 0.42, options.width * 0.58, random),
-    impactY: randomRange(options.height * 0.38, options.height * 0.62, random),
+    impactX: shared.impactX,
+    impactY: shared.impactY,
     launchZone: zone,
     respawnDelayMs: RESPAWN_DELAY_MS,
     scale: randomRange(0.81, 1.53, random),
@@ -98,18 +118,54 @@ export function createPathimonScreensaverItem(
   };
 }
 
+export function createPathimonScreensaverPair(
+  options: PathimonScreensaverOptions,
+  collisionGroup = 0,
+): [PathimonScreensaverItem, PathimonScreensaverItem] {
+  const random = options.random ?? Math.random;
+  const shared = {
+    delayMs: Math.round(randomRange(0, 650, random)),
+    durationMs: Math.round(randomRange(4500, 7000, random)),
+    impactX: randomRange(options.width * 0.38, options.width * 0.62, random),
+    impactY: randomRange(options.height * 0.22, options.height * 0.42, random),
+  };
+
+  return [
+    createPairItem(options, 'upperLeft', collisionGroup, shared, random),
+    createPairItem(options, 'lowerRight', collisionGroup, shared, random),
+  ];
+}
+
+export function createPathimonScreensaverItem(
+  options: PathimonScreensaverOptions,
+  launchZone?: PathimonLaunchZone,
+): PathimonScreensaverItem {
+  const pair = createPathimonScreensaverPair(options);
+  if (launchZone) return pair.find((item) => item.launchZone === launchZone) ?? pair[0];
+  return pair[0];
+}
+
 export function createPathimonScreensaverItems(options: PathimonScreensaverOptions): PathimonScreensaverItem[] {
   const random = options.random ?? Math.random;
   const count = pathimonScreensaverSpriteCount(random);
-  return Array.from({ length: count }, (_, index) => {
-    const launchZone: PathimonLaunchZone = index % 2 === 0 ? 'upperLeft' : 'lowerRight';
-    return createPathimonScreensaverItem({ ...options, random }, launchZone);
-  });
+  const pairCount = count / 2;
+  return Array.from({ length: pairCount }, (_, index) => (
+    createPathimonScreensaverPair({ ...options, random }, index)
+  )).flat();
 }
 
 export function createInitialPathimonScreensaverItems(options: PathimonScreensaverOptions): PathimonScreensaverItem[] {
-  return createPathimonScreensaverItems(options).map((item) => ({
-    ...item,
-    delayMs: 0,
-  }));
+  const random = options.random ?? Math.random;
+  return createPathimonScreensaverItems(options).map((item) => {
+    const progress = randomRange(0.54, 0.76, random);
+    const startX = item.startX + (item.impactX - item.startX) * progress;
+    const startY = item.startY + (item.impactY - item.startY) * progress;
+
+    return {
+      ...item,
+      delayMs: 0,
+      startX: clamp(startX, options.width * 0.04, options.width * 0.96),
+      startY: clamp(startY, options.height * 0.06, options.height * 0.5),
+    };
+  });
 }

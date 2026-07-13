@@ -24,16 +24,16 @@ describe('title UI content', () => {
 
   it('uses the supplied run boss roster for the six title-side boss previews', () => {
     const content = titleScreenContent({
-      bossRosterIds: ['red', 'blue', 'giovanni', 'brock', 'misty', 'koga'],
+      bossRosterIds: ['red', 'blue', 'giovanni', 'brock', 'koga', 'lance'],
     });
 
     expect(content.bossSprites).toEqual([
-      'images/trainers/red.png',
-      'images/trainers/blue.png',
-      'images/trainers/giovanni.png',
-      'images/trainers/brock.png',
-      'images/trainers/misty.png',
-      'images/trainers/koga.png',
+      'images/character/boss/red.png',
+      'images/character/boss/blue.png',
+      'images/character/boss/giovanni.png',
+      'images/character/boss/brock.png',
+      'images/character/boss/koga.png',
+      'images/character/boss/lance.png',
     ]);
   });
 

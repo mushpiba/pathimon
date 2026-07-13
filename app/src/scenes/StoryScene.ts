@@ -4,6 +4,8 @@ import { addLabel, drawPanel } from '../ui/draw';
 import { destroySceneChildren } from '../ui/sceneCleanup';
 import { storyPages } from '../ui/storyUi';
 
+type BgmPreloadSceneHandle = Phaser.Scene & { stopPathimonScreensaver?: () => void };
+
 export class StoryScene extends Phaser.Scene {
   private pageIndex = 0;
 
@@ -71,7 +73,7 @@ export class StoryScene extends Phaser.Scene {
     rect.setInteractive({ useHandCursor: true });
     rect.on('pointerover', () => rect.setFillStyle(0x4a405d));
     rect.on('pointerout', () => rect.setFillStyle(COLORS.panelDark));
-    rect.on('pointerdown', () => this.scene.start('DisclaimerScene'));
+    rect.on('pointerdown', () => this.finishStory());
     addLabel(this, 930, 43, '스킵', 17).setOrigin(0.5);
   }
 
@@ -82,9 +84,15 @@ export class StoryScene extends Phaser.Scene {
     }
   }
 
+  private finishStory(): void {
+    const preloadScene = this.scene.get('BgmPreloadScene') as BgmPreloadSceneHandle;
+    preloadScene.stopPathimonScreensaver?.();
+    this.scene.start('DisclaimerScene');
+  }
+
   private advancePage(): void {
     if (this.pageIndex >= storyPages().length - 1) {
-      this.scene.start('DisclaimerScene');
+      this.finishStory();
       return;
     }
 

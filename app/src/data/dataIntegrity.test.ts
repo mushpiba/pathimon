@@ -5,6 +5,7 @@ import { BOSSES } from './bosses';
 import { EFFECTIVENESS } from './effectiveness';
 import { MONSTERS, STARTER_ID, TOTAL_FLOORS } from './monsters';
 import { TRAINERS } from './trainers';
+import { BOSS_CHARACTER_ASSETS, TRAINER_CHARACTER_ASSETS } from './characterAssets';
 import { buildLoadout, buildMoveSlots } from '../battle/loadout';
 import { MOVES } from './moves';
 import { NOTE_MONSTERS } from './pathimonNoteData';
@@ -16,7 +17,13 @@ const pathimonAssets = import.meta.glob('/public/images/pathimon/*.png', {
   import: 'default',
 });
 
-const trainerAssets = import.meta.glob('/public/images/trainers/*.png', {
+const bossCharacterAssets = import.meta.glob('/public/images/character/boss/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+
+const trainerCharacterAssets = import.meta.glob('/public/images/character/trainer/*.png', {
   eager: true,
   query: '?url',
   import: 'default',
@@ -185,16 +192,22 @@ describe('Pathimon data', () => {
     expect(trichinellaAdult?.maxHp).toBeGreaterThan(trichinellaLarva?.maxHp ?? 0);
   });
 
-  it('has a broad trainer and boss image pool from the copied pokerogue assets', () => {
-    expect(TRAINERS.length).toBeGreaterThanOrEqual(16);
-    expect(BOSSES.length).toBeGreaterThanOrEqual(12);
+  it('uses every image from the separated character boss and trainer folders', () => {
+    expect(TRAINER_CHARACTER_ASSETS).toHaveLength(Object.keys(trainerCharacterAssets).length);
+    expect(BOSS_CHARACTER_ASSETS).toHaveLength(Object.keys(bossCharacterAssets).length);
+    expect(TRAINER_CHARACTER_ASSETS.length).toBeGreaterThanOrEqual(20);
+    expect(BOSS_CHARACTER_ASSETS.length).toBeGreaterThanOrEqual(50);
+    expect(TRAINERS.map((trainer) => trainer.assetPath)).toEqual(expect.arrayContaining(TRAINER_CHARACTER_ASSETS));
+    expect(BOSSES.map((boss) => boss.assetPath)).toEqual(expect.arrayContaining(BOSS_CHARACTER_ASSETS));
 
     for (const trainer of TRAINERS) {
-      expect(trainerAssets[`/public/${trainer.assetPath}`]).toBeDefined();
+      expect(trainer.assetPath.startsWith('images/character/trainer/')).toBe(true);
+      expect(trainerCharacterAssets[`/public/${trainer.assetPath}`]).toBeDefined();
     }
 
     for (const boss of BOSSES) {
-      expect(trainerAssets[`/public/${boss.assetPath}`]).toBeDefined();
+      expect(boss.assetPath.startsWith('images/character/boss/')).toBe(true);
+      expect(bossCharacterAssets[`/public/${boss.assetPath}`]).toBeDefined();
     }
   });
 

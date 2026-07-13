@@ -4,7 +4,7 @@ import { addLabel } from '../ui/draw';
 import { battleBgmAudioPaths } from '../ui/battleUi';
 import {
   createInitialPathimonScreensaverItems,
-  createPathimonScreensaverItem,
+  createPathimonScreensaverPair,
   pathimonScreensaverSpritePool,
   type PathimonScreensaverItem,
 } from '../ui/pathimonScreensaver';
@@ -37,7 +37,6 @@ export class BgmPreloadScene extends Phaser.Scene {
 
   create(): void {
     this.load.off('progress', this.updateLoadingProgress, this);
-    this.removePathimonScreensaver();
     this.registry.set('battleBgmPreloadComplete', true);
     this.scene.stop();
   }
@@ -64,18 +63,25 @@ export class BgmPreloadScene extends Phaser.Scene {
     const width = bounds.width || APP_WIDTH;
     const height = bounds.height || APP_HEIGHT;
     const sprites = pathimonScreensaverSpritePool();
-    createInitialPathimonScreensaverItems({ height, sprites, width }).forEach((item) => {
-      this.addScreensaverSprite(layer, item, width, height, sprites);
-    });
+    const items = createInitialPathimonScreensaverItems({ height, sprites, width });
+    for (let index = 0; index < items.length; index += 2) {
+      const pair = items.slice(index, index + 2);
+      if (pair.length === 2) this.addScreensaverPair(layer, pair, width, height, sprites);
+    }
   }
 
-  private addScreensaverSprite(
+  private addScreensaverPair(
     layer: HTMLDivElement,
-    item: PathimonScreensaverItem,
+    pair: PathimonScreensaverItem[],
     width: number,
     height: number,
     sprites: string[],
   ): void {
+    const images = pair.map((item) => this.createScreensaverImage(layer, item));
+    this.animateScreensaverPair(images, pair, width, height, sprites);
+  }
+
+  private createScreensaverImage(layer: HTMLDivElement, item: PathimonScreensaverItem): HTMLImageElement {
     const image = document.createElement('img');
     image.alt = '';
     image.decoding = 'async';
@@ -85,58 +91,87 @@ export class BgmPreloadScene extends Phaser.Scene {
       filter: 'drop-shadow(0 10px 8px rgba(0, 0, 0, 0.45))',
       imageRendering: 'pixelated',
       left: '0',
-      opacity: '0.88',
+      opacity: '0.9',
       position: 'absolute',
       top: '0',
       width: '129px',
       willChange: 'transform',
     });
     layer.appendChild(image);
-    this.animateScreensaverSprite(image, item, width, height, sprites);
+    return image;
   }
 
-  private animateScreensaverSprite(
-    image: HTMLImageElement,
-    item: PathimonScreensaverItem,
+  private animateScreensaverPair(
+    images: HTMLImageElement[],
+    pair: PathimonScreensaverItem[],
     width: number,
     height: number,
     sprites: string[],
   ): void {
-    image.src = item.assetPath;
-    image.style.transition = 'none';
-    image.style.transform = this.screensaverTransform(item.startX, item.startY, item.scale, 0);
+    const first = pair[0];
+    if (!first || images.length !== pair.length) return;
 
-    const launchDuration = Math.round(item.durationMs * 0.48);
-    const bounceDuration = item.durationMs - launchDuration;
+    const allImagesStillMounted = () => images.every((image) => this.screensaverLayer?.contains(image));
+    images.forEach((image, index) => {
+      const item = pair[index]!;
+      image.src = item.assetPath;
+      image.style.transition = 'none';
+      image.style.transform = this.screensaverTransform(item.startX, item.startY, item.scale, 0);
+    });
+
+    const launchDuration = Math.round(first.durationMs * 0.5);
+    const bounceDuration = first.durationMs - launchDuration;
     let phase: 'launch' | 'bounce' = 'launch';
+    let completedTransitions = 0;
 
-    const timer = window.setTimeout(() => {
-      if (!this.screensaverLayer?.contains(image)) return;
-      image.style.transition = `transform ${launchDuration}ms cubic-bezier(0.18, 0.78, 0.28, 1)`;
-      image.style.transform = this.screensaverTransform(item.impactX, item.impactY, item.scale * 1.08, 0);
-    }, item.delayMs);
-    this.screensaverTimers.push(timer);
+    const launchTimer = window.setTimeout(() => {
+      if (!allImagesStillMounted()) return;
+      images.forEach((image, index) => {
+        const item = pair[index]!;
+        image.style.transition = `transform ${launchDuration}ms cubic-bezier(0.18, 0.78, 0.28, 1)`;
+        image.style.transform = this.screensaverTransform(item.impactX, item.impactY, item.scale * 1.1, 0);
+      });
+    }, first.delayMs);
+    this.screensaverTimers.push(launchTimer);
 
-    image.ontransitionend = (event) => {
-      if (event.propertyName !== 'transform' || !this.screensaverLayer?.contains(image)) return;
+    const handleTransitionEnd = (event: TransitionEvent) => {
+      if (event.propertyName !== 'transform' || !allImagesStillMounted()) return;
+      completedTransitions += 1;
+      if (completedTransitions < images.length) return;
+      completedTransitions = 0;
+
       if (phase === 'launch') {
         phase = 'bounce';
-        image.style.transition = `transform ${bounceDuration}ms cubic-bezier(0.64, 0.02, 0.86, 0.36)`;
-        image.style.transform = this.screensaverTransform(item.endX, item.endY, item.scale, item.wobblePx);
+        images.forEach((image, index) => {
+          const item = pair[index]!;
+          image.style.transition = `transform ${bounceDuration}ms cubic-bezier(0.64, 0.02, 0.86, 0.36)`;
+          image.style.transform = this.screensaverTransform(item.endX, item.endY, item.scale, item.wobblePx);
+        });
         return;
       }
 
       const nextTimer = window.setTimeout(() => {
-        if (!this.screensaverLayer?.contains(image)) return;
-        const nextItem = createPathimonScreensaverItem({ height, sprites, width });
-        this.animateScreensaverSprite(image, { ...nextItem, delayMs: 0 }, width, height, sprites);
-      }, item.respawnDelayMs);
+        if (!allImagesStillMounted()) return;
+        const nextPair = createPathimonScreensaverPair({ height, sprites, width }).map((item) => ({
+          ...item,
+          delayMs: 0,
+        }));
+        this.animateScreensaverPair(images, nextPair, width, height, sprites);
+      }, first.respawnDelayMs);
       this.screensaverTimers.push(nextTimer);
     };
+
+    images.forEach((image) => {
+      image.ontransitionend = handleTransitionEnd;
+    });
   }
 
   private screensaverTransform(x: number, y: number, scale: number, wobblePx: number): string {
     return `translate(${x}px, ${y + wobblePx}px) translate(-50%, -50%) scale(${scale})`;
+  }
+
+  stopPathimonScreensaver(): void {
+    this.removePathimonScreensaver();
   }
 
   private removePathimonScreensaver(): void {

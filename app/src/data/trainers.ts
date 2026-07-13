@@ -1,4 +1,5 @@
 import type { TrainerData } from '../types/game';
+import { TRAINER_CHARACTER_ASSETS, assetIdFromPath, characterAssetPathForId } from './characterAssets';
 
 const HOST_LABEL = '일반 사람 (Human Host)';
 const PHAGO_CORE: TrainerData['movePool'] = ['m_phago', 'm_opsonin', 'm_antibody', 'm_th2'];
@@ -15,6 +16,31 @@ export const TRAINER_COMBAT_STATS = {
   defense: 8,
 } as const;
 
+const TRAINER_MOVE_POOLS: TrainerData['movePool'][] = [
+  PHAGO_CORE,
+  VIRAL_CORE,
+  COMPLEMENT_CORE,
+  ELITE_CORE,
+  INNATE_CORE,
+  DRUG_CORE,
+  PARASITE_CORE,
+  FUNGAL_CORE,
+];
+
+function trainerAssetPath(id: string, index = 0): string {
+  return characterAssetPathForId(TRAINER_CHARACTER_ASSETS, id)
+    ?? TRAINER_CHARACTER_ASSETS[index % Math.max(1, TRAINER_CHARACTER_ASSETS.length)]
+    ?? `images/character/trainer/${id}.png`;
+}
+
+function trainerAssetLabel(assetPath: string): string {
+  return assetIdFromPath(assetPath)
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 const RAW_TRAINERS: TrainerData[] = [
   {
     id: 'doctor_m',
@@ -22,7 +48,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'DR',
-    assetPath: 'images/trainers/doctor_m.png',
+    assetPath: 'images/character/trainer/doctor_m.png',
     maxHp: 72,
     attack: 11,
     defense: 4,
@@ -34,7 +60,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'ICU',
-    assetPath: 'images/trainers/doctor_f.png',
+    assetPath: 'images/character/trainer/doctor_f.png',
     maxHp: 74,
     attack: 11,
     defense: 4,
@@ -46,7 +72,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'LAB',
-    assetPath: 'images/trainers/scientist_f.png',
+    assetPath: 'images/character/trainer/scientist_f.png',
     maxHp: 68,
     attack: 10,
     defense: 4,
@@ -58,7 +84,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'EPI',
-    assetPath: 'images/trainers/scientist_m.png',
+    assetPath: 'images/character/trainer/scientist_m.png',
     maxHp: 70,
     attack: 10,
     defense: 4,
@@ -70,7 +96,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'ACE',
-    assetPath: 'images/trainers/ace_trainer_m.png',
+    assetPath: 'images/character/trainer/ace_trainer_m.png',
     maxHp: 76,
     attack: 12,
     defense: 5,
@@ -82,7 +108,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'VAC',
-    assetPath: 'images/trainers/ace_trainer_f.png',
+    assetPath: 'images/character/trainer/ace_trainer_f.png',
     maxHp: 76,
     attack: 12,
     defense: 5,
@@ -94,7 +120,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'VT',
-    assetPath: 'images/trainers/veteran_f.png',
+    assetPath: 'images/character/trainer/veteran_f.png',
     maxHp: 82,
     attack: 12,
     defense: 5,
@@ -106,7 +132,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'QT',
-    assetPath: 'images/trainers/veteran_m.png',
+    assetPath: 'images/character/trainer/veteran_m.png',
     maxHp: 84,
     attack: 12,
     defense: 5,
@@ -118,7 +144,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'QR',
-    assetPath: 'images/trainers/ranger_f.png',
+    assetPath: 'images/character/trainer/ranger_f.png',
     maxHp: 73,
     attack: 11,
     defense: 4,
@@ -130,7 +156,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'FD',
-    assetPath: 'images/trainers/ranger_m.png',
+    assetPath: 'images/character/trainer/ranger_m.png',
     maxHp: 75,
     attack: 11,
     defense: 4,
@@ -142,7 +168,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'NEU',
-    assetPath: 'images/trainers/psychic_f.png',
+    assetPath: 'images/character/trainer/psychic_f.png',
     maxHp: 69,
     attack: 12,
     defense: 3,
@@ -154,7 +180,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'CYT',
-    assetPath: 'images/trainers/psychic_m.png',
+    assetPath: 'images/character/trainer/psychic_m.png',
     maxHp: 69,
     attack: 12,
     defense: 3,
@@ -166,7 +192,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'SUP',
-    assetPath: 'images/trainers/clerk_f.png',
+    assetPath: 'images/character/trainer/clerk_f.png',
     maxHp: 66,
     attack: 9,
     defense: 4,
@@ -178,7 +204,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'LOG',
-    assetPath: 'images/trainers/clerk_m.png',
+    assetPath: 'images/character/trainer/clerk_m.png',
     maxHp: 67,
     attack: 9,
     defense: 4,
@@ -190,7 +216,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'FLD',
-    assetPath: 'images/trainers/hiker.png',
+    assetPath: 'images/character/trainer/hiker.png',
     maxHp: 86,
     attack: 11,
     defense: 6,
@@ -202,7 +228,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'BOX',
-    assetPath: 'images/trainers/backpacker_m.png',
+    assetPath: 'images/character/trainer/backpacker_m.png',
     maxHp: 71,
     attack: 10,
     defense: 5,
@@ -214,7 +240,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'POL',
-    assetPath: 'images/trainers/officer.png',
+    assetPath: 'images/character/trainer/officer.png',
     maxHp: 78,
     attack: 11,
     defense: 5,
@@ -226,7 +252,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'CLN',
-    assetPath: 'images/trainers/janitor.png',
+    assetPath: 'images/character/trainer/janitor.png',
     maxHp: 74,
     attack: 11,
     defense: 5,
@@ -238,7 +264,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'WRK',
-    assetPath: 'images/trainers/worker_m.png',
+    assetPath: 'images/character/trainer/worker_m.png',
     maxHp: 82,
     attack: 11,
     defense: 6,
@@ -250,7 +276,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'STL',
-    assetPath: 'images/trainers/worker_f.png',
+    assetPath: 'images/character/trainer/worker_f.png',
     maxHp: 80,
     attack: 11,
     defense: 6,
@@ -262,7 +288,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'INN',
-    assetPath: 'images/trainers/black_belt_m.png',
+    assetPath: 'images/character/trainer/black_belt_m.png',
     maxHp: 83,
     attack: 12,
     defense: 5,
@@ -274,7 +300,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'EOS',
-    assetPath: 'images/trainers/black_belt_f.png',
+    assetPath: 'images/character/trainer/black_belt_f.png',
     maxHp: 81,
     attack: 12,
     defense: 5,
@@ -286,7 +312,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'EMS',
-    assetPath: 'images/trainers/biker.png',
+    assetPath: 'images/character/trainer/biker.png',
     maxHp: 77,
     attack: 11,
     defense: 4,
@@ -298,7 +324,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'MEM',
-    assetPath: 'images/trainers/hex_maniac.png',
+    assetPath: 'images/character/trainer/hex_maniac.png',
     maxHp: 72,
     attack: 12,
     defense: 4,
@@ -310,7 +336,7 @@ const RAW_TRAINERS: TrainerData[] = [
     scientificName: HOST_LABEL,
     category: '사람',
     glyph: 'RAIL',
-    assetPath: 'images/trainers/depot_agent.png',
+    assetPath: 'images/character/trainer/depot_agent.png',
     maxHp: 79,
     attack: 11,
     defense: 5,
@@ -318,7 +344,29 @@ const RAW_TRAINERS: TrainerData[] = [
   },
 ];
 
-export const TRAINERS: TrainerData[] = RAW_TRAINERS.map((trainer) => ({
+const RAW_TRAINERS_WITH_ASSETS: TrainerData[] = RAW_TRAINERS.map((trainer, index) => ({
+  ...trainer,
+  assetPath: trainerAssetPath(trainer.id, index),
+}));
+
+const USED_TRAINER_ASSETS = new Set(RAW_TRAINERS_WITH_ASSETS.map((trainer) => trainer.assetPath));
+
+const EXTRA_TRAINERS: TrainerData[] = TRAINER_CHARACTER_ASSETS
+  .filter((assetPath) => !USED_TRAINER_ASSETS.has(assetPath))
+  .map((assetPath, index) => ({
+    id: assetIdFromPath(assetPath),
+    name: `현장 대응요원 ${index + 1}`,
+    scientificName: `${trainerAssetLabel(assetPath)}형 일반 사람 (Human Host)`,
+    category: '사람',
+    glyph: 'HST',
+    assetPath,
+    maxHp: 70 + (index % 5) * 3,
+    attack: TRAINER_COMBAT_STATS.attack,
+    defense: TRAINER_COMBAT_STATS.defense,
+    movePool: TRAINER_MOVE_POOLS[index % TRAINER_MOVE_POOLS.length],
+  }));
+
+export const TRAINERS: TrainerData[] = [...RAW_TRAINERS_WITH_ASSETS, ...EXTRA_TRAINERS].map((trainer) => ({
   ...trainer,
   attack: TRAINER_COMBAT_STATS.attack,
   defense: TRAINER_COMBAT_STATS.defense,

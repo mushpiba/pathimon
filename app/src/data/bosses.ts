@@ -1,5 +1,6 @@
 import type { BossData } from '../types/game';
 import { BOSS_ATTACK_MOVE_IDS } from './bossAttackMatchups';
+import { BOSS_CHARACTER_ASSETS, assetIdFromPath, characterAssetPathForId } from './characterAssets';
 
 const BOSS_ABILITIES: BossData['abilityPool'] = [
   'epithelial_barrier',
@@ -19,6 +20,20 @@ export const BOSS_COMBAT_STATS = {
   defense: 6,
 } as const;
 
+function bossAssetPath(id: string, index = 0): string {
+  return characterAssetPathForId(BOSS_CHARACTER_ASSETS, id)
+    ?? BOSS_CHARACTER_ASSETS[index % Math.max(1, BOSS_CHARACTER_ASSETS.length)]
+    ?? `images/character/boss/${id}.png`;
+}
+
+function bossAssetLabel(assetPath: string): string {
+  return assetIdFromPath(assetPath)
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 function createBoss(
   id: string,
   name: string,
@@ -35,7 +50,7 @@ function createBoss(
     scientificName,
     category: '보스 사람',
     glyph,
-    assetPath: `images/trainers/${id}.png`,
+    assetPath: bossAssetPath(id),
     maxHp,
     attack,
     defense,
@@ -52,7 +67,7 @@ const RAW_BOSSES: BossData[] = [
     scientificName: '수석 면역학자 (Chief Immunologist)',
     category: '보스 사람',
     glyph: 'BOSS',
-    assetPath: 'images/trainers/ace_trainer_f.png',
+    assetPath: bossAssetPath('immune_hq'),
     maxHp: 230,
     attack: 15,
     defense: 6,
@@ -177,7 +192,31 @@ const RAW_BOSSES: BossData[] = [
   ]),
 ];
 
-export const BOSSES: BossData[] = RAW_BOSSES.map((boss) => ({
+const RAW_BOSSES_WITH_ASSETS: BossData[] = RAW_BOSSES.map((boss, index) => ({
+  ...boss,
+  assetPath: bossAssetPath(boss.id, index),
+}));
+
+const USED_BOSS_ASSETS = new Set(RAW_BOSSES_WITH_ASSETS.map((boss) => boss.assetPath));
+
+const EXTRA_BOSSES: BossData[] = BOSS_CHARACTER_ASSETS
+  .filter((assetPath) => !USED_BOSS_ASSETS.has(assetPath))
+  .map((assetPath, index) => ({
+    id: assetIdFromPath(assetPath),
+    name: `면역 보스 ${index + 1}`,
+    scientificName: `${bossAssetLabel(assetPath)}형 방역 지휘관 (Immune Boss)`,
+    category: '보스 사람',
+    glyph: 'BOSS',
+    assetPath,
+    maxHp: 230 + (index % 6) * 8,
+    attack: BOSS_COMBAT_STATS.attack,
+    defense: BOSS_COMBAT_STATS.defense,
+    abilityPool: BOSS_ABILITIES,
+    movePool: BOSS_MOVES,
+    symptoms: ['전신 염증', '면역 반응', '감염 대응'],
+  }));
+
+export const BOSSES: BossData[] = [...RAW_BOSSES_WITH_ASSETS, ...EXTRA_BOSSES].map((boss) => ({
   ...boss,
   attack: BOSS_COMBAT_STATS.attack,
   defense: BOSS_COMBAT_STATS.defense,

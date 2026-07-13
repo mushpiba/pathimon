@@ -105,7 +105,7 @@ describe('battle UI helpers', () => {
   });
 
   it('scales trainer sprites up from extracted pokerogue frames', () => {
-    const trainer = createMonster({ isTrainer: true, assetPath: 'images/trainers/doctor_m.png' });
+    const trainer = createMonster({ isTrainer: true, assetPath: 'images/character/trainer/doctor_m.png' });
 
     expect(combatSpriteScale(trainer, 2.5)).toBe(2.75);
     expect(combatSpriteScale(createMonster(), 2.5)).toBe(2.5);

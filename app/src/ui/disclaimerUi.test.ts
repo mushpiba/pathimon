@@ -7,7 +7,7 @@ describe('disclaimer UI content', () => {
     const copy = [content.title, ...content.lines].join(' ');
 
     expect(content.blinkEffect.mode).toBe('horizontal-curtain');
-    expect(content.blinkEffect.initialHoldMs).toBe(1000);
+    expect(content.blinkEffect.initialHoldMs).toBe(1500);
     expect(content.durationMs).toBe(disclaimerBlinkDurationMs(content.blinkEffect));
     expect(content.blinkEffect.cycles).toHaveLength(3);
     expect(content.blinkEffect.cycles.map((cycle) => cycle.closeMs)).toEqual([144, 200, 280]);

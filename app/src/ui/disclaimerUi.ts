@@ -30,7 +30,7 @@ export function disclaimerBlinkDurationMs(effect: DisclaimerBlinkEffect): number
 export function disclaimerContent(): DisclaimerContent {
   const blinkEffect: DisclaimerBlinkEffect = {
     mode: 'horizontal-curtain',
-    initialHoldMs: 1000,
+    initialHoldMs: 1500,
     cycles: [
       { closeMs: 144, closedMs: 136, openMs: 208, openHoldMs: 416 },
       { closeMs: 200, closedMs: 192, openMs: 296, openHoldMs: 608 },
