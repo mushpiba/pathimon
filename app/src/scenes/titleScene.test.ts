@@ -10,4 +10,9 @@ describe('TitleScene rendering', () => {
     expect(titleSceneSource).toContain('drawMicrobeDecorations');
     expect(titleSceneSource).toContain('this.textures.addCanvas');
   });
+
+  it('starts with the story before showing the disclaimer', () => {
+    expect(titleSceneSource).toContain("this.scene.start('StoryScene')");
+    expect(titleSceneSource).not.toContain("this.scene.start('DisclaimerScene')");
+  });
 });

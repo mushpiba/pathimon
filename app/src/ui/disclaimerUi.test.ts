@@ -9,7 +9,8 @@ describe('disclaimer UI content', () => {
     expect(content.blinkEffect.mode).toBe('horizontal-curtain');
     expect(content.blinkEffect.initialHoldMs).toBe(1000);
     expect(content.durationMs).toBe(disclaimerBlinkDurationMs(content.blinkEffect));
-    expect(content.blinkEffect.cycles.map((cycle) => cycle.openHoldMs)).toEqual([360, 190, 90]);
+    expect(content.blinkEffect.cycles.map((cycle) => cycle.openHoldMs)).toEqual([520, 390, 280, 190]);
+    expect(content.blinkEffect.finalHoldMs).toBe(1000);
     expect(copy).toContain('상업적 이용을 금합니다');
     expect(copy).toContain('저작권');
     expect(copy).toContain('미완성');

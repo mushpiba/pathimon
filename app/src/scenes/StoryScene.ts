@@ -68,7 +68,7 @@ export class StoryScene extends Phaser.Scene {
     rect.setInteractive({ useHandCursor: true });
     rect.on('pointerover', () => rect.setFillStyle(0x4a405d));
     rect.on('pointerout', () => rect.setFillStyle(COLORS.panelDark));
-    rect.on('pointerdown', () => this.scene.start('GameGuideScene'));
+    rect.on('pointerdown', () => this.scene.start('DisclaimerScene'));
     addLabel(this, 930, 43, '스킵', 17).setOrigin(0.5);
   }
 
@@ -81,7 +81,7 @@ export class StoryScene extends Phaser.Scene {
 
   private advancePage(): void {
     if (this.pageIndex >= storyPages().length - 1) {
-      this.scene.start('GameGuideScene');
+      this.scene.start('DisclaimerScene');
       return;
     }
 

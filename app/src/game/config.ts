@@ -4,6 +4,7 @@ import { BossIntroScene } from '../scenes/BossIntroScene';
 import { DisclaimerScene } from '../scenes/DisclaimerScene';
 import { GameGuideScene } from '../scenes/GameGuideScene';
 import { ModeSelectScene } from '../scenes/ModeSelectScene';
+import { PostDisclaimerStoryScene } from '../scenes/PostDisclaimerStoryScene';
 import { ShopScene } from '../scenes/ShopScene';
 import { StarterSelectScene } from '../scenes/StarterSelectScene';
 import { StoryScene } from '../scenes/StoryScene';
@@ -22,6 +23,6 @@ export function createGameConfig(parent: string): Phaser.Types.Core.GameConfig {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [TitleScene, DisclaimerScene, StoryScene, GameGuideScene, ModeSelectScene, StarterSelectScene, BattleScene, ShopScene, BossIntroScene],
+    scene: [TitleScene, StoryScene, DisclaimerScene, PostDisclaimerStoryScene, GameGuideScene, ModeSelectScene, StarterSelectScene, BattleScene, ShopScene, BossIntroScene],
   };
 }

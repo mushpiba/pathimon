@@ -58,7 +58,7 @@ export class TitleScene extends Phaser.Scene {
     startButton.setInteractive({ useHandCursor: true });
     startButton.on('pointerover', () => startButton.setFillStyle(0x72d6ff));
     startButton.on('pointerout', () => startButton.setFillStyle(COLORS.line));
-    startButton.on('pointerdown', () => this.scene.start('DisclaimerScene'));
+    startButton.on('pointerdown', () => this.scene.start('StoryScene'));
   }
 
   private getContent(): TitleScreenContent {
