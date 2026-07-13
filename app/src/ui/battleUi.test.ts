@@ -155,7 +155,7 @@ describe('battle UI helpers', () => {
     expect(playerRows.map((row) => row.kind)).not.toContain('heading');
     expect(playerRows).toContainEqual({ kind: 'defense', text: '방어특성: 보체회피' });
     expect(wildRows.map((row) => row.kind)).not.toContain('heading');
-    expect(wildRows.map((row) => row.kind)).not.toContain('defense');
+    expect(wildRows).toContainEqual({ kind: 'defense', text: '방어특성: 보체회피' });
     expect(trainerRows.map((row) => row.kind)).not.toContain('scientificName');
     expect(bossRows).toContainEqual({ kind: 'heading', text: 'BOSS' });
   });

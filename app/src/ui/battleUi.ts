@@ -685,12 +685,11 @@ export function statusSummary(monster: RuntimeMonster): string {
 
 export function battleUnitPanelRows(monster: RuntimeMonster, role: BattleUnitPanelRole): BattleUnitPanelRow[] {
   const rows: BattleUnitPanelRow[] = [];
-  const isWildEnemy = role === 'enemy' && !monster.isTrainer;
   if (monster.isBoss) rows.push({ kind: 'heading', text: 'BOSS' });
 
   rows.push({ kind: 'name', text: monster.name });
   if (!monster.isTrainer) rows.push({ kind: 'scientificName', text: monster.scientificName });
-  if (!isWildEnemy && (!monster.isTrainer || role !== 'player')) rows.push({ kind: 'defense', text: `방어특성: ${defenseTraitSummary(monster)}` });
+  if (!monster.isTrainer || role !== 'player') rows.push({ kind: 'defense', text: `방어특성: ${defenseTraitSummary(monster)}` });
   rows.push({ kind: 'status', text: statusSummary(monster) });
   if (monster.isTrainer) rows.push({ kind: 'symptoms', text: `증상: ${symptomSummary(monster)}` });
 

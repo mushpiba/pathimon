@@ -88,6 +88,7 @@ export class BattleScene extends Phaser.Scene {
   private statusMoveCursor = 0;
   private statusLearningOpen = false;
   private currentBgmKey = '';
+  private selectedBgmKey = '';
   private isAnimating = false;
   private enemyCombatSprite?: Phaser.GameObjects.Image | Phaser.GameObjects.Text;
   private playerCombatSprite?: Phaser.GameObjects.Image | Phaser.GameObjects.Text;
@@ -112,6 +113,7 @@ export class BattleScene extends Phaser.Scene {
     this.statusMoveCursor = 0;
     this.statusLearningOpen = false;
     this.currentBgmKey = '';
+    this.selectedBgmKey = this.chooseBgmKey();
     this.isAnimating = false;
     this.enemyCombatSprite = undefined;
     this.playerCombatSprite = undefined;
@@ -163,8 +165,7 @@ export class BattleScene extends Phaser.Scene {
     pathimonTypeIconAssetPaths().forEach((path) => this.queueImage(path));
     this.queueImage(lockedMoveOverlayPath());
 
-    const bgmAssets = battleBgmAssetPaths();
-    [...bgmAssets.normal, ...bgmAssets.boss].forEach((path) => this.queueAudio(path));
+    this.queueAudio(this.selectedBgmKey);
     Object.values(battleSfxAssetPaths()).forEach((path) => this.queueAudio(path));
 
     const monsters = [...this.state.party];
@@ -199,6 +200,15 @@ export class BattleScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown', this.handleKeyboardDown);
   }
 
+  private chooseBgmKey(): string {
+    const enemy = this.state.enemy;
+    return chooseBattleBgm({
+      floor: this.state.floor,
+      isBoss: Boolean(enemy?.isBoss),
+      roll: Math.random(),
+    });
+  }
+
   private handleKeyboardDown = (event: KeyboardEvent): void => {
     const key = event.key.toLowerCase();
 
@@ -224,12 +234,7 @@ export class BattleScene extends Phaser.Scene {
   };
 
   private playBattleBgm(): void {
-    const enemy = this.state.enemy;
-    const bgmKey = chooseBattleBgm({
-      floor: this.state.floor,
-      isBoss: Boolean(enemy?.isBoss),
-      roll: Math.random(),
-    });
+    const bgmKey = this.selectedBgmKey || this.chooseBgmKey();
 
     this.stopBattleBgm();
     this.currentBgmKey = bgmKey;

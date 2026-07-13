@@ -23,4 +23,10 @@ describe('BattleScene pathimon type borders', () => {
     expect(battleSceneSource).toContain('const overlayPath = lockedMoveOverlayPath();');
     expect(battleSceneSource).toContain('this.add.image(x, y, overlayPath).setOrigin(0).setDisplaySize(width, height).setAlpha(0.96);');
   });
+
+  it('preloads only the selected BGM instead of every battle track', () => {
+    expect(battleSceneSource).toContain('this.selectedBgmKey = this.chooseBgmKey();');
+    expect(battleSceneSource).toContain('this.queueAudio(this.selectedBgmKey);');
+    expect(battleSceneSource).not.toContain('[...bgmAssets.normal, ...bgmAssets.boss].forEach((path) => this.queueAudio(path));');
+  });
 });

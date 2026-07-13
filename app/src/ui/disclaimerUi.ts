@@ -1,12 +1,48 @@
 export interface DisclaimerContent {
+  blinkEffect: DisclaimerBlinkEffect;
   durationMs: number;
   lines: string[];
   title: string;
 }
 
+export interface DisclaimerBlinkCycle {
+  closedMs: number;
+  closeMs: number;
+  openHoldMs: number;
+  openMs: number;
+}
+
+export interface DisclaimerBlinkEffect {
+  cycles: DisclaimerBlinkCycle[];
+  finalCloseMs: number;
+  finalHoldMs: number;
+  initialHoldMs: number;
+  mode: 'horizontal-curtain';
+}
+
+export function disclaimerBlinkDurationMs(effect: DisclaimerBlinkEffect): number {
+  return effect.initialHoldMs
+    + effect.cycles.reduce((sum, cycle) => sum + cycle.closeMs + cycle.closedMs + cycle.openMs + cycle.openHoldMs, 0)
+    + effect.finalCloseMs
+    + effect.finalHoldMs;
+}
+
 export function disclaimerContent(): DisclaimerContent {
+  const blinkEffect: DisclaimerBlinkEffect = {
+    mode: 'horizontal-curtain',
+    initialHoldMs: 1000,
+    cycles: [
+      { closeMs: 90, closedMs: 80, openMs: 120, openHoldMs: 360 },
+      { closeMs: 70, closedMs: 70, openMs: 90, openHoldMs: 190 },
+      { closeMs: 55, closedMs: 60, openMs: 70, openHoldMs: 90 },
+    ],
+    finalCloseMs: 130,
+    finalHoldMs: 90,
+  };
+
   return {
-    durationMs: 700,
+    blinkEffect,
+    durationMs: disclaimerBlinkDurationMs(blinkEffect),
     title: '면책조항',
     lines: [
       '이 게임은 비상업적 학습용 미완성 프로토타입입니다.',
