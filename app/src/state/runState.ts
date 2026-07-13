@@ -126,6 +126,10 @@ function clampActiveIndex(activeIndex: number, partyLength: number): number {
   return Math.min(Math.max(0, partyLength - 1), Math.max(0, activeIndex));
 }
 
+function createBgmSeed(random: () => number): number {
+  return Math.floor(random() * 0x100000000);
+}
+
 function planInitialBossMove(state: RunState): void {
   const enemy = state.enemy;
   const actor = state.party[state.activeIndex];
@@ -161,16 +165,20 @@ export function createInitialRunState(
   });
 
   const capsuleInventory = createInitialCapsuleInventory();
+  const wildRosterIds = createWildRosterIds(wildRosterRandom);
+  const resolvedBossRosterIds = bossRosterIds ? [...bossRosterIds] : createBossRosterIds(wildRosterRandom, TOTAL_FLOORS / 10);
+  const bgmSeed = createBgmSeed(wildRosterRandom);
 
   return {
     floor: 1,
+    bgmSeed,
     mode,
     visualStyle,
     money: 0,
     capsules: totalCapsules(capsuleInventory),
     capsuleInventory,
-    wildRosterIds: createWildRosterIds(wildRosterRandom),
-    bossRosterIds: bossRosterIds ? [...bossRosterIds] : createBossRosterIds(wildRosterRandom, TOTAL_FLOORS / 10),
+    wildRosterIds,
+    bossRosterIds: resolvedBossRosterIds,
     party: starterDataList.map((starter) => {
       const monster = createMonsterInstance(starter);
       monster.signatureUnlocked = mode === 'learning';

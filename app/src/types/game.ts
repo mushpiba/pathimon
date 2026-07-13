@@ -317,6 +317,7 @@ export interface ShopItem {
 
 export interface RunState {
   floor: number;
+  bgmSeed: number;
   mode: RunMode;
   visualStyle: VisualStyle;
   money: number;

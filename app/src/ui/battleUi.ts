@@ -94,8 +94,9 @@ export interface BattleFieldLayerLayout {
 }
 
 export interface BattleBgmAssets {
+  wild: string[];
+  trainer: string[];
   boss: string[];
-  normal: string[];
 }
 
 export interface BattleSfxAssets {
@@ -160,34 +161,134 @@ export function battleSceneAssetPaths(): BattleSceneAssets {
 
 export function battleBgmAssetPaths(): BattleBgmAssets {
   return {
-    normal: [
+    wild: [
+      'audio/bgm/abyss.mp3',
+      'audio/bgm/badlands.mp3',
+      'audio/bgm/beach.mp3',
+      'audio/bgm/construction_site.mp3',
+      'audio/bgm/forest.mp3',
+      'audio/bgm/ice_cave.mp3',
+      'audio/bgm/laboratory.mp3',
+      'audio/bgm/lake.mp3',
+      'audio/bgm/meadow.mp3',
+      'audio/bgm/plains.mp3',
+      'audio/bgm/ruins.mp3',
+      'audio/bgm/seabed.mp3',
+      'audio/bgm/snowy_forest.mp3',
+      'audio/bgm/swamp.mp3',
+      'audio/bgm/temple.mp3',
+      'audio/bgm/town.mp3',
+      'audio/bgm/volcano.mp3',
+      'audio/bgm/desert.mp3',
+      'audio/bgm/factory.mp3',
+      'audio/bgm/grass.mp3',
+      'audio/bgm/island.mp3',
+      'audio/bgm/jungle.mp3',
+      'audio/bgm/metropolis.mp3',
+      'audio/bgm/power_plant.mp3',
+      'audio/bgm/sea.mp3',
+      'audio/bgm/slum.mp3',
+      'audio/bgm/wasteland.mp3',
+      'audio/bgm/tall_grass.mp3',
+    ],
+    trainer: [
+      'audio/bgm/battle_rival.mp3',
+      'audio/bgm/battle_rocket_grunt.mp3',
       'audio/bgm/battle_wild.mp3',
-      'audio/bgm/battle_wild_strong.mp3',
       'audio/bgm/battle_trainer.mp3',
-      'audio/bgm/battle_kanto_gym.mp3',
-      'audio/bgm/battle_johto_gym.mp3',
-      'audio/bgm/battle_unova_gym.mp3',
-      'audio/bgm/battle_colress.mp3',
     ],
     boss: [
-      'audio/bgm/battle_final.mp3',
-      'audio/bgm/battle_champion_iris.mp3',
-      'audio/bgm/battle_galar_champion.mp3',
+      'audio/bgm/battle_aqua_magma_grunt.mp3',
+      'audio/bgm/battle_champion_geeta.mp3',
+      'audio/bgm/battle_champion_kieran.mp3',
       'audio/bgm/battle_galactic_boss.mp3',
-      'audio/bgm/battle_plasma_boss.mp3',
+      'audio/bgm/battle_kalos_elite.mp3',
+      'audio/bgm/battle_legendary_giratina.mp3',
+      'audio/bgm/battle_legendary_lake_trio.mp3',
+      'audio/bgm/battle_legendary_res_zek.mp3',
+      'audio/bgm/battle_legendary_ruinous.mp3',
+      'audio/bgm/battle_legendary_terapagos.mp3',
+      'audio/bgm/battle_macro_boss.mp3',
+      'audio/bgm/battle_plasma_grunt.mp3',
+      'audio/bgm/battle_rival_3.mp3',
+      'audio/bgm/battle_rogue_mega.mp3',
+      'audio/bgm/battle_sinnoh_champion.mp3',
+      'audio/bgm/battle_sinnoh_gym.mp3',
+      'audio/bgm/battle_skull_grunt.mp3',
+      'audio/bgm/battle_star_boss.mp3',
+      'audio/bgm/battle_star_grunt.mp3',
+      'audio/bgm/battle_unova_gym.mp3',
     ],
   };
 }
 
-export function chooseBattleBgm(input: { floor: number; isBoss: boolean; roll: number }): string {
+export function battleBgmAudioPaths(): string[] {
   const assets = battleBgmAssetPaths();
-  const pool = input.isBoss || input.floor % 10 === 0 ? assets.boss : assets.normal;
+  return [...new Set([
+    ...assets.wild,
+    ...assets.trainer,
+    ...assets.boss,
+    'audio/bgm/battle_galar_gym.mp3',
+    'audio/bgm/end_summit.mp3',
+    'audio/bgm/battle_legendary_unova.mp3',
+  ])];
+}
 
-  const index = Math.min(
-    pool.length - 1,
-    Math.max(0, Math.floor(input.roll * pool.length)),
+function clampedPoolIndex(length: number, roll: number): number {
+  return Math.min(
+    length - 1,
+    Math.max(0, Math.floor(roll * length)),
   );
+}
+
+function wildBgmGroupIndex(floor: number): number {
+  return Math.max(0, Math.floor((floor - 1) / 5));
+}
+
+function seededRoll(seed: number, salt: number): number {
+  let value = (seed ^ Math.imul(salt + 1, 0x9e3779b1)) >>> 0;
+  value = Math.imul(value ^ (value >>> 16), 0x85ebca6b) >>> 0;
+  value = Math.imul(value ^ (value >>> 13), 0xc2b2ae35) >>> 0;
+  return ((value ^ (value >>> 16)) >>> 0) / 0x100000000;
+}
+
+function isSkyTowerSummitFloor(floor: number): boolean {
+  return (floor >= 90 && floor <= 94) || (floor >= 96 && floor <= 99);
+}
+
+export function chooseBattleBgm(input: { encounterKind?: EncounterKind; floor: number; isBoss?: boolean; roll: number; seed?: number }): string {
+  const assets = battleBgmAssetPaths();
+  if (input.floor === 100) return 'audio/bgm/battle_legendary_unova.mp3';
+  if (isSkyTowerSummitFloor(input.floor)) return 'audio/bgm/end_summit.mp3';
+  if (input.floor === 70) return 'audio/bgm/battle_galar_gym.mp3';
+
+  const encounterKind = input.encounterKind ?? (input.isBoss || input.floor % 10 === 0 ? 'boss' : input.floor % 5 === 0 ? 'trainer' : 'wild');
+  const pool = encounterKind === 'boss'
+    ? assets.boss
+    : encounterKind === 'trainer'
+      ? assets.trainer
+      : assets.wild;
+  const roll = encounterKind === 'wild' && input.seed !== undefined
+    ? seededRoll(input.seed, wildBgmGroupIndex(input.floor))
+    : input.roll;
+  const index = clampedPoolIndex(pool.length, roll);
   return pool[index];
+}
+
+export function shouldPreserveBattleBgm(input: {
+  currentEncounterKind: EncounterKind;
+  currentKey: string;
+  nextEncounterKind: EncounterKind;
+  nextFloor: number;
+  seed?: number;
+}): boolean {
+  if (input.currentEncounterKind !== 'wild' || input.nextEncounterKind !== 'wild') return false;
+  return input.currentKey === chooseBattleBgm({
+    floor: input.nextFloor,
+    encounterKind: input.nextEncounterKind,
+    roll: 0,
+    seed: input.seed,
+  });
 }
 
 export function battleSfxAssetPaths(): BattleSfxAssets {

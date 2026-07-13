@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { battleBgmAssetPaths } from '../ui/battleUi';
+import { battleBgmAudioPaths } from '../ui/battleUi';
 
 export class BgmPreloadScene extends Phaser.Scene {
   constructor() {
@@ -11,8 +11,7 @@ export class BgmPreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const assets = battleBgmAssetPaths();
-    [...assets.normal, ...assets.boss].forEach((path) => {
+    battleBgmAudioPaths().forEach((path) => {
       if (!this.cache.audio.exists(path)) {
         this.load.audio(path, path);
       }

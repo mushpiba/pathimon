@@ -70,6 +70,7 @@ describe('run state loop', () => {
     expect(state.party[0].name).toBe('탄저록스');
     expect(state.party[0].templateId).toBe(STARTER_ID);
     expect(state.phase).toBe('story');
+    expect(Number.isInteger(state.bgmSeed)).toBe(true);
   });
 
   it('can start with the selected starter pathimon', () => {
@@ -621,6 +622,15 @@ describe('run state loop', () => {
 
     expect(result.activeIndex).toBe(0);
     expect(result.lastLog).toContain('교체할 패시몬');
+  });
+
+  it('keeps the run BGM seed while advancing floors', () => {
+    const state = createInitialRunState('challenge', 'character', 'anthrax', () => 0.42);
+    state.phase = 'floorClear';
+
+    const next = advanceFromShop(state);
+
+    expect(next.bgmSeed).toBe(state.bgmSeed);
   });
 
   it('does not spend capsules when capture is blocked against a boss', () => {

@@ -29,4 +29,13 @@ describe('BattleScene pathimon type borders', () => {
     expect(battleSceneSource).toContain('this.queueAudio(this.selectedBgmKey);');
     expect(battleSceneSource).not.toContain('[...bgmAssets.normal, ...bgmAssets.boss].forEach((path) => this.queueAudio(path));');
   });
+
+  it('keeps wild-block BGM continuous and refreshes boss roster when returning home', () => {
+    expect(battleSceneSource).toContain('createBossRosterIds');
+    expect(battleSceneSource).toContain('private preserveBattleBgmOnShutdown = false;');
+    expect(battleSceneSource).toContain('shouldPreserveBattleBgm');
+    expect(battleSceneSource).toContain('this.registry.set(\'bossRosterIds\', createBossRosterIds(Math.random));');
+    expect(battleSceneSource).toContain("this.drawMenuButton(780, 444, 160, 48, '처음으로', () => this.returnToModeSelect())");
+    expect(battleSceneSource).toContain("this.scene.start('ModeSelectScene');");
+  });
 });

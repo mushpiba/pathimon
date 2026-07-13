@@ -4,6 +4,7 @@ import type { RuntimeMonster } from '../types/game';
 import {
   battleActionOptions,
   battleBgmAssetPaths,
+  battleBgmAudioPaths,
   battleMoveUnavailableReason,
   capsuleIconPath,
   battleFieldLayerLayouts,
@@ -41,6 +42,7 @@ import {
   statusProfileMemoLines,
   symptomSummary,
   statusSummary,
+  shouldPreserveBattleBgm,
 } from './battleUi';
 
 function createMonster(overrides: Partial<RuntimeMonster> = {}): RuntimeMonster {
@@ -520,13 +522,55 @@ describe('battle UI helpers', () => {
     });
   });
 
-  it('chooses random normal battle bgm and boss bgm from copied pokerogue assets', () => {
+  it('chooses BGM by encounter playlist with fixed late-floor overrides', () => {
     const assets = battleBgmAssetPaths();
 
-    expect(chooseBattleBgm({ floor: 1, isBoss: false, roll: 0 })).toBe(assets.normal[0]);
-    expect(chooseBattleBgm({ floor: 9, isBoss: false, roll: 0.99 })).toBe(assets.normal[assets.normal.length - 1]);
-    expect(chooseBattleBgm({ floor: 10, isBoss: true, roll: 0 })).toBe(assets.boss[0]);
-    expect(chooseBattleBgm({ floor: 20, isBoss: true, roll: 0.99 })).toBe(assets.boss[assets.boss.length - 1]);
+    expect(assets.wild).toContain('audio/bgm/abyss.mp3');
+    expect(assets.trainer).toContain('audio/bgm/battle_rival.mp3');
+    expect(assets.boss).toContain('audio/bgm/battle_unova_gym.mp3');
+    expect(battleBgmAudioPaths()).toContain('audio/bgm/battle_galar_gym.mp3');
+    expect(battleBgmAudioPaths()).toContain('audio/bgm/end_summit.mp3');
+    expect(battleBgmAudioPaths()).toContain('audio/bgm/battle_legendary_unova.mp3');
+
+    expect(chooseBattleBgm({ floor: 1, encounterKind: 'wild', roll: 0, seed: 1234 }))
+      .toBe(chooseBattleBgm({ floor: 4, encounterKind: 'wild', roll: 0.99, seed: 1234 }));
+    expect(chooseBattleBgm({ floor: 31, encounterKind: 'wild', roll: 0, seed: 1234 }))
+      .toBe(chooseBattleBgm({ floor: 34, encounterKind: 'wild', roll: 0.99, seed: 1234 }));
+    expect(chooseBattleBgm({ floor: 5, encounterKind: 'trainer', roll: 0.99, seed: 1234 }))
+      .toBe(assets.trainer[assets.trainer.length - 1]);
+    expect(chooseBattleBgm({ floor: 80, encounterKind: 'boss', roll: 0.99, seed: 1234 }))
+      .toBe(assets.boss[assets.boss.length - 1]);
+    expect(chooseBattleBgm({ floor: 70, encounterKind: 'boss', roll: 0, seed: 1234 }))
+      .toBe('audio/bgm/battle_galar_gym.mp3');
+    expect(chooseBattleBgm({ floor: 90, encounterKind: 'boss', roll: 0, seed: 1234 }))
+      .toBe('audio/bgm/end_summit.mp3');
+    expect(chooseBattleBgm({ floor: 94, encounterKind: 'wild', roll: 0, seed: 1234 }))
+      .toBe('audio/bgm/end_summit.mp3');
+    expect(chooseBattleBgm({ floor: 96, encounterKind: 'wild', roll: 0, seed: 1234 }))
+      .toBe('audio/bgm/end_summit.mp3');
+    expect(chooseBattleBgm({ floor: 99, encounterKind: 'wild', roll: 0, seed: 1234 }))
+      .toBe('audio/bgm/end_summit.mp3');
+    expect(chooseBattleBgm({ floor: 100, encounterKind: 'boss', roll: 0, seed: 1234 }))
+      .toBe('audio/bgm/battle_legendary_unova.mp3');
+  });
+
+  it('preserves wild BGM only while staying inside the same four-floor wild block', () => {
+    const currentKey = chooseBattleBgm({ floor: 1, encounterKind: 'wild', roll: 0, seed: 777 });
+
+    expect(shouldPreserveBattleBgm({
+      currentEncounterKind: 'wild',
+      currentKey,
+      nextEncounterKind: 'wild',
+      nextFloor: 2,
+      seed: 777,
+    })).toBe(true);
+    expect(shouldPreserveBattleBgm({
+      currentEncounterKind: 'wild',
+      currentKey,
+      nextEncounterKind: 'trainer',
+      nextFloor: 5,
+      seed: 777,
+    })).toBe(false);
   });
 
   it('previews a different move before arming it for execution', () => {

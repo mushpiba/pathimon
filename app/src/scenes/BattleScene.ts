@@ -8,13 +8,14 @@ import {
   resolvePlayerMove,
   resolveSwitchMonster,
 } from '../battle/turn';
+import { createBossRosterIds } from '../data/bosses';
 import { CAPSULE_LABELS, CAPSULE_ORDER } from '../data/capsules';
 import { advanceFromShop, createInitialRunState, enterBattle } from '../state/runState';
 import type { CapsuleId, HitEffectiveness, MoveId, RunState, RuntimeMonster } from '../types/game';
 import { COLORS, APP_WIDTH, APP_HEIGHT } from '../game/constants';
 import {
   battleActionOptions,
-  battleBgmAssetPaths,
+  battleBgmAudioPaths,
   battleSfxAssetPaths,
   battleMoveUnavailableReason,
   battleFieldLayerLayouts,
@@ -49,6 +50,7 @@ import {
   pathimonTypeIcon,
   pathimonSpriteAssets,
   resolveMoveSelectionPress,
+  shouldPreserveBattleBgm,
   statusProfileMemoLines,
 } from '../ui/battleUi';
 import type { BattleActionId, BattleUnitPanelRole, PartyMenuPurpose, PathimonTypeIcon } from '../ui/battleUi';
@@ -89,6 +91,7 @@ export class BattleScene extends Phaser.Scene {
   private statusLearningOpen = false;
   private currentBgmKey = '';
   private selectedBgmKey = '';
+  private preserveBattleBgmOnShutdown = false;
   private isAnimating = false;
   private enemyCombatSprite?: Phaser.GameObjects.Image | Phaser.GameObjects.Text;
   private playerCombatSprite?: Phaser.GameObjects.Image | Phaser.GameObjects.Text;
@@ -114,6 +117,7 @@ export class BattleScene extends Phaser.Scene {
     this.statusLearningOpen = false;
     this.currentBgmKey = '';
     this.selectedBgmKey = this.chooseBgmKey();
+    this.preserveBattleBgmOnShutdown = false;
     this.isAnimating = false;
     this.enemyCombatSprite = undefined;
     this.playerCombatSprite = undefined;
@@ -127,7 +131,9 @@ export class BattleScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => destroySceneChildren(this));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.input.keyboard?.off('keydown', this.handleKeyboardDown);
-      this.stopBattleBgm();
+      if (!this.preserveBattleBgmOnShutdown) {
+        this.stopBattleBgm();
+      }
     });
     this.setupKeyboardControls();
     this.playBattleBgm();
@@ -201,11 +207,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private chooseBgmKey(): string {
-    const enemy = this.state.enemy;
     return chooseBattleBgm({
       floor: this.state.floor,
-      isBoss: Boolean(enemy?.isBoss),
+      encounterKind: this.state.encounterKind,
       roll: Math.random(),
+      seed: this.state.bgmSeed,
     });
   }
 
@@ -236,20 +242,24 @@ export class BattleScene extends Phaser.Scene {
   private playBattleBgm(): void {
     const bgmKey = this.selectedBgmKey || this.chooseBgmKey();
 
-    this.stopBattleBgm();
+    this.stopBattleBgm(bgmKey);
     this.currentBgmKey = bgmKey;
     const existing = this.sound.get(bgmKey);
+    if (existing?.isPlaying) {
+      return;
+    }
+
     const sound = existing ?? this.sound.add(bgmKey, { loop: true, volume: 0.35 });
     sound.play();
   }
 
-  private stopBattleBgm(): void {
-    const bgmAssets = battleBgmAssetPaths();
-    [...bgmAssets.normal, ...bgmAssets.boss].forEach((key) => {
+  private stopBattleBgm(exceptKey = ''): void {
+    battleBgmAudioPaths().forEach((key) => {
+      if (key === exceptKey) return;
       const sound = this.sound.get(key);
       if (sound) sound.stop();
     });
-    this.currentBgmKey = '';
+    if (!exceptKey) this.currentBgmKey = '';
   }
 
   private render(): void {
@@ -1509,16 +1519,30 @@ export class BattleScene extends Phaser.Scene {
       minSize: 11,
       maxLines: 3,
     }).setAlpha(0.9);
-    this.drawMenuButton(780, 444, 160, 48, '처음으로', () => this.scene.start('ModeSelectScene'));
+    this.drawMenuButton(780, 444, 160, 48, '처음으로', () => this.returnToModeSelect());
   }
 
   private goNextFloor(): void {
     const nextState = advanceFromShop(this.state);
+    this.preserveBattleBgmOnShutdown = shouldPreserveBattleBgm({
+      currentEncounterKind: this.state.encounterKind,
+      currentKey: this.selectedBgmKey,
+      nextEncounterKind: nextState.encounterKind,
+      nextFloor: nextState.floor,
+      seed: nextState.bgmSeed,
+    });
     if (nextState.phase === 'bossIntro') {
       this.scene.start('BossIntroScene', { state: nextState });
       return;
     }
     this.scene.start('BattleScene', { state: nextState });
+  }
+
+  private returnToModeSelect(): void {
+    this.preserveBattleBgmOnShutdown = false;
+    this.registry.set('bossRosterIds', createBossRosterIds(Math.random));
+    this.stopBattleBgm();
+    this.scene.start('ModeSelectScene');
   }
 
   private drawMobileOverlay(): void {
@@ -1539,7 +1563,7 @@ export class BattleScene extends Phaser.Scene {
     this.drawActionOverlayButton(802, 510, 44, 'B', () => this.handleCancelInput(), depth + 1);
     const homeButton = mobileHomeButtonLayout();
     this.drawOverlayTextButton(homeButton.x, homeButton.y, homeButton.width, homeButton.height, homeButton.label, () => {
-      this.scene.start('ModeSelectScene');
+      this.returnToModeSelect();
     }, depth + 1, true);
   }
 

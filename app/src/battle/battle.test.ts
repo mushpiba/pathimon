@@ -63,6 +63,7 @@ function createMonster(overrides: Partial<RuntimeMonster> = {}): RuntimeMonster 
 function createBattleState(overrides: Partial<RunState> = {}): RunState {
   return {
     floor: 10,
+    bgmSeed: 1,
     mode: 'challenge',
     visualStyle: 'character',
     money: 0,
@@ -403,6 +404,7 @@ describe('battle engine', () => {
   it('advances staged moves after use and wraps after the final stage', () => {
     const battle: RunState = {
       floor: 5,
+      bgmSeed: 1,
       mode: 'challenge',
       visualStyle: 'character',
       money: 0,
@@ -589,6 +591,7 @@ describe('battle engine', () => {
   it('uses visual and hearing abnormality as 25% accuracy penalties', () => {
     const baseState: RunState = {
       floor: 5,
+      bgmSeed: 1,
       mode: 'challenge',
       visualStyle: 'character',
       money: 0,
