@@ -19,6 +19,13 @@ function isOutsideViewport(item: { startX: number; startY: number }, width: numb
   return item.startX < 0 || item.startX > width || item.startY < 0 || item.startY > height;
 }
 
+function isSafeLaunchPoint(item: { startX: number; startY: number }, width: number, height: number): boolean {
+  const fromTop = item.startY < 0 && item.startX >= width * 0.04 && item.startX <= width * 0.96;
+  const fromLeft = item.startX < 0 && item.startY >= height * 0.06 && item.startY <= height * 0.46;
+  const fromRight = item.startX > width && item.startY >= height * 0.06 && item.startY <= height * 0.46;
+  return fromTop || fromLeft || fromRight;
+}
+
 describe('pathimon screensaver', () => {
   it('uses the current pathimon front-image roster as the sprite pool', () => {
     const pool = pathimonScreensaverSpritePool();
@@ -52,6 +59,8 @@ describe('pathimon screensaver', () => {
       const second = items[index + 1]!;
       expect(first.collisionGroup).toBe(second.collisionGroup);
       expect(first.launchZone).not.toBe(second.launchZone);
+      expect(['top', 'left', 'right']).toContain(first.launchZone);
+      expect(['top', 'left', 'right']).toContain(second.launchZone);
       expect(first.delayMs).toBe(second.delayMs);
       expect(first.durationMs).toBe(second.durationMs);
       expect(first.impactX).toBeCloseTo(second.impactX, 5);
@@ -62,6 +71,8 @@ describe('pathimon screensaver', () => {
       expect(first.impactY).toBeLessThanOrEqual(576 * 0.42);
       expect(isOutsideViewport(first, 1024, 576)).toBe(true);
       expect(isOutsideViewport(second, 1024, 576)).toBe(true);
+      expect(isSafeLaunchPoint(first, 1024, 576)).toBe(true);
+      expect(isSafeLaunchPoint(second, 1024, 576)).toBe(true);
       if (first.endY > 0) expect(first.endY).toBeLessThanOrEqual(576 * 0.52);
       if (second.endY > 0) expect(second.endY).toBeLessThanOrEqual(576 * 0.52);
       expect(first.respawnDelayMs).toBe(1000);
@@ -71,6 +82,26 @@ describe('pathimon screensaver', () => {
       expect(first.durationMs).toBeGreaterThanOrEqual(4500);
       expect(first.durationMs).toBeLessThanOrEqual(7000);
     }
+  });
+
+  it('randomizes launches across safe non-bottom edges', () => {
+    const random = seededRandom(456);
+    const zones = new Set<string>();
+
+    for (let index = 0; index < 60; index += 1) {
+      const pair = createPathimonScreensaverPair({
+        height: 576,
+        random,
+        sprites: ['images/pathimon/anthrax-front.png', 'images/pathimon/cereus-front.png'],
+        width: 1024,
+      });
+      pair.forEach((item) => {
+        zones.add(item.launchZone);
+        expect(isSafeLaunchPoint(item, 1024, 576)).toBe(true);
+      });
+    }
+
+    expect([...zones].sort()).toEqual(['left', 'right', 'top']);
   });
 
   it('keeps recurring sprite swaps offscreen by starting respawned pairs outside the viewport', () => {
@@ -83,6 +114,7 @@ describe('pathimon screensaver', () => {
 
     expect(pair).toHaveLength(2);
     expect(pair.every((item) => isOutsideViewport(item, 1024, 576))).toBe(true);
+    expect(pair.every((item) => isSafeLaunchPoint(item, 1024, 576))).toBe(true);
   });
 
   it('keeps the first 8 to 12 pathimon visible immediately while BGM loads', () => {

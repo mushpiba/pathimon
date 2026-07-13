@@ -1,7 +1,7 @@
 import { wildEncounterRoster } from '../data/monsters';
 
 type RandomSource = () => number;
-export type PathimonLaunchZone = 'upperLeft' | 'lowerRight';
+export type PathimonLaunchZone = 'top' | 'left' | 'right';
 
 export interface PathimonScreensaverItem {
   assetPath: string;
@@ -30,6 +30,7 @@ export interface PathimonScreensaverOptions {
 const MIN_VISIBLE_PATHIMON = 8;
 const MAX_VISIBLE_PATHIMON = 12;
 const RESPAWN_DELAY_MS = 1000;
+const SAFE_LAUNCH_ZONES: PathimonLaunchZone[] = ['top', 'left', 'right'];
 
 export function pathimonScreensaverSpritePool(): string[] {
   return [...new Set(
@@ -50,6 +51,15 @@ function randomIndex(length: number, random: RandomSource): number {
   return Math.min(length - 1, Math.max(0, Math.floor(random() * length)));
 }
 
+function randomLaunchZone(random: RandomSource): PathimonLaunchZone {
+  return SAFE_LAUNCH_ZONES[randomIndex(SAFE_LAUNCH_ZONES.length, random)]!;
+}
+
+function randomDifferentLaunchZone(zone: PathimonLaunchZone, random: RandomSource): PathimonLaunchZone {
+  const candidates = SAFE_LAUNCH_ZONES.filter((candidate) => candidate !== zone);
+  return candidates[randomIndex(candidates.length, random)]!;
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -61,14 +71,9 @@ function launchPoint(
   margin: number,
   random: RandomSource,
 ): { x: number; y: number } {
-  const horizontalEdge = random() < 0.5;
-  if (zone === 'upperLeft') {
-    if (horizontalEdge) return { x: randomRange(width * 0.04, width * 0.42, random), y: -margin };
-    return { x: -margin, y: randomRange(height * 0.08, height * 0.42, random) };
-  }
-
-  if (horizontalEdge) return { x: width + margin, y: randomRange(height * 0.16, height * 0.48, random) };
-  return { x: randomRange(width * 0.58, width * 0.96, random), y: -margin };
+  if (zone === 'top') return { x: randomRange(width * 0.04, width * 0.96, random), y: -margin };
+  if (zone === 'left') return { x: -margin, y: randomRange(height * 0.06, height * 0.46, random) };
+  return { x: width + margin, y: randomRange(height * 0.06, height * 0.46, random) };
 }
 
 function exitPoint(
@@ -78,14 +83,9 @@ function exitPoint(
   margin: number,
   random: RandomSource,
 ): { x: number; y: number } {
-  const horizontalEdge = random() < 0.5;
-  if (zone === 'upperLeft') {
-    if (horizontalEdge) return { x: randomRange(-margin, width * 0.36, random), y: -margin };
-    return { x: -margin, y: randomRange(height * 0.06, height * 0.46, random) };
-  }
-
-  if (horizontalEdge) return { x: width + margin, y: randomRange(height * 0.12, height * 0.46, random) };
-  return { x: randomRange(width * 0.62, width + margin, random), y: -margin };
+  if (zone === 'top') return { x: randomRange(width * 0.04, width * 0.96, random), y: -margin };
+  if (zone === 'left') return { x: -margin, y: randomRange(height * 0.06, height * 0.46, random) };
+  return { x: width + margin, y: randomRange(height * 0.06, height * 0.46, random) };
 }
 
 function createPairItem(
@@ -123,6 +123,8 @@ export function createPathimonScreensaverPair(
   collisionGroup = 0,
 ): [PathimonScreensaverItem, PathimonScreensaverItem] {
   const random = options.random ?? Math.random;
+  const firstZone = randomLaunchZone(random);
+  const secondZone = randomDifferentLaunchZone(firstZone, random);
   const shared = {
     delayMs: Math.round(randomRange(0, 650, random)),
     durationMs: Math.round(randomRange(4500, 7000, random)),
@@ -131,8 +133,8 @@ export function createPathimonScreensaverPair(
   };
 
   return [
-    createPairItem(options, 'upperLeft', collisionGroup, shared, random),
-    createPairItem(options, 'lowerRight', collisionGroup, shared, random),
+    createPairItem(options, firstZone, collisionGroup, shared, random),
+    createPairItem(options, secondZone, collisionGroup, shared, random),
   ];
 }
 
