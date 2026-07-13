@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { queueIntroBgm } from '../audio/introBgm';
 import { APP_HEIGHT, APP_WIDTH, COLORS } from '../game/constants';
 import { addLabel, drawPanel } from '../ui/draw';
 import { disclaimerContent, type DisclaimerBlinkEffect } from '../ui/disclaimerUi';
@@ -6,6 +7,10 @@ import { disclaimerContent, type DisclaimerBlinkEffect } from '../ui/disclaimerU
 export class DisclaimerScene extends Phaser.Scene {
   constructor() {
     super('DisclaimerScene');
+  }
+
+  preload(): void {
+    queueIntroBgm(this);
   }
 
   create(): void {

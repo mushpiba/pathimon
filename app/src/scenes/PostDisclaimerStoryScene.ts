@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { playIntroBgm, queueIntroBgm } from '../audio/introBgm';
 import { APP_HEIGHT, APP_WIDTH } from '../game/constants';
 import { addLabel } from '../ui/draw';
 
@@ -9,8 +10,13 @@ export class PostDisclaimerStoryScene extends Phaser.Scene {
     super('PostDisclaimerStoryScene');
   }
 
+  preload(): void {
+    queueIntroBgm(this);
+  }
+
   create(): void {
     this.advancing = false;
+    playIntroBgm(this);
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, 0x000000, 1).setOrigin(0);
 
     this.time.delayedCall(1000, () => {

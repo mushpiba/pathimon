@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { stopIntroBgm } from '../audio/introBgm';
 import { MONSTERS, starterCandidateRoster } from '../data/monsters';
 import { APP_HEIGHT, APP_WIDTH, COLORS } from '../game/constants';
 import { createInitialRunState, enterBattle } from '../state/runState';
@@ -57,6 +58,7 @@ export class StarterSelectScene extends Phaser.Scene {
   }
 
   create(): void {
+    stopIntroBgm(this);
     this.input.keyboard?.on('keydown', this.handleKeyboardDown);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.input.keyboard?.off('keydown', this.handleKeyboardDown);

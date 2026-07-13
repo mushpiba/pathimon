@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { playIntroBgm, queueIntroBgm } from '../audio/introBgm';
 import { APP_HEIGHT, APP_WIDTH, COLORS } from '../game/constants';
 import type { RunMode, VisualStyle } from '../types/game';
 import { addLabel, drawPanel } from '../ui/draw';
@@ -21,8 +22,13 @@ export class ModeSelectScene extends Phaser.Scene {
     super('ModeSelectScene');
   }
 
+  preload(): void {
+    queueIntroBgm(this);
+  }
+
   create(): void {
     this.choice = {};
+    playIntroBgm(this);
     this.render();
   }
 

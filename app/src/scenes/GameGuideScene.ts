@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { playIntroBgm, queueIntroBgm } from '../audio/introBgm';
 import { APP_HEIGHT, APP_WIDTH, COLORS } from '../game/constants';
 import { addBoxLabel, addLabel, drawPanel } from '../ui/draw';
 import { gameGuideContent, gameGuideLineLayout } from '../ui/gameGuideUi';
@@ -9,7 +10,12 @@ export class GameGuideScene extends Phaser.Scene {
     super('GameGuideScene');
   }
 
+  preload(): void {
+    queueIntroBgm(this);
+  }
+
   create(): void {
+    playIntroBgm(this);
     this.render();
   }
 
