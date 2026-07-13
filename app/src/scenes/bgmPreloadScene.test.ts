@@ -5,6 +5,10 @@ describe('BgmPreloadScene', () => {
   it('warms all battle BGM in the background with a loading indicator', () => {
     expect(bgmPreloadSceneSource).toContain("super('BgmPreloadScene')");
     expect(bgmPreloadSceneSource).toContain('battleBgmAudioPaths()');
+    expect(bgmPreloadSceneSource).toContain('startPathimonScreensaver');
+    expect(bgmPreloadSceneSource).toContain('createPathimonScreensaverItems');
+    expect(bgmPreloadSceneSource).toContain('pathimonScreensaverSpritePool');
+    expect(bgmPreloadSceneSource).toContain('removePathimonScreensaver');
     expect(bgmPreloadSceneSource).toContain('drawLoadingOverlay');
     expect(bgmPreloadSceneSource).toContain('BGM 로딩중 0%');
     expect(bgmPreloadSceneSource).toContain("this.load.on('progress'");
