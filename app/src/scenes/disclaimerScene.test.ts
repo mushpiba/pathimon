@@ -6,5 +6,6 @@ describe('DisclaimerScene blink transition', () => {
     expect(disclaimerSceneSource).toContain('this.playBlinkOut(content.blinkEffect');
     expect(disclaimerSceneSource).toContain('scaleY: closed ? 1 : 0.001');
     expect(disclaimerSceneSource).toContain("this.scene.start('PostDisclaimerStoryScene')");
+    expect(disclaimerSceneSource).not.toContain('잠시 후 화면이 어두워집니다.');
   });
 });

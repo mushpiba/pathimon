@@ -7,12 +7,17 @@ import {
 
 describe('mode select UI helpers', () => {
   it('shows two run modes and two visual styles as four selectable buttons', () => {
-    expect(modeSelectButtonOptions().map((option) => option.label)).toEqual([
+    const options = modeSelectButtonOptions();
+
+    expect(options.map((option) => option.label)).toEqual([
       '학습모드',
       '도전모드',
       '캐릭터풍',
       '실사풍',
     ]);
+    const copy = options.flatMap((option) => option.lines).join(' ');
+    expect(copy).not.toContain('전투 화면 가독성 우선');
+    expect(copy).not.toContain('캐릭터화 최소화');
   });
 
   it('does not start until both a run mode and a visual style are selected', () => {

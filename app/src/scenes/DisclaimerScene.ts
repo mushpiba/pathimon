@@ -24,11 +24,6 @@ export class DisclaimerScene extends Phaser.Scene {
         .setAlpha(0.92);
     });
 
-    addLabel(this, APP_WIDTH / 2, 474, '잠시 후 화면이 어두워집니다.', 16)
-      .setOrigin(0.5)
-      .setAlign('center')
-      .setAlpha(0.7);
-
     this.playBlinkOut(content.blinkEffect, () => this.scene.start('PostDisclaimerStoryScene'));
   }
 

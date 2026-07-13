@@ -32,12 +32,12 @@ export function disclaimerContent(): DisclaimerContent {
     mode: 'horizontal-curtain',
     initialHoldMs: 1000,
     cycles: [
-      { closeMs: 110, closedMs: 110, openMs: 140, openHoldMs: 520 },
-      { closeMs: 100, closedMs: 100, openMs: 130, openHoldMs: 390 },
-      { closeMs: 90, closedMs: 90, openMs: 120, openHoldMs: 280 },
-      { closeMs: 80, closedMs: 80, openMs: 110, openHoldMs: 190 },
+      { closeMs: 180, closedMs: 170, openMs: 260, openHoldMs: 520 },
+      { closeMs: 250, closedMs: 240, openMs: 370, openHoldMs: 760 },
+      { closeMs: 350, closedMs: 340, openMs: 530, openHoldMs: 1120 },
+      { closeMs: 500, closedMs: 490, openMs: 760, openHoldMs: 1660 },
     ],
-    finalCloseMs: 160,
+    finalCloseMs: 760,
     finalHoldMs: 1000,
   };
 

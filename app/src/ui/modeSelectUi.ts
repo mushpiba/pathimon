@@ -27,13 +27,13 @@ export function modeSelectButtonOptions(): ModeSelectOption[] {
       kind: 'visualStyle',
       value: 'character',
       label: '캐릭터풍',
-      lines: ['패시몬 몬스터풍', '전투 화면 가독성 우선', '기존 픽셀 감성'],
+      lines: ['패시몬 몬스터풍', '기존 픽셀 감성'],
     },
     {
       kind: 'visualStyle',
       value: 'micro',
       label: '실사풍',
-      lines: ['현미경 표본에 가까움', '캐릭터화 최소화', '학습 관찰감 우선'],
+      lines: ['현미경 표본에 가까움', '학습 관찰감 우선'],
     },
   ];
 }

@@ -14,7 +14,7 @@ export class PostDisclaimerStoryScene extends Phaser.Scene {
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, 0x000000, 1).setOrigin(0);
 
     this.time.delayedCall(1000, () => {
-      const line = addLabel(this, APP_WIDTH / 2, APP_HEIGHT / 2, '... 일어나세요..!', 28)
+      const line = addLabel(this, APP_WIDTH / 2, APP_HEIGHT - 122, '... 일어나세요..!', 28)
         .setOrigin(0.5)
         .setAlign('center')
         .setAlpha(0);

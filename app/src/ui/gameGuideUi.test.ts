@@ -8,11 +8,16 @@ describe('game guide UI content', () => {
 
     expect(content.title).toBe('전투 안내');
     expect(content.continueLabel).toBe('모드 선택');
-    expect(text).toContain('기술 위력 × 공격/방어');
-    expect(text).toContain('항상 병원체 패시몬이 먼저');
-    expect(text).toContain('전용기는 전투당 한 번');
-    expect(text).toContain('기침(2)');
-    expect(text).toContain('봉인');
+    expect(text).toContain('데미지 공식은 포켓몬 본가 시리즈를 따릅니다.');
+    expect(text).toContain('상성은 효과 굉장: 2배, 무효: 0배');
+    expect(text).toContain('항상 패시몬이 먼저');
+    expect(text).not.toContain('항상 병원체 패시몬이');
+    expect(text).toContain('이상한 사탕으로 해금됩니다.');
+    expect(text).toContain('상태이상은 실제로 전투에 영향을 끼치고');
+    expect(text).toContain('증상은 텍스트만 표기됩니다.');
+    expect(text).toContain('상태이상을 누적시켜 전투를 승리로 이끌어보세요!');
+    expect(text).toContain('보스의 네 기술이 모두 봉인되면');
+    expect(text).toContain('2턴 동안 재정비');
   });
 
   it('reserves fixed non-overlapping boxes for wrapped guide lines', () => {
