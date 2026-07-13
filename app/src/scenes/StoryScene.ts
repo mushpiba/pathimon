@@ -21,6 +21,9 @@ export class StoryScene extends Phaser.Scene {
 
   create(): void {
     this.pageIndex = 0;
+    if (!this.registry.get('battleBgmPreloadStarted')) {
+      this.scene.launch('BgmPreloadScene');
+    }
     this.render();
   }
 

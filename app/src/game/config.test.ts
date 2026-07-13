@@ -13,6 +13,7 @@ describe('scene registration', () => {
 
     expect(scenes.map((scene) => scene.name)).toEqual([
       'TitleScene',
+      'BgmPreloadScene',
       'StoryScene',
       'DisclaimerScene',
       'PostDisclaimerStoryScene',
