@@ -34,6 +34,8 @@ describe('BattleScene pathimon type borders', () => {
     expect(battleSceneSource).toContain('createBossRosterIds');
     expect(battleSceneSource).toContain('private preserveBattleBgmOnShutdown = false;');
     expect(battleSceneSource).toContain('shouldPreserveBattleBgm');
+    expect(battleSceneSource).toContain("if (this.state.phase === 'shop') {");
+    expect(battleSceneSource).toContain('this.preserveBattleBgmOnShutdown = true;');
     expect(battleSceneSource).toContain('this.registry.set(\'bossRosterIds\', createBossRosterIds(Math.random));');
     expect(battleSceneSource).toContain("this.drawMenuButton(780, 444, 160, 48, '처음으로', () => this.returnToModeSelect())");
     expect(battleSceneSource).toContain("this.scene.start('ModeSelectScene');");

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { stopIntroBgm } from '../audio/introBgm';
+import { playIntroBgm, queueIntroBgm, stopIntroBgm } from '../audio/introBgm';
 import { MONSTERS, starterCandidateRoster } from '../data/monsters';
 import { APP_HEIGHT, APP_WIDTH, COLORS } from '../game/constants';
 import { createInitialRunState, enterBattle } from '../state/runState';
@@ -54,11 +54,12 @@ export class StarterSelectScene extends Phaser.Scene {
   }
 
   preload(): void {
+    queueIntroBgm(this);
     this.queueImage(capsuleIconPath('universal'));
   }
 
   create(): void {
-    stopIntroBgm(this);
+    playIntroBgm(this);
     this.input.keyboard?.on('keydown', this.handleKeyboardDown);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.input.keyboard?.off('keydown', this.handleKeyboardDown);
@@ -233,6 +234,7 @@ export class StarterSelectScene extends Phaser.Scene {
     if (!canStartWithStarterSelection(this.selectedIds)) return;
 
     const state = enterBattle(createInitialRunState(this.mode, this.visualStyle, this.selectedIds[0], Math.random, this.bossRosterIds));
+    stopIntroBgm(this);
     this.scene.start('BattleScene', { state });
   }
 }

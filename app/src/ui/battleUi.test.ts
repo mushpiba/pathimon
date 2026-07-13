@@ -215,9 +215,9 @@ describe('battle UI helpers', () => {
   });
 
   it('shows contextual party submenu options', () => {
-    expect(partyMenuOptions('switch')).toEqual(['능력치를 본다', '교체한다', '그만둔다']);
+    expect(partyMenuOptions('switch')).toEqual(['교체한다', '능력치를 본다', '그만둔다']);
     expect(partyMenuOptions('release')).toEqual(['놓아준다', '능력치를 본다', '그만둔다']);
-    expect(partyMenuOptions('forced')).toEqual(['능력치를 본다', '교체한다']);
+    expect(partyMenuOptions('forced')).toEqual(['교체한다', '능력치를 본다']);
   });
 
   it('derives pokerogue atlas json paths from sprite png paths', () => {

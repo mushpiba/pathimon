@@ -392,8 +392,8 @@ export function mobileControlOverlayInteractive(input: { coarsePointer: boolean;
 
 export function partyMenuOptions(purpose: PartyMenuPurpose): string[] {
   if (purpose === 'release') return ['놓아준다', '능력치를 본다', '그만둔다'];
-  if (purpose === 'forced') return ['능력치를 본다', '교체한다'];
-  return ['능력치를 본다', '교체한다', '그만둔다'];
+  if (purpose === 'forced') return ['교체한다', '능력치를 본다'];
+  return ['교체한다', '능력치를 본다', '그만둔다'];
 }
 
 export interface BattlePanelLayout {

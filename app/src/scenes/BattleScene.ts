@@ -1484,6 +1484,7 @@ export class BattleScene extends Phaser.Scene {
 
   private afterBattleAction(): void {
     if (this.state.phase === 'shop') {
+      this.preserveBattleBgmOnShutdown = true;
       this.scene.start('ShopScene', { state: this.state });
       return;
     }
