@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createInitialPathimonScreensaverItems,
   createPathimonScreensaverItems,
   pathimonScreensaverSpritePool,
   pathimonScreensaverSpriteCount,
@@ -41,6 +42,29 @@ describe('pathimon screensaver', () => {
       expect(Math.hypot(item.endX - item.startX, item.endY - item.startY)).toBeGreaterThan(300);
       expect(item.durationMs).toBeGreaterThanOrEqual(14000);
       expect(item.durationMs).toBeLessThanOrEqual(26000);
+    }
+  });
+
+  it('keeps the first 8 to 12 pathimon visible immediately while BGM loads', () => {
+    const rolls = [0.2, 0.44, 0.68, 0.92, 0.14, 0.36, 0.58, 0.8];
+    let index = 0;
+    const random = () => rolls[index++ % rolls.length]!;
+    const items = createInitialPathimonScreensaverItems({
+      height: 576,
+      random,
+      sprites: ['images/pathimon/anthrax-front.png', 'images/pathimon/cereus-front.png'],
+      width: 1024,
+    });
+
+    expect(items.length).toBeGreaterThanOrEqual(8);
+    expect(items.length).toBeLessThanOrEqual(12);
+    for (const item of items) {
+      expect(item.delayMs).toBe(0);
+      expect(item.startX).toBeGreaterThan(0);
+      expect(item.startX).toBeLessThan(1024);
+      expect(item.startY).toBeGreaterThan(0);
+      expect(item.startY).toBeLessThan(576);
+      expect(item.endX < 0 || item.endX > 1024 || item.endY < 0 || item.endY > 576).toBe(true);
     }
   });
 });

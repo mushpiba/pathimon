@@ -6,7 +6,7 @@ describe('BgmPreloadScene', () => {
     expect(bgmPreloadSceneSource).toContain("super('BgmPreloadScene')");
     expect(bgmPreloadSceneSource).toContain('battleBgmAudioPaths()');
     expect(bgmPreloadSceneSource).toContain('startPathimonScreensaver');
-    expect(bgmPreloadSceneSource).toContain('createPathimonScreensaverItems');
+    expect(bgmPreloadSceneSource).toContain('createInitialPathimonScreensaverItems');
     expect(bgmPreloadSceneSource).toContain('pathimonScreensaverSpritePool');
     expect(bgmPreloadSceneSource).toContain('removePathimonScreensaver');
     expect(bgmPreloadSceneSource).toContain('drawLoadingOverlay');

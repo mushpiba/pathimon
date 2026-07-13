@@ -81,3 +81,17 @@ export function createPathimonScreensaverItems(options: PathimonScreensaverOptio
   const count = pathimonScreensaverSpriteCount(random);
   return Array.from({ length: count }, () => createPathimonScreensaverItem({ ...options, random }));
 }
+
+export function createInitialPathimonScreensaverItems(options: PathimonScreensaverOptions): PathimonScreensaverItem[] {
+  const random = options.random ?? Math.random;
+  const count = pathimonScreensaverSpriteCount(random);
+  return Array.from({ length: count }, () => {
+    const item = createPathimonScreensaverItem({ ...options, random });
+    return {
+      ...item,
+      delayMs: 0,
+      startX: randomRange(options.width * 0.08, options.width * 0.92, random),
+      startY: randomRange(options.height * 0.12, options.height * 0.88, random),
+    };
+  });
+}

@@ -3,8 +3,8 @@ import { APP_HEIGHT, APP_WIDTH, COLORS } from '../game/constants';
 import { addLabel } from '../ui/draw';
 import { battleBgmAudioPaths } from '../ui/battleUi';
 import {
+  createInitialPathimonScreensaverItems,
   createPathimonScreensaverItem,
-  createPathimonScreensaverItems,
   pathimonScreensaverSpritePool,
   type PathimonScreensaverItem,
 } from '../ui/pathimonScreensaver';
@@ -64,7 +64,7 @@ export class BgmPreloadScene extends Phaser.Scene {
     const width = bounds.width || APP_WIDTH;
     const height = bounds.height || APP_HEIGHT;
     const sprites = pathimonScreensaverSpritePool();
-    createPathimonScreensaverItems({ height, sprites, width }).forEach((item) => {
+    createInitialPathimonScreensaverItems({ height, sprites, width }).forEach((item) => {
       this.addScreensaverSprite(layer, item, width, height, sprites);
     });
   }
