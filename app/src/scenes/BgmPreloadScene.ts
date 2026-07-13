@@ -88,7 +88,7 @@ export class BgmPreloadScene extends Phaser.Scene {
       opacity: '0.88',
       position: 'absolute',
       top: '0',
-      width: '86px',
+      width: '129px',
       willChange: 'transform',
     });
     layer.appendChild(image);
@@ -106,17 +106,32 @@ export class BgmPreloadScene extends Phaser.Scene {
     image.style.transition = 'none';
     image.style.transform = this.screensaverTransform(item.startX, item.startY, item.scale, 0);
 
+    const launchDuration = Math.round(item.durationMs * 0.48);
+    const bounceDuration = item.durationMs - launchDuration;
+    let phase: 'launch' | 'bounce' = 'launch';
+
     const timer = window.setTimeout(() => {
       if (!this.screensaverLayer?.contains(image)) return;
-      image.style.transition = `transform ${item.durationMs}ms linear`;
-      image.style.transform = this.screensaverTransform(item.endX, item.endY, item.scale, item.wobblePx);
+      image.style.transition = `transform ${launchDuration}ms cubic-bezier(0.18, 0.78, 0.28, 1)`;
+      image.style.transform = this.screensaverTransform(item.impactX, item.impactY, item.scale * 1.08, 0);
     }, item.delayMs);
     this.screensaverTimers.push(timer);
 
-    image.ontransitionend = () => {
-      if (!this.screensaverLayer?.contains(image)) return;
-      const nextItem = createPathimonScreensaverItem({ height, sprites, width });
-      this.animateScreensaverSprite(image, { ...nextItem, delayMs: 0 }, width, height, sprites);
+    image.ontransitionend = (event) => {
+      if (event.propertyName !== 'transform' || !this.screensaverLayer?.contains(image)) return;
+      if (phase === 'launch') {
+        phase = 'bounce';
+        image.style.transition = `transform ${bounceDuration}ms cubic-bezier(0.64, 0.02, 0.86, 0.36)`;
+        image.style.transform = this.screensaverTransform(item.endX, item.endY, item.scale, item.wobblePx);
+        return;
+      }
+
+      const nextTimer = window.setTimeout(() => {
+        if (!this.screensaverLayer?.contains(image)) return;
+        const nextItem = createPathimonScreensaverItem({ height, sprites, width });
+        this.animateScreensaverSprite(image, { ...nextItem, delayMs: 0 }, width, height, sprites);
+      }, item.respawnDelayMs);
+      this.screensaverTimers.push(nextTimer);
     };
   }
 

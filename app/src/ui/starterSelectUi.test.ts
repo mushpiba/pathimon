@@ -41,6 +41,8 @@ describe('starter select UI helpers', () => {
     expect(summary.title).toBe('세레우톡스');
     expect(summary.lines).toContain('세레우스균 (Bacillus cereus)');
     expect(summary.lines).toContain('계열: 세균');
+    expect(summary.lines).toContain(`HP ${cereus.maxHp} · 공격 ${cereus.attack} · 방어 ${cereus.defense}`);
+    expect(summary.lines.join(' ')).not.toContain('속도');
   });
 
   it('keeps starter selection to one capsule at a time', () => {

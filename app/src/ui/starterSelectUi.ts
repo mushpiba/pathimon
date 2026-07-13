@@ -63,7 +63,7 @@ export function starterChoiceSummary(monster: MonsterData): StarterChoiceSummary
     lines: [
       monster.scientificName,
       `계열: ${monster.category}`,
-      `HP ${monster.maxHp} · 공격 ${monster.attack} · 방어 ${monster.defense} · 속도 ${monster.speed}`,
+      `HP ${monster.maxHp} · 공격 ${monster.attack} · 방어 ${monster.defense}`,
     ],
   };
 }

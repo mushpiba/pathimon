@@ -21,7 +21,7 @@ describe('pathimon screensaver', () => {
     expect(pathimonScreensaverSpriteCount(() => 0.999)).toBe(12);
   });
 
-  it('starts every selected pathimon outside the viewport with a slow inward path', () => {
+  it('launches pathimon from upper-left and lower-right bands toward the center', () => {
     const rolls = [0, 0.12, 0.33, 0.58, 0.84, 0.99];
     let index = 0;
     const random = () => rolls[index++ % rolls.length]!;
@@ -34,14 +34,24 @@ describe('pathimon screensaver', () => {
 
     expect(items.length).toBeGreaterThanOrEqual(8);
     expect(items.length).toBeLessThanOrEqual(12);
+    expect(items.some((item) => item.launchZone === 'upperLeft')).toBe(true);
+    expect(items.some((item) => item.launchZone === 'lowerRight')).toBe(true);
     for (const item of items) {
-      const startsOutside = item.startX < 0 || item.startX > 1024 || item.startY < 0 || item.startY > 576;
       const endsOutside = item.endX < 0 || item.endX > 1024 || item.endY < 0 || item.endY > 576;
-      expect(startsOutside).toBe(true);
+      expect(item.startX).toBeGreaterThan(0);
+      expect(item.startX).toBeLessThan(1024);
+      expect(item.startY).toBeGreaterThan(0);
+      expect(item.startY).toBeLessThan(576);
+      expect(item.impactX).toBeGreaterThanOrEqual(1024 * 0.42);
+      expect(item.impactX).toBeLessThanOrEqual(1024 * 0.58);
+      expect(item.impactY).toBeGreaterThanOrEqual(576 * 0.38);
+      expect(item.impactY).toBeLessThanOrEqual(576 * 0.62);
       expect(endsOutside).toBe(true);
-      expect(Math.hypot(item.endX - item.startX, item.endY - item.startY)).toBeGreaterThan(300);
-      expect(item.durationMs).toBeGreaterThanOrEqual(14000);
-      expect(item.durationMs).toBeLessThanOrEqual(26000);
+      expect(item.respawnDelayMs).toBe(1000);
+      expect(item.scale).toBeGreaterThanOrEqual(0.81);
+      expect(item.scale).toBeLessThanOrEqual(1.53);
+      expect(item.durationMs).toBeGreaterThanOrEqual(3600);
+      expect(item.durationMs).toBeLessThanOrEqual(5600);
     }
   });
 
