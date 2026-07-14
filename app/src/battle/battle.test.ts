@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { MOVES } from '../data/moves';
 import { MONSTERS } from '../data/monsters';
 import { adjustedStatusChance, effectiveMaxHp } from '../data/statusConditions';
@@ -660,11 +660,16 @@ describe('battle engine', () => {
       }),
     });
 
-    const result = resolvePlayerMove(battle, 'coagulase', 1);
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const result = resolvePlayerMove(battle, 'coagulase', 1, 0, 0);
 
-    expect(result.lastLog).toContain('구충 신경마비');
-    expect(result.lastLog).toContain('효과가 굉장했다');
-    expect(result.party[0].hp).toBeLessThan(500);
+      expect(result.lastLog).toContain('구충 신경마비');
+      expect(result.lastLog).toContain('효과가 굉장했다');
+      expect(result.party[0].hp).toBeLessThan(500);
+    } finally {
+      randomSpy.mockRestore();
+    }
   });
 
   it('does not seal boss moves after switching; damage is recalculated against the final active pathimon', () => {

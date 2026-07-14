@@ -12,6 +12,7 @@ import {
 export class BgmPreloadScene extends Phaser.Scene {
   private loadingBar?: Phaser.GameObjects.Rectangle;
   private loadingText?: Phaser.GameObjects.Text;
+  private previousCanvasZIndex?: string;
   private screensaverLayer?: HTMLDivElement;
   private screensaverTimers: number[] = [];
 
@@ -47,7 +48,8 @@ export class BgmPreloadScene extends Phaser.Scene {
 
     parent.style.position = parent.style.position || 'relative';
     this.game.canvas.style.position = this.game.canvas.style.position || 'relative';
-    this.game.canvas.style.zIndex = this.game.canvas.style.zIndex || '1';
+    this.previousCanvasZIndex = this.game.canvas.style.zIndex;
+    this.game.canvas.style.zIndex = '1000';
     const layer = document.createElement('div');
     layer.className = 'pathimon-bgm-screensaver';
     Object.assign(layer.style, {
@@ -56,7 +58,7 @@ export class BgmPreloadScene extends Phaser.Scene {
       overflow: 'hidden',
       pointerEvents: 'none',
       position: 'absolute',
-      zIndex: '1000',
+      zIndex: '1001',
     });
     parent.appendChild(layer);
     this.screensaverLayer = layer;
@@ -181,6 +183,10 @@ export class BgmPreloadScene extends Phaser.Scene {
     this.screensaverTimers = [];
     this.screensaverLayer?.remove();
     this.screensaverLayer = undefined;
+    if (this.previousCanvasZIndex !== undefined) {
+      this.game.canvas.style.zIndex = this.previousCanvasZIndex;
+      this.previousCanvasZIndex = undefined;
+    }
   }
 
   private drawLoadingOverlay(): void {
