@@ -17,13 +17,13 @@ const pathimonAssets = import.meta.glob('/public/images/pathimon/*.png', {
   import: 'default',
 });
 
-const bossCharacterAssets = import.meta.glob('/public/images/character/boss/*.png', {
+const bossCharacterAssets = import.meta.glob('/public/images/trainers/boss/*.png', {
   eager: true,
   query: '?url',
   import: 'default',
 });
 
-const trainerCharacterAssets = import.meta.glob('/public/images/character/trainer/*.png', {
+const trainerCharacterAssets = import.meta.glob('/public/images/trainers/trainer/*.png', {
   eager: true,
   query: '?url',
   import: 'default',
@@ -192,7 +192,7 @@ describe('Pathimon data', () => {
     expect(trichinellaAdult?.maxHp).toBeGreaterThan(trichinellaLarva?.maxHp ?? 0);
   });
 
-  it('uses every image from the separated character boss and trainer folders', () => {
+  it('uses every image from the organized trainers boss and trainer folders', () => {
     expect(TRAINER_CHARACTER_ASSETS).toHaveLength(Object.keys(trainerCharacterAssets).length);
     expect(BOSS_CHARACTER_ASSETS).toHaveLength(Object.keys(bossCharacterAssets).length);
     expect(TRAINER_CHARACTER_ASSETS.length).toBeGreaterThanOrEqual(20);
@@ -201,12 +201,12 @@ describe('Pathimon data', () => {
     expect(BOSSES.map((boss) => boss.assetPath)).toEqual(expect.arrayContaining(BOSS_CHARACTER_ASSETS));
 
     for (const trainer of TRAINERS) {
-      expect(trainer.assetPath.startsWith('images/character/trainer/')).toBe(true);
+      expect(trainer.assetPath.startsWith('images/trainers/trainer/')).toBe(true);
       expect(trainerCharacterAssets[`/public/${trainer.assetPath}`]).toBeDefined();
     }
 
     for (const boss of BOSSES) {
-      expect(boss.assetPath.startsWith('images/character/boss/')).toBe(true);
+      expect(boss.assetPath.startsWith('images/trainers/boss/')).toBe(true);
       expect(bossCharacterAssets[`/public/${boss.assetPath}`]).toBeDefined();
     }
   });

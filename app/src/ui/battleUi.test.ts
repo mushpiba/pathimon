@@ -20,6 +20,7 @@ import {
   commandViewLines,
   effectLabels,
   enemyIntentText,
+  battleDexSummary,
   formatBossAttackMatchupRows,
   formatBattleMatchupSections,
   formatMoveDetailSections,
@@ -105,7 +106,7 @@ describe('battle UI helpers', () => {
   });
 
   it('scales trainer sprites up from extracted pokerogue frames', () => {
-    const trainer = createMonster({ isTrainer: true, assetPath: 'images/character/trainer/doctor_m.png' });
+    const trainer = createMonster({ isTrainer: true, assetPath: 'images/trainers/trainer/doctor_m.png' });
 
     expect(combatSpriteScale(trainer, 2.5)).toBe(2.75);
     expect(combatSpriteScale(createMonster(), 2.5)).toBe(2.5);
@@ -250,14 +251,16 @@ describe('battle UI helpers', () => {
     });
   });
 
-  it('formats move details with Korean combat labels', () => {
+  it('formats move details with a fixed readable battle panel order', () => {
     expect(formatMoveDetails('streptokinase')).toEqual([
       '혈전융해',
-      '효과: 방어 -25%',
+      '종류: 공격기',
       '위력: 11',
       '명중률: 92%',
-      '혈전과 장벽을 무너뜨려 방어를 깎는다.',
-      '확산하기 쉽게 숙주의 방어선을 흐린다.',
+      '효과: 방어 -25%',
+      '상태이상: 없음',
+      '기술 설명: 혈전과 장벽을 무너뜨려 방어를 깎는다.',
+      '학습: 확산하기 쉽게 숙주의 방어선을 흐린다.',
     ]);
   });
 
@@ -269,11 +272,13 @@ describe('battle UI helpers', () => {
 
     expect(formatMoveDetails('spore_germination', monster)).toEqual([
       '아포 발아',
-      '효과: 95% 공격력 +1랭크 / 4% 공격력 +2랭크 / 1% 공격력 +4랭크, 상태이상: 발열, 기침, 피로',
+      '종류: 준비기',
       '위력: 0',
       '명중률: 100%',
-      '탄저록스가 아포를 발아시켜 감염을 준비한다.',
-      '탄저균은 아포 상태로 버티다가 숙주 안에서 발아해 감염을 시작한다.',
+      '효과: 95% 공격력 +1랭크 / 4% 공격력 +2랭크 / 1% 공격력 +4랭크',
+      '상태이상: 발열, 기침, 피로',
+      '기술 설명: 탄저록스가 아포를 발아시켜 감염을 준비한다.',
+      '학습: 탄저균은 아포 상태로 버티다가 숙주 안에서 발아해 감염을 시작한다.',
     ]);
   });
 
@@ -285,10 +290,13 @@ describe('battle UI helpers', () => {
 
     expect(formatMoveDetailSections('spore_germination', monster)).toEqual({
       title: '아포 발아',
-      metadata: '위력: 0 · 명중률: 100%',
-      effect: '효과: 95% 공격력 +1랭크 / 4% 공격력 +2랭크 / 1% 공격력 +4랭크, 상태이상: 발열, 기침, 피로',
-      description: '탄저록스가 아포를 발아시켜 감염을 준비한다.',
-      learnText: '탄저균은 아포 상태로 버티다가 숙주 안에서 발아해 감염을 시작한다.',
+      kind: '종류: 준비기',
+      power: '위력: 0',
+      accuracy: '명중률: 100%',
+      effect: '효과: 95% 공격력 +1랭크 / 4% 공격력 +2랭크 / 1% 공격력 +4랭크',
+      conditions: '상태이상: 발열, 기침, 피로',
+      description: '기술 설명: 탄저록스가 아포를 발아시켜 감염을 준비한다.',
+      learnText: '학습: 탄저균은 아포 상태로 버티다가 숙주 안에서 발아해 감염을 시작한다.',
     });
   });
 
@@ -319,11 +327,13 @@ describe('battle UI helpers', () => {
     expect(formatMoveName('anthrax_toxin', monster)).toBe('탄저 독소 3단계');
     expect(formatMoveDetails('anthrax_toxin', monster)).toEqual([
       '탄저 독소 3단계',
-      '효과: 상태이상: 괴사',
+      '종류: 공격기',
       '위력: 200',
       '명중률: 100%',
-      '화농성연쇄상구균은 LF(lethal factor)로 MAP kinase를 잘라 세포를 괴사시켰다.',
-      'LF는 MAPK 경로를 방해해 세포 손상과 괴사를 유도한다.',
+      '효과: 없음',
+      '상태이상: 괴사',
+      '기술 설명: 화농성연쇄상구균은 LF(lethal factor)로 MAP kinase를 잘라 세포를 괴사시켰다.',
+      '학습: LF는 MAPK 경로를 방해해 세포 손상과 괴사를 유도한다.',
     ]);
   });
 
@@ -394,6 +404,15 @@ describe('battle UI helpers', () => {
       '개종',
     ]);
     expect(statusSummary(monster)).toBe('상태: 공격 +1, 피해감소, 무적 3턴, 지속피해, 개종');
+  });
+
+  it('combines repeated rank effects into one status label', () => {
+    const monster = createMonster({
+      effects: Array.from({ length: 6 }, () => ({ kind: 'buff' as const, stat: 'attack' as const, rank: 1, pct: 100, turns: 2 })),
+    });
+
+    expect(effectLabels(monster)).toEqual(['공격 +6']);
+    expect(statusSummary(monster)).toBe('상태: 공격 +6');
   });
 
   it('adds stacked canonical status conditions to the unit panel status text', () => {
@@ -481,6 +500,25 @@ describe('battle UI helpers', () => {
     });
   });
 
+  it('builds battle pokedex details from the current opponent', () => {
+    const enemy = createMonster({
+      name: '간실질 잠입',
+      category: '흡충',
+      hp: 31,
+      maxHp: 80,
+      attack: 14,
+      defense: 8,
+      moveset: ['coagulase', 'hyaluronidase', 'enterotoxin', 'streptokinase'],
+    });
+
+    const summary = battleDexSummary(enemy);
+
+    expect(summary.opponentName).toBe('간실질 잠입');
+    expect(summary.typeLine).toBe('타입: 흡충');
+    expect(summary.statLine).toBe('HP 31/80 · 공격 14 · 방어 8');
+    expect(summary.moveRows.map((row) => row.name)).toEqual(['코아굴라제', '조직융해', '장독소', '혈전융해']);
+    expect(summary.moveRows.map((row) => row.name)).not.toContain('알파독소');
+  });
   it('summarizes attack and defense advice for the current battle matchup', () => {
     const player = createMonster({ ability: 'large_resistance', tags: { pathway: 'gut', wall: 'nematode', location: 'intestinal_lumen', size: 'large' } });
     const enemy = createMonster({ name: '황색포도알균', ability: 'capsule' });

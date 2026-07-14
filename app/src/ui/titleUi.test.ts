@@ -28,12 +28,12 @@ describe('title UI content', () => {
     });
 
     expect(content.bossSprites).toEqual([
-      'images/character/boss/red.png',
-      'images/character/boss/blue.png',
-      'images/character/boss/giovanni.png',
-      'images/character/boss/brock.png',
-      'images/character/boss/koga.png',
-      'images/character/boss/lance.png',
+      'images/trainers/boss/red.png',
+      'images/trainers/boss/blue.png',
+      'images/trainers/boss/giovanni.png',
+      'images/trainers/boss/brock.png',
+      'images/trainers/boss/koga.png',
+      'images/trainers/boss/lance.png',
     ]);
   });
 

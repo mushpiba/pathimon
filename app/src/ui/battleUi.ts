@@ -3,7 +3,7 @@ import { BOSS_ATTACK_MATCHUPS, type BossDefenseTrait } from '../data/bossAttackM
 import { EFFECTIVENESS } from '../data/effectiveness';
 import { ATTACK_TYPE_LABELS, TAG_LABELS } from '../data/labels';
 import { MOVES } from '../data/moves';
-import { effectiveMaxHp, statusConditionLabels } from '../data/statusConditions';
+import { effectiveMaxHp, STATUS_CONDITIONS, statusConditionLabels } from '../data/statusConditions';
 import { currentMoveData, currentMoveName } from '../battle/moveStages';
 import { interpolatePathimonName } from '../game/text';
 import type { AbilityId, CapsuleId, EffectPrimitive, EncounterKind, MoveData, MoveId, MoveSlot, RunMode, RuntimeMonster, TagValue, VisualStyle } from '../types/game';
@@ -461,6 +461,13 @@ export interface BattleMatchupSections {
   offense: PokedexEffectivenessRow[];
 }
 
+export interface BattleDexSummary {
+  moveRows: PokedexMoveRow[];
+  opponentName: string;
+  statLine: string;
+  typeLine: string;
+}
+
 export interface BossAttackMatchupRow {
   attackName: string;
   attackType: string;
@@ -645,9 +652,19 @@ function moveTypeLabel(move: MoveData): string {
   return ATTACK_TYPE_LABELS[move.type];
 }
 
+function moveKindLabel(move: MoveData): string {
+  if (move.signature || move.kind === 'signature') return '전용기';
+  if (move.kind === 'prep') return '준비기';
+  return '공격기';
+}
+
 function primitiveEffectLabel(effect: EffectPrimitive): string {
-  if (effect.kind === 'buff') return `${effect.stat === 'attack' ? '공격' : '방어'} ${effect.pct > 0 ? '+' : ''}${effect.pct}%`;
-  if (effect.kind === 'condition') return `상태이상`;
+  if (effect.kind === 'buff') {
+    const stat = effect.stat === 'attack' ? '공격력' : '방어';
+    if (typeof effect.rank === 'number' && effect.rank !== 0) return `${stat} ${effect.rank > 0 ? '+' : ''}${effect.rank}랭크`;
+    return `${stat} ${effect.pct > 0 ? '+' : ''}${effect.pct}%`;
+  }
+  if (effect.kind === 'condition') return '';
   if (effect.kind === 'invuln') return `무적 ${effect.turns}턴`;
   if (effect.kind === 'dot') return `지속피해 ${effect.power}`;
   if (effect.kind === 'field') return '받는 피해 감소';
@@ -657,42 +674,82 @@ function primitiveEffectLabel(effect: EffectPrimitive): string {
   return '';
 }
 
-function moveEffectText(move: MoveData): string {
-  if (move.effectText?.trim()) return move.effectText;
-  const labels = move.effects?.map(primitiveEffectLabel).filter(Boolean) ?? [];
-  return labels.length > 0 ? labels.join(', ') : '없음';
+function conditionEffectLabels(move: MoveData): string[] {
+  const labels = move.effects
+    ?.filter((effect): effect is Extract<EffectPrimitive, { kind: 'condition' }> => effect.kind === 'condition')
+    .map((effect) => {
+      const label = STATUS_CONDITIONS[effect.condition].label;
+      return effect.stacks && effect.stacks > 1 ? `${label}(${effect.stacks})` : label;
+    }) ?? [];
+  return [...new Set(labels)];
+}
+
+function splitEffectText(effectText: string): { conditions: string; effect: string } {
+  const marker = '상태이상:';
+  const markerIndex = effectText.indexOf(marker);
+  if (markerIndex < 0) return { effect: effectText.trim(), conditions: '' };
+
+  return {
+    effect: effectText.slice(0, markerIndex).replace(/[\s,]+$/, '').trim(),
+    conditions: effectText.slice(markerIndex + marker.length).trim(),
+  };
+}
+
+function moveEffectParts(move: MoveData): { conditions: string; effect: string } {
+  const conditionLabels = conditionEffectLabels(move);
+  if (move.effectText?.trim()) {
+    const split = splitEffectText(move.effectText.trim());
+    return {
+      effect: split.effect || '없음',
+      conditions: split.conditions || (conditionLabels.length > 0 ? conditionLabels.join(', ') : '없음'),
+    };
+  }
+
+  const effectLabels = move.effects?.map(primitiveEffectLabel).filter(Boolean) ?? [];
+  return {
+    effect: effectLabels.length > 0 ? effectLabels.join(', ') : '없음',
+    conditions: conditionLabels.length > 0 ? conditionLabels.join(', ') : '없음',
+  };
 }
 
 export function formatMoveDetails(moveId: MoveId, monster?: RuntimeMonster): string[] {
   const move = currentMoveData(MOVES[moveId], monster);
-  const effect = `효과: ${moveEffectText(move)}`;
+  const parts = moveEffectParts(move);
   return [
     move.name,
-    effect,
+    `종류: ${moveKindLabel(move)}`,
     `위력: ${move.power}`,
     `명중률: ${Math.round(move.accuracy * 100)}%`,
-    interpolateMoveText(move.description, monster),
-    interpolateMoveText(move.learnText, monster),
+    `효과: ${parts.effect}`,
+    `상태이상: ${parts.conditions}`,
+    `기술 설명: ${interpolateMoveText(move.description, monster)}`,
+    `학습: ${interpolateMoveText(move.learnText, monster)}`,
   ];
 }
 
 export interface MoveDetailSections {
+  accuracy: string;
+  conditions: string;
   description: string;
   effect: string;
+  kind: string;
   learnText: string;
-  metadata: string;
+  power: string;
   title: string;
 }
 
 export function formatMoveDetailSections(moveId: MoveId, monster?: RuntimeMonster): MoveDetailSections {
   const move = currentMoveData(MOVES[moveId], monster);
-  const effect = `효과: ${moveEffectText(move)}`;
+  const parts = moveEffectParts(move);
   return {
     title: move.name,
-    metadata: `위력: ${move.power} · 명중률: ${Math.round(move.accuracy * 100)}%`,
-    effect,
-    description: interpolateMoveText(move.description, monster),
-    learnText: interpolateMoveText(move.learnText, monster),
+    kind: `종류: ${moveKindLabel(move)}`,
+    power: `위력: ${move.power}`,
+    accuracy: `명중률: ${Math.round(move.accuracy * 100)}%`,
+    effect: `효과: ${parts.effect}`,
+    conditions: `상태이상: ${parts.conditions}`,
+    description: `기술 설명: ${interpolateMoveText(move.description, monster)}`,
+    learnText: `학습: ${interpolateMoveText(move.learnText, monster)}`,
   };
 }
 
@@ -702,6 +759,16 @@ export function statusProfileMemoLines(monster: RuntimeMonster): string[] {
 
 export function battleMoveSlots(monster: RuntimeMonster): MoveSlot[] {
   return monster.moveSlots ?? monster.moveset.slice(0, 4);
+}
+
+export function battleDexSummary(enemy: RuntimeMonster): BattleDexSummary {
+  const moveIds = battleMoveSlots(enemy).filter((moveId): moveId is MoveId => Boolean(moveId));
+  return {
+    moveRows: formatPokedexMoveRows(moveIds, enemy),
+    opponentName: enemy.name,
+    statLine: `HP ${enemy.hp}/${enemy.maxHp} · 공격 ${enemy.attack} · 방어 ${enemy.defense}`,
+    typeLine: `타입: ${enemy.category}`,
+  };
 }
 
 export function isSignatureMove(moveId: MoveId): boolean {
@@ -733,20 +800,37 @@ export function firstUsableMove(monster: RuntimeMonster): MoveId {
 }
 
 export function effectLabels(monster: RuntimeMonster): string[] {
-  const timedLabels = monster.effects.map((effect) => {
+  const rankTotals = new Map<'attack' | 'defense', number>();
+  const otherTimedLabels: string[] = [];
+
+  monster.effects.forEach((effect) => {
     if (effect.kind === 'buff') {
-      const stat = effect.stat === 'attack' ? '공격' : '방어';
-      if (effect.rank) return `${stat} ${effect.rank > 0 ? '+' : ''}${effect.rank}`;
-      return `${stat} ${effect.pct ?? 0}%`;
+      if (!effect.stat) return;
+      const statKey = effect.stat;
+      const stat = statKey === 'attack' ? '공격' : '방어';
+      if (typeof effect.rank === 'number' && effect.rank !== 0) {
+        rankTotals.set(statKey, (rankTotals.get(statKey) ?? 0) + effect.rank);
+        return;
+      }
+      otherTimedLabels.push(`${stat} ${effect.pct ?? 0}%`);
+      return;
     }
-    if (effect.kind === 'field') return '피해감소';
-    if (effect.kind === 'invuln') return effect.turns ? `무적 ${effect.turns}턴` : '무적';
-    if (effect.kind === 'dot') return '지속피해';
-    if (effect.kind === 'convert') return '개종';
-    return effect.kind;
+    if (effect.kind === 'field') otherTimedLabels.push('피해감소');
+    else if (effect.kind === 'invuln') otherTimedLabels.push(effect.turns ? `무적 ${effect.turns}턴` : '무적');
+    else if (effect.kind === 'dot') otherTimedLabels.push('지속피해');
+    else if (effect.kind === 'convert') otherTimedLabels.push('개종');
+    else otherTimedLabels.push(effect.kind);
   });
 
-  return [...timedLabels, ...statusConditionLabels(monster)];
+  const rankLabels: string[] = [];
+  (['attack', 'defense'] as const).forEach((statKey) => {
+    const rank = rankTotals.get(statKey) ?? 0;
+    if (rank === 0) return;
+    const stat = statKey === 'attack' ? '공격' : '방어';
+    rankLabels.push(`${stat} ${rank > 0 ? '+' : ''}${rank}`);
+  });
+
+  return [...rankLabels, ...otherTimedLabels, ...statusConditionLabels(monster)];
 }
 
 export function defenseTraitSummary(monster: RuntimeMonster): string {

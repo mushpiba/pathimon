@@ -24,10 +24,10 @@ export const CAPSULE_SHORT_LABELS: Record<CapsuleId, string> = {
 
 const CAPSULE_CATEGORIES: Partial<Record<CapsuleId, string[]>> = {
   virus: ['바이러스'],
-  bacteria: ['세균'],
-  parasite: ['연충', '기생충'],
-  fungus: ['진균'],
-  protozoa: ['원충', '원생동물'],
+  bacteria: ['세균', '세균 병원형', '세균 병원성', '세균 내성형', '박테리아'],
+  parasite: ['연충', '기생충', '선충', '흡충', '조충'],
+  fungus: ['진균', '곰팡이'],
+  protozoa: ['원충', '원생동물', '프로토조아'],
   prion: ['프리온'],
 };
 
@@ -60,12 +60,25 @@ export function addCapsule(inventory: CapsuleInventory, capsuleId: CapsuleId, am
   return nextInventory;
 }
 
+function categoryMatches(category: string, labels: string[]): boolean {
+  return labels.some((label) => category === label || category.startsWith(`${label}-`));
+}
+
+function isParasiteStageLabel(category: string): boolean {
+  return /-(충란|유충|성충)$/.test(category);
+}
+
 export function capsuleCanCatch(capsuleId: CapsuleId, enemy: RuntimeMonster): boolean {
   if (capsuleId === 'universal') {
     return true;
   }
 
-  return Boolean(CAPSULE_CATEGORIES[capsuleId]?.includes(enemy.category));
+  const labels = CAPSULE_CATEGORIES[capsuleId] ?? [];
+  if (categoryMatches(enemy.category, labels)) {
+    return true;
+  }
+
+  return capsuleId === 'parasite' && isParasiteStageLabel(enemy.category);
 }
 
 export function formatCapsuleInventory(inventory: CapsuleInventory): string {

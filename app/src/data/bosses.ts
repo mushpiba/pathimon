@@ -23,7 +23,7 @@ export const BOSS_COMBAT_STATS = {
 function bossAssetPath(id: string, index = 0): string {
   return characterAssetPathForId(BOSS_CHARACTER_ASSETS, id)
     ?? BOSS_CHARACTER_ASSETS[index % Math.max(1, BOSS_CHARACTER_ASSETS.length)]
-    ?? `images/character/boss/${id}.png`;
+    ?? `images/trainers/boss/${id}.png`;
 }
 
 function bossAssetLabel(assetPath: string): string {

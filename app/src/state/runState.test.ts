@@ -282,7 +282,7 @@ describe('run state loop', () => {
     expect(result.money).toBe(10);
   });
 
-  it('skips the maintenance shop after learning-mode victories', () => {
+  it('skips the maintenance shop after learning-mode victories without result-screen learning feedback', () => {
     const battle = enterBattle(createInitialRunState('learning'));
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.hp = 1;
@@ -290,11 +290,13 @@ describe('run state loop', () => {
     const result = resolvePlayerMove(battle, 'cholera_toxin', 1);
 
     expect(result.phase).toBe('floorClear');
-    expect(result.lastLog).toContain('학습 피드백');
+    expect(result.lastLog).toContain(`${battle.floor}층 클리어`);
+    expect(result.lastLog).not.toContain('학습 피드백');
   });
 
-  it('captures a normal enemy and skips maintenance', () => {
+  it('captures a normal enemy and shows the floor and pathimon memo instead of learning feedback', () => {
     const initial = createInitialRunState();
+    const firstWildPathimon = wildMonsterForRun(initial);
     const battle = enterBattle(initial);
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.hp = 1;
@@ -306,6 +308,9 @@ describe('run state loop', () => {
     expect(result.capsuleInventory.universal).toBe(3);
     expect(result.money).toBe(0);
     expect(result.party.length).toBe(2);
+    expect(result.lastLog).toContain(`${battle.floor}층 클리어`);
+    expect(result.lastLog).toContain(firstWildPathimon.profileMemo?.[0] ?? firstWildPathimon.scientificName);
+    expect(result.lastLog).not.toContain('학습 피드백');
   });
 
   it('blocks capture before spending when the selected capsule does not match the pathogen tag', () => {
@@ -343,6 +348,7 @@ describe('run state loop', () => {
 
   it('can pass a wild pathimon encounter without fighting', () => {
     const battle = enterBattle(createInitialRunState());
+    if (!battle.enemy) throw new Error('enemy missing');
     battle.party[0].effects.push({ kind: 'buff', stat: 'attack', pct: 25, turns: 3 });
     battle.party[0].statusConditions = { fever: 1 };
     battle.party[0].symptoms = ['기침'];
@@ -356,7 +362,10 @@ describe('run state loop', () => {
     expect(result.party[0].statusConditions).toEqual({});
     expect(result.party[0].symptoms).toEqual([]);
     expect(result.party[0].usedSignatureMoveIds).toEqual([]);
+    expect(result.lastLog).toContain(`${battle.floor}층 클리어`);
     expect(result.lastLog).toContain('지나갔다');
+    expect(result.lastLog).toContain(battle.enemy.profileMemo?.[0] ?? battle.enemy.scientificName);
+    expect(result.lastLog).not.toContain('학습 피드백');
   });
 
   it('treats capsules as unlimited in learning mode', () => {

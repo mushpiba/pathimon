@@ -114,10 +114,20 @@ function maintenanceVictoryLog(state: RunState): string {
   return '사람 전투에서 승리했습니다. 정비 구역에 도착했습니다.';
 }
 
-function setWinState(state: RunState, message: string, learningDetail?: string): RunState {
+function pathimonMemoDetail(monster: RuntimeMonster): string {
+  const memo = monster.profileMemo?.filter((line) => line.trim().length > 0) ?? [];
+  if (memo.length > 0) return memo.slice(0, 2).join(' ');
+  return `${monster.scientificName}은 ${monster.category} 타입입니다.`;
+}
+
+function floorClearLog(state: RunState, message: string, detail?: string): string {
+  return [`${state.floor}층 클리어`, message, detail].filter((line): line is string => Boolean(line?.trim())).join('\n');
+}
+
+function setWinState(state: RunState, message: string, _learningDetail?: string, resultDetail?: string): RunState {
   const shouldOpenShop = state.mode === 'challenge' && (state.encounterKind === 'trainer' || state.encounterKind === 'boss');
   const reward = shouldOpenShop ? WIN_REWARD : 0;
-  const battleResultLog = withLearningFeedback(state, message, learningDetail);
+  const battleResultLog = floorClearLog(state, message, resultDetail);
 
   return {
     ...state,
@@ -471,10 +481,10 @@ export function resolvePassEncounter(state: RunState): RunState {
 
   nextState.phase = 'floorClear';
   nextState.party = nextState.party.map(clearBattleOnlyState);
-  nextState.lastLog = withLearningFeedback(
+  nextState.lastLog = floorClearLog(
     nextState,
     `${enemy.name}와 거리를 두고 지나갔다.`,
-    `${enemy.name}(${enemy.scientificName})은 ${enemy.category}입니다. 포획하지 않을 때도 전파 경로와 숙주 위치를 관찰하는 습관이 중요합니다.`,
+    pathimonMemoDetail(enemy),
   );
   return nextState;
 }
@@ -578,7 +588,7 @@ export function resolveCapsuleAction(state: RunState, rollOrCapsule: number | Ca
     }
 
     nextState.party.push(captured);
-    return setWinState(nextState, `${enemy.name} was captured.`, defaultLearningDetail(nextState));
+    return setWinState(nextState, `${enemy.name}을 포획했습니다.`, undefined, pathimonMemoDetail(enemy));
   }
 
   nextState.phase = 'battle';

@@ -24,6 +24,7 @@ import {
   battleUnitPanelLayouts,
   battleUnitPanelRows,
   battleMoveSlots,
+  battleDexSummary,
   canUseBattleMove,
   capsuleIconPath,
   chooseBattleBgm,
@@ -32,12 +33,10 @@ import {
   cursorMarkerPoint,
   defenseTraitSummary,
   firstUsableMove,
-  formatBattleMatchupSections,
   formatBossAttackMatchupRows,
   formatMoveDetailSections,
   formatMoveDetails,
   formatMoveName,
-  formatPokedexMoveRows,
   hpPct,
   hpPercentLabel,
   lockedMoveOverlayPath,
@@ -568,20 +567,30 @@ export class BattleScene extends Phaser.Scene {
 
   private drawMoveDetailPanel(player: RuntimeMonster): void {
     const detail = formatMoveDetailSections(this.selectedMoveId, player);
-    const panelX = 528;
-    const panelY = 396;
-    const panelWidth = 318;
-    const textX = panelX + 18;
-    const textWidth = panelWidth - 34;
+    const showLearnText = this.state.mode === 'learning';
+    const panelX = 522;
+    const panelY = 386;
+    const panelWidth = 332;
+    const panelHeight = 178;
+    const textX = panelX + 16;
+    const textWidth = panelWidth - 32;
 
-    drawPanel(this, panelX, panelY, panelWidth, 166).setAlpha(0.98);
-    addBoxLabel(this, textX, panelY + 14, detail.title, { width: textWidth, height: 24, size: 17, maxLines: 1 });
-    addBoxLabel(this, textX, panelY + 42, detail.metadata, { width: textWidth, height: 18, size: 11, minSize: 10, maxLines: 1 })
+    drawPanel(this, panelX, panelY, panelWidth, panelHeight).setAlpha(0.98);
+    addBoxLabel(this, textX, panelY + 10, detail.title, { width: textWidth, height: 22, size: 17, minSize: 12, maxLines: 1 });
+    addBoxLabel(this, textX, panelY + 35, detail.kind, { width: textWidth, height: 17, size: 10, minSize: 8, maxLines: 1 })
       .setAlpha(0.9);
-    addBoxLabel(this, textX, panelY + 64, detail.effect, { width: textWidth, height: 54, size: 11, minSize: 9, maxLines: 3 })
+    addBoxLabel(this, textX, panelY + 54, `${detail.power} · ${detail.accuracy}`, { width: textWidth, height: 17, size: 10, minSize: 8, maxLines: 1 })
+      .setAlpha(0.9);
+    addBoxLabel(this, textX, panelY + 74, detail.effect, { width: textWidth, height: 30, size: 10, minSize: 8, maxLines: 2 })
       .setAlpha(0.92);
-    addBoxLabel(this, textX, panelY + 120, detail.description, { width: textWidth, height: 34, size: 11, minSize: 9, maxLines: 2 })
+    addBoxLabel(this, textX, panelY + 105, detail.conditions, { width: textWidth, height: 18, size: 10, minSize: 8, maxLines: 1 })
+      .setAlpha(0.92);
+    addBoxLabel(this, textX, panelY + 126, detail.description, { width: textWidth, height: showLearnText ? 28 : 42, size: 10, minSize: 8, maxLines: showLearnText ? 2 : 3 })
       .setAlpha(0.96);
+    if (showLearnText) {
+      addBoxLabel(this, textX, panelY + 154, detail.learnText, { width: textWidth, height: 20, size: 9, minSize: 8, maxLines: 1 })
+        .setAlpha(0.9);
+    }
   }
 
   private drawCapsuleView(player: RuntimeMonster, enemy: RuntimeMonster): void {
@@ -612,22 +621,28 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  private drawDexView(player: RuntimeMonster, enemy: RuntimeMonster): void {
+  private drawDexView(_player: RuntimeMonster, enemy: RuntimeMonster): void {
+    const dex = battleDexSummary(enemy);
+
     addLabel(this, 34, 404, '도감', 21);
-    addLabel(this, 34, 432, '현재 전투 기준', 14).setAlpha(0.86);
-    this.drawMenuButton(34, 462, 84, 34, '기술 목록', () => {
+    addBoxLabel(this, 34, 432, dex.opponentName, { width: 170, height: 20, size: 14, minSize: 10, maxLines: 1 })
+      .setAlpha(0.9);
+    addBoxLabel(this, 34, 452, dex.typeLine, { width: 170, height: 18, size: 11, minSize: 9, maxLines: 1 })
+      .setAlpha(0.84);
+    addBoxLabel(this, 34, 470, dex.statLine, { width: 170, height: 18, size: 11, minSize: 8, maxLines: 1 })
+      .setAlpha(0.84);
+    this.drawMenuButton(34, 500, 84, 34, '기술 목록', () => {
       this.dexTab = 'moves';
       this.render();
     }, this.dexTab === 'moves');
-    this.drawMenuButton(128, 462, 84, 34, '상성표', () => {
+    this.drawMenuButton(128, 500, 84, 34, '상성표', () => {
       this.dexTab = 'effectiveness';
       this.render();
     }, this.dexTab === 'effectiveness');
 
     drawPanel(this, 220, 400, 628, 150).setAlpha(0.98);
     if (this.dexTab === 'moves') {
-      const moveIds = battleMoveSlots(player).filter((moveId): moveId is MoveId => Boolean(moveId));
-      formatPokedexMoveRows(moveIds, player).forEach((row, index) => {
+      dex.moveRows.forEach((row, index) => {
         const y = 411 + index * 34;
         addBoxLabel(this, 238, y, `${row.name} · ${row.type} · 위력 ${row.power} · 명중 ${row.accuracy}`, {
           width: 586,
@@ -644,39 +659,16 @@ export class BattleScene extends Phaser.Scene {
           maxLines: 1,
         }).setAlpha(0.88);
       });
-    } else {
-      if (enemy.isBoss) {
-        addLabel(this, 238, 414, '보스 공격', 14).setAlpha(0.86);
-        addLabel(this, 424, 414, '효과 굉장한 방어특성', 14).setAlpha(0.86);
-        addLabel(this, 632, 414, '무효 방어특성', 14).setAlpha(0.86);
-        this.drawBossMatchupRows(formatBossAttackMatchupRows(enemy), 238, 438, 586);
-      } else {
-        const sections = formatBattleMatchupSections(player, enemy);
-        addLabel(this, 238, 414, '공격: 야생 패시몬 약점', 15);
-        this.drawMatchupRows(sections.offense, 238, 440, 270);
-
-        addLabel(this, 548, 414, '방어: 내 패시몬 약점', 15);
-        this.drawMatchupRows(sections.defense, 548, 440, 270);
-      }
+    } else if (enemy.isBoss) {
+      addLabel(this, 238, 414, '보스 공격', 14).setAlpha(0.86);
+      addLabel(this, 424, 414, '효과 굉장한 방어특성', 14).setAlpha(0.86);
+      addLabel(this, 632, 414, '무효 방어특성', 14).setAlpha(0.86);
+      this.drawBossMatchupRows(formatBossAttackMatchupRows(enemy), 238, 438, 586);
     }
 
     this.drawMenuButton(852, 488, 120, 34, '뒤로', () => {
       this.viewMode = 'command';
       this.render();
-    });
-  }
-  private drawMatchupRows(rows: ReturnType<typeof formatBattleMatchupSections>['offense'], x: number, y: number, width: number): void {
-    if (rows.length === 0) {
-      addBoxLabel(this, x, y, '효과 굉장한 항목 없음', { width, height: 18, size: 13, minSize: 10, maxLines: 1 })
-        .setAlpha(0.76);
-      return;
-    }
-
-    rows.slice(0, 3).forEach((row, index) => {
-      const rowY = y + index * 32;
-      addBoxLabel(this, x, rowY, `${row.attackType} → ${row.target}`, { width, height: 16, size: 13, minSize: 10, maxLines: 1 });
-      addBoxLabel(this, x, rowY + 15, row.multiplier, { width, height: 16, size: 12, minSize: 10, maxLines: 1 })
-        .setAlpha(0.78);
     });
   }
 
@@ -1500,13 +1492,16 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private drawFloorClearView(): void {
-    addLabel(this, 34, 410, '층 클리어', 24);
-    addBoxLabel(this, 34, 448, this.notice || this.state.lastLog, {
+    const title = `${this.state.floor}층 클리어`;
+    const log = this.notice || this.state.lastLog;
+    const body = log.startsWith(title) ? log.slice(title.length).trimStart() : log;
+    addLabel(this, 34, 410, title, 24);
+    addBoxLabel(this, 34, 448, body, {
       width: 690,
-      height: 74,
-      size: 16,
-      minSize: 11,
-      maxLines: 3,
+      height: 82,
+      size: 15,
+      minSize: 10,
+      maxLines: 4,
     }).setAlpha(0.9);
     this.drawMenuButton(780, 444, 160, 48, '다음 층', () => this.goNextFloor());
   }

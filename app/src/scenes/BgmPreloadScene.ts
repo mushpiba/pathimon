@@ -124,15 +124,15 @@ export class BgmPreloadScene extends Phaser.Scene {
     let phase: 'launch' | 'bounce' = 'launch';
     let completedTransitions = 0;
 
-    const launchTimer = window.setTimeout(() => {
-      if (!allImagesStillMounted()) return;
-      images.forEach((image, index) => {
-        const item = pair[index]!;
+    images.forEach((image, index) => {
+      const item = pair[index]!;
+      const launchTimer = window.setTimeout(() => {
+        if (!allImagesStillMounted()) return;
         image.style.transition = `transform ${launchDuration}ms cubic-bezier(0.18, 0.78, 0.28, 1)`;
         image.style.transform = this.screensaverTransform(item.impactX, item.impactY, item.scale * 1.1, 0);
-      });
-    }, first.delayMs);
-    this.screensaverTimers.push(launchTimer);
+      }, item.delayMs);
+      this.screensaverTimers.push(launchTimer);
+    });
 
     const handleTransitionEnd = (event: TransitionEvent) => {
       if (event.propertyName !== 'transform' || !allImagesStillMounted()) return;
@@ -152,9 +152,9 @@ export class BgmPreloadScene extends Phaser.Scene {
 
       const nextTimer = window.setTimeout(() => {
         if (!allImagesStillMounted()) return;
-        const nextPair = createPathimonScreensaverPair({ height, sprites, width }).map((item) => ({
+        const nextPair = createPathimonScreensaverPair({ height, sprites, width }).map((item, index) => ({
           ...item,
-          delayMs: 0,
+          delayMs: index * 350,
         }));
         this.animateScreensaverPair(images, nextPair, width, height, sprites);
       }, first.respawnDelayMs);

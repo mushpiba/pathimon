@@ -117,7 +117,7 @@ describe('pathimon screensaver', () => {
     expect(pair.every((item) => isSafeLaunchPoint(item, 1024, 576))).toBe(true);
   });
 
-  it('keeps the first 8 to 12 pathimon visible immediately while BGM loads', () => {
+  it('starts the first 8 to 12 pathimon offscreen one by one', () => {
     const items = createInitialPathimonScreensaverItems({
       height: 576,
       random: seededRandom(987),
@@ -127,13 +127,11 @@ describe('pathimon screensaver', () => {
 
     expect(items.length).toBeGreaterThanOrEqual(8);
     expect(items.length).toBeLessThanOrEqual(12);
-    for (const item of items) {
-      expect(item.delayMs).toBe(0);
-      expect(item.startX).toBeGreaterThanOrEqual(0);
-      expect(item.startX).toBeLessThanOrEqual(1024);
-      expect(item.startY).toBeGreaterThanOrEqual(0);
-      expect(item.startY).toBeLessThanOrEqual(576 * 0.5);
+    items.forEach((item, index) => {
+      expect(item.delayMs).toBe(index * 350);
       expect(item.endX < 0 || item.endX > 1024 || item.endY < 0 || item.endY > 576).toBe(true);
-    }
+      expect(isOutsideViewport(item, 1024, 576)).toBe(true);
+      expect(isSafeLaunchPoint(item, 1024, 576)).toBe(true);
+    });
   });
 });

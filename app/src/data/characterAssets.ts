@@ -1,12 +1,12 @@
 type AssetModules = Record<string, string>;
 
-const bossCharacterModules = import.meta.glob('/public/images/character/boss/*.png', {
+const bossCharacterModules = import.meta.glob('/public/images/trainers/boss/*.png', {
   eager: true,
   query: '?url',
   import: 'default',
 }) as AssetModules;
 
-const trainerCharacterModules = import.meta.glob('/public/images/character/trainer/*.png', {
+const trainerCharacterModules = import.meta.glob('/public/images/trainers/trainer/*.png', {
   eager: true,
   query: '?url',
   import: 'default',
