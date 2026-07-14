@@ -51,6 +51,7 @@ import {
   resolveMoveSelectionPress,
   shouldPreserveBattleBgm,
   statusProfileMemoLines,
+  statusConditionDetailLines,
 } from '../ui/battleUi';
 import type { BattleActionId, BattleUnitPanelRole, PartyMenuPurpose, PathimonTypeIcon } from '../ui/battleUi';
 import { destroySceneChildren } from '../ui/sceneCleanup';
@@ -94,6 +95,8 @@ export class BattleScene extends Phaser.Scene {
   private isAnimating = false;
   private enemyCombatSprite?: Phaser.GameObjects.Image | Phaser.GameObjects.Text;
   private playerCombatSprite?: Phaser.GameObjects.Image | Phaser.GameObjects.Text;
+  private statusTooltip?: Phaser.GameObjects.Container;
+  private statusTooltipTimer?: Phaser.Time.TimerEvent;
 
   constructor() {
     super('BattleScene');
@@ -127,7 +130,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => destroySceneChildren(this));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.clearStatusTooltip();
+      destroySceneChildren(this);
+    });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.input.keyboard?.off('keydown', this.handleKeyboardDown);
       if (!this.preserveBattleBgmOnShutdown) {
@@ -262,6 +268,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private render(): void {
+    this.clearStatusTooltip();
     destroySceneChildren(this);
 
     const player = this.state.party[this.state.activeIndex];
@@ -419,11 +426,73 @@ export class BattleScene extends Phaser.Scene {
     addLabel(this, x + width - 36, hpY - 9, hpPercentLabel(monster), 12).setAlpha(0.9);
 
     const statusRow = rows.find((row) => row.kind === 'status');
-    if (statusRow) addBoxLabel(this, x + 18, hpY + 20, statusRow.text, { width: width - 36, height: 18, size: 12, minSize: 9, maxLines: 1 });
+    if (statusRow) {
+      addBoxLabel(this, x + 18, hpY + 20, statusRow.text, { width: width - 36, height: 18, size: 12, minSize: 9, maxLines: 1 });
+      this.bindStatusTooltip(x + 18, hpY + 18, width - 36, monster);
+    }
     const symptomsRow = rows.find((row) => row.kind === 'symptoms');
     if (symptomsRow) addBoxLabel(this, x + 18, hpY + 38, symptomsRow.text, { width: width - 36, height: 18, size: 12, minSize: 9, maxLines: 1 });
   }
 
+  private bindStatusTooltip(x: number, y: number, width: number, monster: RuntimeMonster): void {
+    const lines = statusConditionDetailLines(monster);
+    if (lines.length === 0) return;
+
+    const hitArea = this.add.rectangle(x, y, width, 24, 0xffffff, 0.001)
+      .setOrigin(0)
+      .setDepth(790)
+      .setInteractive({ useHandCursor: true });
+    const scheduleTooltip = () => {
+      this.clearStatusTooltip();
+      this.statusTooltipTimer = this.time.delayedCall(520, () => {
+        this.statusTooltipTimer = undefined;
+        this.showStatusTooltip(x, y, width, lines);
+      });
+    };
+
+    hitArea.on('pointerover', scheduleTooltip);
+    hitArea.on('pointerdown', scheduleTooltip);
+    hitArea.on('pointerout', () => this.clearStatusTooltip());
+    hitArea.on('pointerup', () => this.clearStatusTooltip());
+    hitArea.on('pointerupoutside', () => this.clearStatusTooltip());
+  }
+
+  private showStatusTooltip(x: number, y: number, width: number, lines: string[]): void {
+    this.clearStatusTooltip();
+    const visibleLines = lines.length > 8 ? [...lines.slice(0, 7), `외 ${lines.length - 7}개 상태이상`] : lines;
+    const tooltipWidth = Math.min(420, Math.max(260, width + 52));
+    const lineHeight = visibleLines.length > 5 ? 17 : 19;
+    const tooltipHeight = 18 + visibleLines.length * lineHeight;
+    const tooltipX = Math.min(APP_WIDTH - tooltipWidth - 16, Math.max(16, x));
+    const tooltipY = y > APP_HEIGHT / 2
+      ? Math.max(16, y - tooltipHeight - 10)
+      : Math.min(APP_HEIGHT - tooltipHeight - 16, y + 30);
+    const container = this.add.container(0, 0).setDepth(9600);
+    const background = this.add.rectangle(tooltipX, tooltipY, tooltipWidth, tooltipHeight, COLORS.panelDark, 0.98)
+      .setOrigin(0)
+      .setStrokeStyle(2, 0x72d6ff, 0.9);
+    container.add(background);
+
+    visibleLines.forEach((line, index) => {
+      const label = addBoxLabel(this, tooltipX + 12, tooltipY + 9 + index * lineHeight, line, {
+        width: tooltipWidth - 24,
+        height: lineHeight,
+        size: visibleLines.length > 5 ? 10 : 11,
+        minSize: 8,
+        maxLines: 1,
+      }).setAlpha(0.96);
+      container.add(label);
+    });
+
+    this.statusTooltip = container;
+  }
+
+  private clearStatusTooltip(): void {
+    this.statusTooltipTimer?.remove(false);
+    this.statusTooltipTimer = undefined;
+    this.statusTooltip?.destroy(true);
+    this.statusTooltip = undefined;
+  }
   private drawPathimonTypeIcon(x: number, y: number, width: number, height: number, icon: PathimonTypeIcon): void {
     if (this.textures.exists(icon.assetPath)) {
       this.add.image(x, y, icon.assetPath).setOrigin(0).setDisplaySize(width, height);

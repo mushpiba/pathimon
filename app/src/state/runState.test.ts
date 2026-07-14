@@ -21,6 +21,7 @@ import {
   healPartyMember,
   purchaseShopItem,
   purchaseShopItemForPartyMember,
+  maintenanceRefreshCost,
   refreshMaintenanceInventory,
 } from './runState';
 
@@ -62,8 +63,8 @@ describe('run state loop', () => {
 
     expect(state.floor).toBe(1);
     expect(state.money).toBe(0);
-    expect(state.capsules).toBe(4);
-    expect(state.capsuleInventory.universal).toBe(4);
+    expect(state.capsules).toBe(5);
+    expect(state.capsuleInventory.universal).toBe(5);
     expect(state.capsuleInventory.bacteria).toBe(0);
     expect(state.mode).toBe('challenge');
     expect(state.visualStyle).toBe('character');
@@ -304,8 +305,8 @@ describe('run state loop', () => {
     const result = resolveCapsuleAction(battle, 0);
 
     expect(result.phase).toBe('floorClear');
-    expect(result.capsules).toBe(3);
-    expect(result.capsuleInventory.universal).toBe(3);
+    expect(result.capsules).toBe(4);
+    expect(result.capsuleInventory.universal).toBe(4);
     expect(result.money).toBe(0);
     expect(result.party.length).toBe(2);
     expect(result.lastLog).toContain(`${battle.floor}층 클리어`);
@@ -650,7 +651,7 @@ describe('run state loop', () => {
     const result = resolveCapsuleAction(battle, 0);
 
     expect(result.phase).toBe('battle');
-    expect(result.capsules).toBe(4);
+    expect(result.capsules).toBe(5);
     expect(result.party).toHaveLength(1);
   });
 
@@ -694,25 +695,50 @@ describe('run state loop', () => {
     const result = purchaseShopItem(state, 'slot-capsule-a');
 
     expect(result.capsuleInventory[capsule.capsuleId]).toBe(1);
-    expect(result.capsules).toBe(5);
+    expect(result.capsules).toBe(6);
     expect(result.lastLog).toContain(capsule.name);
   });
 
-  it('spends one money to refresh maintenance inventory slots', () => {
+  it('starts maintenance refreshes free and then increases the cost by one each time', () => {
     const state = createInitialRunState('challenge');
     state.floor = 5;
     state.phase = 'shop';
-    state.money = 2;
+    state.money = 3;
     state.shopInventory = undefined;
-    const before = refreshMaintenanceInventory(state, 0);
 
-    const result = refreshMaintenanceInventory(before, 0.2);
+    expect(maintenanceRefreshCost(state)).toBe(0);
+    const first = refreshMaintenanceInventory(state, 0);
+    expect(first.money).toBe(3);
+    expect(first.shopRefreshCount).toBe(1);
+    expect(maintenanceRefreshCost(first)).toBe(1);
+
+    const second = refreshMaintenanceInventory(first, 0.2);
+    expect(second.money).toBe(2);
+    expect(second.shopRefreshCount).toBe(2);
+    expect(maintenanceRefreshCost(second)).toBe(2);
+
+    const third = refreshMaintenanceInventory(second, 0.4);
+    expect(third.money).toBe(0);
+    expect(third.shopRefreshCount).toBe(3);
+    expect(maintenanceRefreshCost(third)).toBe(3);
+    expect(third.shopInventory).toHaveLength(6);
+    expect(third.shopInventory?.map((item) => item.name)).not.toEqual(second.shopInventory?.map((item) => item.name));
+    expect(third.shopInventory?.some((item) => item.purchased)).toBe(false);
+    expect(third.lastLog).toContain('새로고침');
+  });
+
+  it('blocks maintenance refreshes when the increasing cost exceeds money', () => {
+    const state = createInitialRunState('challenge');
+    state.floor = 5;
+    state.phase = 'shop';
+    state.money = 0;
+    state.shopRefreshCount = 1;
+
+    const result = refreshMaintenanceInventory(state, 0.4);
 
     expect(result.money).toBe(0);
-    expect(result.shopInventory).toHaveLength(6);
-    expect(result.shopInventory?.map((item) => item.name)).not.toEqual(before.shopInventory?.map((item) => item.name));
-    expect(result.shopInventory?.some((item) => item.purchased)).toBe(false);
-    expect(result.lastLog).toContain('새로고침');
+    expect(result.shopRefreshCount).toBe(1);
+    expect(result.lastLog).toContain('자금이 부족');
   });
 
   it('asks for a party target before using a basic maintenance potion', () => {

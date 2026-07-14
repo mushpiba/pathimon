@@ -40,6 +40,7 @@ import {
   partyMenuOptions,
   pokerogueAtlasJsonPath,
   resolveMoveSelectionPress,
+  statusConditionDetailLines,
   statusProfileMemoLines,
   symptomSummary,
   statusSummary,
@@ -425,6 +426,20 @@ describe('battle UI helpers', () => {
 
     expect(effectLabels(monster)).toEqual(['공격 +6']);
     expect(statusSummary(monster)).toBe('상태: 공격 +6');
+  });
+
+  it('builds status condition detail lines for hover and long-press tooltips', () => {
+    const monster = createMonster({
+      statusConditions: {
+        fever: 2,
+        dehydration: 1,
+      },
+    });
+
+    expect(statusConditionDetailLines(monster)).toEqual([
+      '발열(2): 매 턴 최대 체력 2% 피해',
+      '탈수: 받는 직접 피해 10% 증가',
+    ]);
   });
 
   it('adds stacked canonical status conditions to the unit panel status text', () => {

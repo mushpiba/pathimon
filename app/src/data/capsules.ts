@@ -33,7 +33,7 @@ const CAPSULE_CATEGORIES: Partial<Record<CapsuleId, string[]>> = {
 
 export function createInitialCapsuleInventory(): CapsuleInventory {
   return {
-    universal: 4,
+    universal: 5,
     virus: 0,
     bacteria: 0,
     parasite: 0,

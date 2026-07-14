@@ -197,6 +197,7 @@ export function createInitialRunState(
     encounterKind: 'wild',
     phase: 'story',
     lastLog: '',
+    shopRefreshCount: 0,
   };
 }
 
@@ -211,6 +212,7 @@ export function enterBattle(state: RunState, enemyIndex?: number): RunState {
     encounterKind: encounterKindForFloor(state.floor),
     pendingCapture: undefined,
     shopInventory: undefined,
+    shopRefreshCount: 0,
     battleResultLog: undefined,
     lastEnemyHitEffectiveness: undefined,
     lastPlayerHitEffectiveness: undefined,
@@ -259,6 +261,7 @@ export function advanceFromShop(state: RunState): RunState {
     lastEnemyHitEffectiveness: undefined,
     lastPlayerHitEffectiveness: undefined,
     shopInventory: undefined,
+    shopRefreshCount: 0,
   };
 
   return enterBattle(nextState);
@@ -485,6 +488,10 @@ export function purchaseShopItemForPartyMember(
   return nextState;
 }
 
+export function maintenanceRefreshCost(state: RunState): number {
+  return Math.max(0, state.shopRefreshCount ?? 0);
+}
+
 export function refreshMaintenanceInventory(state: RunState, roll = Math.random()): RunState {
   const nextState: RunState = {
     ...state,
@@ -495,17 +502,20 @@ export function refreshMaintenanceInventory(state: RunState, roll = Math.random(
     shopInventory: ensureMaintenanceInventory(state),
   };
 
-  if (state.money < 1) {
+  const cost = maintenanceRefreshCost(state);
+  if (state.money < cost) {
     return {
       ...nextState,
+      shopRefreshCount: state.shopRefreshCount ?? 0,
       lastLog: '자금이 부족합니다.',
     };
   }
 
   return {
     ...nextState,
-    money: state.money - 1,
+    money: state.money - cost,
     shopInventory: createMaintenanceInventory(state.floor, roll),
-    lastLog: '정비 품목을 새로고침했습니다.',
+    shopRefreshCount: (state.shopRefreshCount ?? 0) + 1,
+    lastLog: cost > 0 ? `정비 품목을 새로고침했습니다. -₩${cost}` : '정비 품목을 무료로 새로고침했습니다.',
   };
 }

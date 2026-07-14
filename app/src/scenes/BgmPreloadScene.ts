@@ -46,6 +46,8 @@ export class BgmPreloadScene extends Phaser.Scene {
     if (!parent || this.screensaverLayer) return;
 
     parent.style.position = parent.style.position || 'relative';
+    this.game.canvas.style.position = this.game.canvas.style.position || 'relative';
+    this.game.canvas.style.zIndex = this.game.canvas.style.zIndex || '1';
     const layer = document.createElement('div');
     layer.className = 'pathimon-bgm-screensaver';
     Object.assign(layer.style, {
@@ -54,7 +56,7 @@ export class BgmPreloadScene extends Phaser.Scene {
       overflow: 'hidden',
       pointerEvents: 'none',
       position: 'absolute',
-      zIndex: '8',
+      zIndex: '1000',
     });
     parent.appendChild(layer);
     this.screensaverLayer = layer;

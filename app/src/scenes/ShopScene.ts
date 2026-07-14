@@ -10,6 +10,7 @@ import {
   evolutionTargetForMonster,
   purchaseShopItem,
   purchaseShopItemForPartyMember,
+  maintenanceRefreshCost,
   refreshMaintenanceInventory,
 } from '../state/runState';
 import type { RunState, ShopItem } from '../types/game';
@@ -89,7 +90,7 @@ export class ShopScene extends Phaser.Scene {
       this.scene.start('BattleScene', { state: nextState });
     });
 
-    this.createButton(802, 506, 138, 34, '새로고침 ₩1', () => {
+    this.createButton(802, 506, 138, 34, `새로고침 ₩${maintenanceRefreshCost(this.state)}`, () => {
       this.state = refreshMaintenanceInventory(this.state);
       this.note = this.state.lastLog;
       this.selectedTargetItem = undefined;

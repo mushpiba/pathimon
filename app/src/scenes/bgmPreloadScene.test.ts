@@ -10,6 +10,8 @@ describe('BgmPreloadScene', () => {
     expect(bgmPreloadSceneSource).toContain('createPathimonScreensaverPair');
     expect(bgmPreloadSceneSource).toContain('addScreensaverPair');
     expect(bgmPreloadSceneSource).toContain('pathimonScreensaverSpritePool');
+    expect(bgmPreloadSceneSource).toContain('this.game.canvas.style.zIndex');
+    expect(bgmPreloadSceneSource).toContain("zIndex: '1000'");
     expect(bgmPreloadSceneSource).toContain('stopPathimonScreensaver');
     expect(bgmPreloadSceneSource).toContain('removePathimonScreensaver');
     expect(bgmPreloadSceneSource).toContain('drawLoadingOverlay');

@@ -2,7 +2,7 @@ import { ABILITIES } from '../data/abilities';
 import { EFFECTIVENESS } from '../data/effectiveness';
 import { ATTACK_TYPE_LABELS, TAG_LABELS } from '../data/labels';
 import { MOVES } from '../data/moves';
-import { effectiveMaxHp, STATUS_CONDITIONS, statusConditionLabels } from '../data/statusConditions';
+import { effectiveMaxHp, STATUS_CONDITIONS, STATUS_CONDITION_IDS, statusConditionLabels, statusConditionStacks } from '../data/statusConditions';
 import { currentMoveData, currentMoveName } from '../battle/moveStages';
 import { interpolatePathimonName } from '../game/text';
 import type { AbilityId, CapsuleId, EffectPrimitive, EncounterKind, MoveData, MoveId, MoveSlot, RunMode, RuntimeMonster, TagValue, VisualStyle } from '../types/game';
@@ -730,6 +730,19 @@ export function formatMoveDetailSections(moveId: MoveId, monster?: RuntimeMonste
 
 export function statusProfileMemoLines(monster: RuntimeMonster): string[] {
   return monster.profileMemo?.filter((line) => line.trim().length > 0) ?? ['메모가 아직 정리되지 않았습니다.'];
+}
+
+export function statusConditionDetailLines(monster: RuntimeMonster): string[] {
+  return STATUS_CONDITION_IDS
+    .map((id) => {
+      const stacks = statusConditionStacks(monster, id);
+      if (stacks <= 0) return undefined;
+
+      const condition = STATUS_CONDITIONS[id];
+      const label = stacks > 1 ? `${condition.label}(${stacks})` : condition.label;
+      return `${label}: ${condition.effect}`;
+    })
+    .filter((line): line is string => Boolean(line));
 }
 
 export function battleMoveSlots(monster: RuntimeMonster): MoveSlot[] {

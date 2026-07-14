@@ -57,6 +57,7 @@ function cloneState(state: RunState): RunState {
     enemy: state.enemy ? cloneMonster(state.enemy) : null,
     pendingCapture: state.pendingCapture ? cloneMonster(state.pendingCapture) : undefined,
     shopInventory: state.shopInventory?.map((item) => ({ ...item })),
+    shopRefreshCount: state.shopRefreshCount,
   };
 }
 
@@ -143,6 +144,7 @@ function setWinState(state: RunState, message: string, _learningDetail?: string,
     lastLog: shouldOpenShop ? maintenanceVictoryLog(state) : battleResultLog,
     battleResultLog,
     shopInventory: shouldOpenShop ? createMaintenanceInventory(state.floor) : undefined,
+    shopRefreshCount: shouldOpenShop ? 0 : undefined,
   };
 }
 

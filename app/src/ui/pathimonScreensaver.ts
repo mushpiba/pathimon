@@ -30,7 +30,8 @@ export interface PathimonScreensaverOptions {
 const MIN_VISIBLE_PATHIMON = 8;
 const MAX_VISIBLE_PATHIMON = 12;
 const RESPAWN_DELAY_MS = 1000;
-const INITIAL_ITEM_STAGGER_MS = 350;
+const INITIAL_ITEM_STAGGER_MS = 120;
+const INITIAL_ITEM_DURATION_MS = 1800;
 const SAFE_LAUNCH_ZONES: PathimonLaunchZone[] = ['top', 'left', 'right'];
 
 export function pathimonScreensaverSpritePool(): string[] {
@@ -158,5 +159,6 @@ export function createInitialPathimonScreensaverItems(options: PathimonScreensav
   return createPathimonScreensaverItems(options).map((item, index) => ({
     ...item,
     delayMs: index * INITIAL_ITEM_STAGGER_MS,
+    durationMs: INITIAL_ITEM_DURATION_MS,
   }));
 }

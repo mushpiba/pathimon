@@ -347,4 +347,5 @@ export interface RunState {
   lastEnemyHitEffectiveness?: HitEffectiveness;
   lastPlayerHitEffectiveness?: HitEffectiveness;
   shopInventory?: ShopItem[];
+  shopRefreshCount?: number;
 }
