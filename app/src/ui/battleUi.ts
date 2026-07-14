@@ -1,5 +1,4 @@
 import { ABILITIES } from '../data/abilities';
-import { BOSS_ATTACK_MATCHUPS, type BossDefenseTrait } from '../data/bossAttackMatchups';
 import { EFFECTIVENESS } from '../data/effectiveness';
 import { ATTACK_TYPE_LABELS, TAG_LABELS } from '../data/labels';
 import { MOVES } from '../data/moves';
@@ -471,39 +470,11 @@ export interface BattleDexSummary {
 export interface BossAttackMatchupRow {
   attackName: string;
   attackType: string;
-  noneTargets: string;
-  superTargets: string;
+  targetTags: string;
 }
 
 function labelEffectivenessTarget(target: AbilityId | TagValue): string {
   return ABILITIES[target as AbilityId]?.name ?? TAG_LABELS[target as TagValue] ?? target;
-}
-
-const BOSS_DEFENSE_TRAIT_LABELS: Partial<Record<BossDefenseTrait, string>> = {
-  bacterial_cell_wall: '세균 세포벽',
-  category_bacteria: '세균',
-  category_fungus: '진균',
-  category_parasite: '기생충',
-  category_protozoa: '원생동물',
-  category_virus: '바이러스',
-  fungal_membrane: '진균막',
-  large_body: '대형 병원체',
-  no_cell_wall: '무세포벽',
-  superantigen_axis: '초항원축',
-  toxin_axis: '독소축',
-  viral: '바이러스성',
-};
-
-function labelBossDefenseTrait(trait: BossDefenseTrait): string {
-  return ABILITIES[trait as AbilityId]?.name
-    ?? TAG_LABELS[trait as TagValue]
-    ?? BOSS_DEFENSE_TRAIT_LABELS[trait]
-    ?? trait;
-}
-
-function labelBossDefenseTraits(traits?: BossDefenseTrait[]): string {
-  if (!traits?.length) return '없음';
-  return traits.map(labelBossDefenseTrait).join(', ');
 }
 
 function labelMultiplier(multiplier: number): string {
@@ -577,23 +548,27 @@ export function formatBossAttackMatchupRows(enemy: RuntimeMonster): BossAttackMa
   return moveIds
     .map((moveId) => MOVES[moveId])
     .filter((move): move is MoveData => Boolean(move))
-    .map((move) => {
-      const matchup = BOSS_ATTACK_MATCHUPS[move.type];
-      return {
-        attackName: currentMoveName(move, enemy),
-        attackType: ATTACK_TYPE_LABELS[move.type],
-        superTargets: labelBossDefenseTraits(matchup?.super),
-        noneTargets: labelBossDefenseTraits(matchup?.none),
-      };
-    });
+    .map((move) => ({
+      attackName: currentMoveName(move, enemy),
+      attackType: ATTACK_TYPE_LABELS[move.type],
+      targetTags: move.targetTags?.length ? move.targetTags.join(', ') : '없음',
+    }));
+}
+
+function intentMoveLabel(move: MoveData): string {
+  return `${ATTACK_TYPE_LABELS[move.type]}(${move.name})`;
 }
 
 export function enemyIntentText(enemy: RuntimeMonster): string {
-  const move = MOVES[enemy.plannedMoveId ?? enemy.moveset[0]];
-  if (!move) return `${enemy.name}은 공격을 준비하고 있다.`;
-  return `${enemy.name}은 ${ATTACK_TYPE_LABELS[move.type]}(${move.name})을 하려고 한다.`;
-}
+  const plannedIds = enemy.plannedMoveIds?.length
+    ? enemy.plannedMoveIds
+    : [enemy.plannedMoveId ?? enemy.moveset[0]].filter((moveId): moveId is MoveId => Boolean(moveId));
+  const plannedMoves = plannedIds.map((moveId) => MOVES[moveId]).filter((move): move is MoveData => Boolean(move));
 
+  if (plannedMoves.length === 0) return `${enemy.name}은 공격을 준비하고 있다.`;
+  if (plannedMoves.length === 1) return `${enemy.name}은 ${intentMoveLabel(plannedMoves[0])}을 하려고 한다.`;
+  return `${enemy.name}은 ${plannedMoves.map(intentMoveLabel).join('와 ')}을 준비하고 있다.`;
+}
 export function commandViewLines(
   player: RuntimeMonster,
   enemy: RuntimeMonster,

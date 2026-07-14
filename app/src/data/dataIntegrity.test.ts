@@ -106,6 +106,17 @@ describe('Pathimon data', () => {
       '아포 발아와 탄저 독소, 협막 형성이 대표 병인이다.',
     ]);
   });
+  it('loads countermeasure profiles from every selected pathimon note', () => {
+    for (const monster of NOTE_MONSTERS) {
+      expect(monster.countermeasures, `${monster.id} countermeasures`).toBeDefined();
+      expect(monster.countermeasures?.symptomTags.length, `${monster.id} symptom/tag countermeasures`).toBeGreaterThan(0);
+    }
+
+    const anthrax = NOTE_MONSTERS.find((monster) => monster.id === 'anthrax');
+    expect(anthrax?.countermeasures?.direct).toEqual(expect.arrayContaining(['시프로플록사신', '독시사이클린', '탄저 항독소']));
+    expect(anthrax?.countermeasures?.symptomTags).toEqual(expect.arrayContaining(['피부탄저', '흡입탄저', '발열', '기침', '피로']));
+  });
+
 
   it('parses every first-wave note into battle defense tags and explicit defense traits', () => {
     for (const monster of NOTE_MONSTERS) {

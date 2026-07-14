@@ -355,6 +355,18 @@ describe('battle UI helpers', () => {
     expect(enemyIntentText(enemy)).toBe('면역챔피언은 옵소닌표적(옵소닌 표적)을 하려고 한다.');
   });
 
+  it('describes two planned boss moves during phase two', () => {
+    const enemy = createMonster({
+      name: '면역챔피언',
+      isBoss: true,
+      isTrainer: true,
+      moveset: ['m_anthelmintic', 'm_interferon'],
+      plannedMoveIds: ['m_anthelmintic', 'm_interferon'],
+    });
+
+    expect(enemyIntentText(enemy)).toBe('면역챔피언은 구충제(구충 신경마비)와 인터페론(인터페론)을 준비하고 있다.');
+  });
+
   it('orders human battle command copy as prompt, entry log, then planned move', () => {
     const player = createMonster({ name: '플루리온' });
     const enemy = createMonster({ name: '검체 연구원', isTrainer: true, moveset: ['m_interferon'] });
@@ -536,7 +548,7 @@ describe('battle UI helpers', () => {
     });
   });
 
-  it('summarizes current boss attacks by super-effective and immune defense traits', () => {
+  it('summarizes current boss attacks by target tags', () => {
     const boss = createMonster({
       isBoss: true,
       isTrainer: true,
@@ -549,17 +561,14 @@ describe('battle UI helpers', () => {
     expect(rows[0]).toMatchObject({
       attackName: '대식세포 포식',
       attackType: '포식소화',
-      superTargets: '무방비, 세포외, 미시',
-      noneTargets: '피막장벽, 바이오필름, 항산성막, 식포융합차단, 대형저항, 대형 병원체, 무핵산',
+      targetTags: '대식세포 포식, 포식, 세포외, 미세병원체',
     });
     expect(rows[2]).toMatchObject({
       attackName: '세포벽 억제제',
       attackType: '세포벽억제',
-      superTargets: '세균 세포벽, 그람+, 그람−',
-      noneTargets: expect.stringContaining('무세포벽'),
+      targetTags: expect.stringContaining('베타락탐'),
     });
   });
-
   it('chooses BGM by encounter playlist with fixed late-floor overrides', () => {
     const assets = battleBgmAssetPaths();
 

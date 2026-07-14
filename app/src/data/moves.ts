@@ -395,6 +395,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.9,
     description: '포식세포가 병원체를 직접 삼켜 공격한다.',
     learnText: '면역계가 병원체를 집어삼키는 기본 대응이다.',
+    targetTags: ['대식세포 포식', '포식', '세포외', '미세병원체'],
   },
   m_opsonin: {
     id: 'm_opsonin',
@@ -404,6 +405,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.88,
     description: '표식을 남겨 병원체를 더 잘 잡히게 만든다.',
     learnText: '항체와 보조 인자가 표적화를 강화한다.',
+    targetTags: ['옵소닌', '항체', '협막', '세포외'],
   },
   m_antibody: {
     id: 'm_antibody',
@@ -413,6 +415,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.9,
     description: '항체가 병원체와 독소를 중화한다.',
     learnText: '정밀한 결합으로 위협을 무디게 만든다.',
+    targetTags: ['항체', '항독소', '독소', '세포외'],
   },
   m_complement: {
     id: 'm_complement',
@@ -422,6 +425,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.88,
     description: '보체 막공격복합체가 외막을 관통한다.',
     learnText: '연쇄 활성화된 보체가 막에 구멍을 낸다.',
+    targetTags: ['보체', 'MAC', '그람음성', '세포외'],
   },
   m_ctl: {
     id: 'm_ctl',
@@ -431,6 +435,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.85,
     description: '감염된 세포를 골라 강하게 제거한다.',
     learnText: '세포독성 T세포가 숙주 내부 감염을 노린다.',
+    targetTags: ['CTL', '세포독성 T세포', '세포내', '바이러스'],
   },
   m_th1: {
     id: 'm_th1',
@@ -440,6 +445,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.85,
     description: '대식세포 반응을 끌어올려 면역 화력을 강화한다.',
     learnText: '세포성 면역을 깨워 다음 공격을 더 아프게 만든다.',
+    targetTags: ['Th1', '대식세포 활성화', '세포내', '항산성', '결핵'],
     effects: [{ kind: 'buff', stat: 'attack', pct: 30, turns: 3, target: 'self' }],
   },
   m_th2: {
@@ -450,6 +456,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.86,
     description: '호산구와 IgE 반응으로 큰 기생충을 압박한다.',
     learnText: '연충처럼 큰 병원체는 포식보다 호산구성 공격이 중요하다.',
+    targetTags: ['Th2', '호산구', 'IgE', '연충', '기생충', '선충', '흡충', '조충'],
     effects: [{ kind: 'condition', condition: 'immune_abnormal', chance: 1, target: 'enemy' }],
   },
   m_interferon: {
@@ -460,6 +467,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.92,
     description: '항바이러스 신호를 퍼뜨려 병원체를 압박한다.',
     learnText: '주변 세포에 경보를 내려 방어 상태를 높인다.',
+    targetTags: ['인터페론', '항바이러스', '바이러스', '세포내'],
   },
   m_oxidative_burst: {
     id: 'm_oxidative_burst',
@@ -469,6 +477,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.87,
     description: '활성산소가 병원체를 태우듯 압박한다.',
     learnText: '포식세포의 ROS 공격은 카탈라아제나 포자, 바이오필름에 막힐 수 있다.',
+    targetTags: ['산화폭발', '활성산소', '세균', '진균', '세포외'],
   },
   m_cell_wall_inhibitor: {
     id: 'm_cell_wall_inhibitor',
@@ -478,6 +487,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.9,
     description: '세포벽 합성을 방해해 병원체를 무너뜨린다.',
     learnText: '베타락탐 계열처럼 세균 세포벽을 노리는 치료 대응이다.',
+    targetTags: ['세포벽 억제제', '베타락탐', '페니실린', '암피실린', '나프실린', '세파졸린', '세프트리악손', '세팔로스포린', '반코마이신', '카바페넴', '피페라실린-타조박탐', '그람양성', '그람음성', '세균'],
   },
   m_protein_synthesis_inhibitor: {
     id: 'm_protein_synthesis_inhibitor',
@@ -487,6 +497,17 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.88,
     description: '단백질 생산을 끊어 증식을 둔화시킨다.',
     learnText: '세균 리보솜을 표적으로 삼는 항균제 대응이다.',
+    targetTags: ['단백합성 억제제', '독시사이클린', '테트라사이클린', '마크로라이드', '아지스로마이신', '에리스로마이신', '클린다마이신', '아미노글리코사이드', '겐타마이신', '스트렙토마이신', '아미카신', '리네졸리드', '세균'],
+  },
+  m_targeted_antibacterial: {
+    id: 'm_targeted_antibacterial',
+    name: '표적 항균요법',
+    type: 'targeted_antibacterial',
+    power: 17,
+    accuracy: 0.88,
+    description: '균의 특성과 내성 양상에 맞춘 항균 치료로 압박한다.',
+    learnText: '세균 치료는 그람염색만이 아니라 감염 부위, 독소, 내성, 세포내 위치까지 함께 본다.',
+    targetTags: ['표적 항균요법', '항균제', '플루오로퀴놀론', '시프로플록사신', '레보플록사신', '메트로니다졸', '트리메토프림-설파메톡사졸', 'TMP-SMX', '피닥소마이신', '분변미생물 이식', '니트로푸란토인', '리팍시민', '리팜핀', '이소니아지드', '피라진아미드', '에탐부톨', '항결핵제', '세프타지딤-아비박탐', '메로페넴-바보박탐', '세피데로콜', '폴리믹신', '이미페넴'],
   },
   m_antifungal_membrane: {
     id: 'm_antifungal_membrane',
@@ -496,6 +517,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.88,
     description: '진균막과 균사 구조를 노려 공격한다.',
     learnText: '진균의 막과 세포벽 성분은 항진균제의 핵심 표적이다.',
+    targetTags: ['항진균제', '암포테리신B', '아졸', '진균', '진균막'],
   },
   m_anthelmintic: {
     id: 'm_anthelmintic',
@@ -505,6 +527,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.86,
     description: '큰 기생충의 운동성을 마비시켜 몰아붙인다.',
     learnText: '구충제는 연충의 신경근 기능을 표적으로 삼을 수 있다.',
+    targetTags: ['구충제', '알벤다졸', '메벤다졸', '이버멕틴', '프라지콴텔', '트리클라벤다졸', '디에틸카바마진', 'DEC', '피란텔', '니클로사마이드', '선충', '흡충', '조충', '기생충', '장관기생'],
   },
   m_antitoxin_therapy: {
     id: 'm_antitoxin_therapy',
@@ -514,6 +537,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.92,
     description: '독소를 중화해 병원체의 주 공격축을 꺾는다.',
     learnText: '독소 매개 질환에서는 병원체 자체보다 독소 중화가 중요한 대응이 된다.',
+    targetTags: ['항독소', '독소', '탄저 항독소', '보툴리눔 항독소', '디프테리아 항독소', '파상풍 면역글로불린', 'TIG', 'DAT', '보툴리눔', '파상풍', '디프테리아'],
   },
   m_antiviral_replication: {
     id: 'm_antiviral_replication',
@@ -523,6 +547,37 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.9,
     description: '바이러스 복제 과정을 차단한다.',
     learnText: '항바이러스제는 숙주 세포 안에서 복제하는 바이러스의 생활사를 노린다.',
+    targetTags: ['항바이러스제', '항레트로바이러스제', 'ART', '복제차단', '뉴클레오시드', '바이러스', '레트로바이러스'],
+  },
+  m_antiprotozoal: {
+    id: 'm_antiprotozoal',
+    name: '항원충제',
+    type: 'protein_synthesis_drug',
+    power: 17,
+    accuracy: 0.88,
+    description: '원충의 증식과 대사 축을 노려 압박한다.',
+    learnText: '원충 감염에서는 병원체와 생활사에 맞는 항원충제 선택이 중요하다.',
+    targetTags: ['항원충제', '메트로니다졸', '클로로퀸', '아르테미시닌', '원충', '원생동물', '말라리아', '아메바'],
+  },
+  m_rehydration: {
+    id: 'm_rehydration',
+    name: '수액요법',
+    type: 'special',
+    power: 12,
+    accuracy: 0.95,
+    description: '탈수와 구토, 설사로 흔들린 체액 균형을 보정한다.',
+    learnText: '증상 기반 보조요법은 병원체를 직접 제거하지 않아도 전투를 유리하게 만든다.',
+    targetTags: ['수액요법', '재수화', '전해질 보충', '철분 보충', '탈수', '구토', '설사', '배설 이상', '복통'],
+  },
+  m_surgery_drainage: {
+    id: 'm_surgery_drainage',
+    name: '수술·배농',
+    type: 'lysis',
+    power: 18,
+    accuracy: 0.82,
+    description: '농양, 괴사, 폐색처럼 물리적 처치가 필요한 병변을 제거한다.',
+    learnText: '약물만으로 부족한 병소는 배농이나 수술적 처치가 필요할 수 있다.',
+    targetTags: ['수술', '배농', '농양', '괴사', '폐색', '조직손상', '상처 처치', '괴사조직 제거', '내시경 제거', '수술적 제거', '물리적 제거', '충체 제거', '결절절제'],
   },
 };
 

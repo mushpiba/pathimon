@@ -10,7 +10,7 @@ import { MOVES } from '../data/moves';
 import { MONSTERS } from '../data/monsters';
 import { interpolatePathimonName } from '../game/text';
 import { createMonsterInstance } from '../state/factory';
-import { bossMoveEffectiveness, chooseBossMove, createBossDefenseProfile, selectBossMoveSet } from './bossMatchup';
+import { bossMoveEffectiveness, chooseBossMove, chooseEffectiveBossMove, createBossDefenseProfile } from './bossMatchup';
 import { advanceStagedMove, currentMoveData, resolveMoveOutcome } from './moveStages';
 import type { AbilityId, CapsuleId, HitEffectiveness, MoveData, MoveId, RunState, RuntimeMonster } from '../types/game';
 
@@ -33,7 +33,13 @@ function cloneMonster(monster: RuntimeMonster): RuntimeMonster {
     plannedMoveId: monster.plannedMoveId,
     sealedMoveIds: monster.sealedMoveIds ? [...monster.sealedMoveIds] : undefined,
     bossMaintenanceQueued: monster.bossMaintenanceQueued,
+    plannedMoveIds: monster.plannedMoveIds ? [...monster.plannedMoveIds] : undefined,
+    bossPhase2Activated: monster.bossPhase2Activated,
     profileMemo: monster.profileMemo ? [...monster.profileMemo] : undefined,
+    countermeasures: monster.countermeasures ? {
+      direct: [...monster.countermeasures.direct],
+      symptomTags: [...monster.countermeasures.symptomTags],
+    } : undefined,
     effects: monster.effects.map((effect) => ({ ...effect })),
     statusConditions: monster.statusConditions ? { ...monster.statusConditions } : undefined,
     symptoms: monster.symptoms ? [...monster.symptoms] : undefined,
@@ -240,109 +246,162 @@ function missesFromSensoryAbnormality(actor: RuntimeMonster, roll = Math.random(
   return roll >= hitChance;
 }
 
-function sealedBossMoveIds(enemy: RuntimeMonster): MoveId[] {
-  return enemy.sealedMoveIds ?? [];
+function isHumanEnemy(enemy: RuntimeMonster): boolean {
+  return Boolean(enemy.isBoss || enemy.isTrainer);
 }
 
-function planBossMove(enemy: RuntimeMonster, defender: RuntimeMonster): MoveId | undefined {
-  if (!enemy.isBoss) {
-    return enemy.moveset[0];
+function bossUsesPhaseTwo(enemy: RuntimeMonster): boolean {
+  return Boolean(enemy.isBoss && (enemy.bossPhase2Activated || enemy.hp <= enemy.maxHp / 2));
+}
+
+function availablePartyTargets(party: RuntimeMonster[], activeIndex: number): RuntimeMonster[] {
+  return party.filter((monster, index) => index !== activeIndex && monster.hp > 0 && !monster.fainted);
+}
+
+function randomPartyTarget(party: RuntimeMonster[], activeIndex: number, random = Math.random): RuntimeMonster | undefined {
+  const candidates = availablePartyTargets(party, activeIndex);
+  if (candidates.length === 0) return undefined;
+  const index = Math.min(candidates.length - 1, Math.max(0, Math.floor(random() * candidates.length)));
+  return candidates[index];
+}
+
+function chooseMoveForTarget(
+  enemy: RuntimeMonster,
+  target: RuntimeMonster,
+  movePool: MoveId[] = enemy.moveset,
+  preferEffective = false,
+): MoveId | undefined {
+  const profile = createBossDefenseProfile(target);
+  if (preferEffective) {
+    return chooseEffectiveBossMove(movePool, profile) ?? chooseBossMove(movePool, profile);
+  }
+  return chooseBossMove(movePool, profile);
+}
+
+function planHumanMoves(
+  enemy: RuntimeMonster,
+  defender: RuntimeMonster,
+  party: RuntimeMonster[] = [defender],
+  activeIndex = 0,
+): MoveId[] {
+  if (!isHumanEnemy(enemy)) {
+    return enemy.moveset[0] ? [enemy.moveset[0]] : [];
   }
 
-  if (enemy.plannedMoveId && !sealedBossMoveIds(enemy).includes(enemy.plannedMoveId)) {
-    return enemy.plannedMoveId;
+  if (enemy.plannedMoveIds?.length) {
+    return enemy.plannedMoveIds;
   }
 
-  const profile = createBossDefenseProfile(defender);
-  const plannedMoveId = chooseBossMove(enemy.moveset, profile, sealedBossMoveIds(enemy));
-  enemy.plannedMoveId = plannedMoveId;
-  return plannedMoveId;
+  if (enemy.plannedMoveId) {
+    enemy.plannedMoveIds = [enemy.plannedMoveId];
+    return enemy.plannedMoveIds;
+  }
+
+  if (!bossUsesPhaseTwo(enemy)) {
+    const planned = chooseMoveForTarget(enemy, defender);
+    enemy.plannedMoveIds = planned ? [planned] : [];
+    enemy.plannedMoveId = planned;
+    return enemy.plannedMoveIds;
+  }
+
+  enemy.bossPhase2Activated = true;
+  const first = chooseMoveForTarget(enemy, defender, enemy.moveset, true);
+  const secondTarget = randomPartyTarget(party, activeIndex) ?? defender;
+  const secondPool = first ? enemy.moveset.filter((moveId) => moveId !== first) : enemy.moveset;
+  const second = chooseMoveForTarget(enemy, secondTarget, secondPool.length > 0 ? secondPool : enemy.moveset, true);
+  const planned = [first, second].filter((moveId): moveId is MoveId => Boolean(moveId));
+
+  enemy.plannedMoveIds = planned;
+  enemy.plannedMoveId = planned[0];
+  return planned;
 }
 
-function queueBossMaintenanceIfNeeded(enemy: RuntimeMonster): void {
-  if (!enemy.isBoss) return;
-  const sealed = sealedBossMoveIds(enemy);
-  enemy.bossMaintenanceQueued = enemy.moveset.length > 0 && enemy.moveset.every((moveId) => sealed.includes(moveId));
-}
-
-function sealBossMove(enemy: RuntimeMonster, moveId: MoveId): void {
-  const sealed = sealedBossMoveIds(enemy);
-  enemy.sealedMoveIds = sealed.includes(moveId) ? sealed : [...sealed, moveId];
+function clearPlannedHumanMoves(enemy: RuntimeMonster): void {
   enemy.plannedMoveId = undefined;
-  queueBossMaintenanceIfNeeded(enemy);
+  enemy.plannedMoveIds = [];
 }
 
-function refreshBossMoves(enemy: RuntimeMonster): void {
-  const moveset = selectBossMoveSet();
-  enemy.moveset = moveset;
-  enemy.moveSlots = moveset;
-  enemy.sealedMoveIds = [];
-  enemy.plannedMoveId = undefined;
-  enemy.bossMaintenanceQueued = false;
-}
-
-function resolveBossTurn(actor: RuntimeMonster, enemy: RuntimeMonster, variance: number): EnemyTurnResult {
-  if (enemy.bossMaintenanceQueued) {
-    refreshBossMoves(enemy);
-    return { log: `${enemy.name}이 1턴 동안 대응책을 재정비했다.` };
-  }
-
-  const enemyMoveId = planBossMove(enemy, actor);
-  const enemyMove = enemyMoveId ? MOVES[enemyMoveId] : undefined;
-  if (!enemyMove || !enemyMoveId) {
+function resolveHumanMove(actor: RuntimeMonster, enemy: RuntimeMonster, moveId: MoveId, variance: number): EnemyTurnResult {
+  const enemyMove = MOVES[moveId];
+  if (!enemyMove) {
     return { log: `${enemy.name} could not act.` };
   }
 
   const stagedMove = currentMoveData(enemyMove, enemy);
   if (missesFromSensoryAbnormality(enemy)) {
-    enemy.plannedMoveId = undefined;
     advanceStagedMove(enemy, enemyMove);
     applyAttackTriggeredStatusDamage(enemy);
     return { log: `${enemy.name}의 공격이 ${sensoryMissLabel(enemy)}으로 빗나갔다.` };
   }
 
   const resolvedMove = resolveMoveOutcome(stagedMove, Math.random());
-  const profile = createBossDefenseProfile(actor);
-  const effectiveness = bossMoveEffectiveness(resolvedMove, profile);
-
-  if (effectiveness.kind === 'none') {
-    sealBossMove(enemy, enemyMoveId);
-    advanceStagedMove(enemy, enemyMove);
-    applyAttackTriggeredStatusDamage(enemy);
-    return {
-      hitEffectiveness: 'none',
-      log: `${enemy.name}의 ${resolvedMove.name}은 ${actor.name}에게 효과가 없어 봉인되었다.`,
-    };
-  }
-
+  const effectiveness = bossMoveEffectiveness(resolvedMove, createBossDefenseProfile(actor));
   const enemyResult = calculateDamage(
     enemy,
     actor,
     resolvedMove,
     variance,
-    { total: effectiveness.multiplier, notes: effectiveness.matchedTraits },
+    { total: effectiveness.multiplier, notes: effectiveness.matchedTags },
   );
+
   markDamage(actor, enemyResult.damage);
   applyEffects(enemy, actor, resolvedMove.effects);
   appendSymptom(actor, resolvedMove.symptom);
-  enemy.plannedMoveId = undefined;
   advanceStagedMove(enemy, enemyMove);
   applyAttackTriggeredStatusDamage(enemy);
-  const label = effectiveness.kind === 'super' ? ' 효과가 굉장했다.' : '';
+
+  const label = effectiveness.kind === 'super'
+    ? ' 효과가 굉장했다.'
+    : effectiveness.kind === 'effective'
+      ? ' 효과가 있다.'
+      : '';
+
   return {
     hitEffectiveness: resolvedMove.power > 0 ? hitEffectivenessFromMultiplier(effectiveness.multiplier) : undefined,
     log: `${enemy.name}의 ${resolvedMove.name}! ${formatMoveDescription(resolvedMove, enemy)}${label}`,
   };
 }
 
-function resolveEnemyTurn(actor: RuntimeMonster, enemy: RuntimeMonster, variance: number): EnemyTurnResult {
+function resolveHumanTurn(
+  actor: RuntimeMonster,
+  enemy: RuntimeMonster,
+  variance: number,
+  party: RuntimeMonster[] = [actor],
+  activeIndex = 0,
+): EnemyTurnResult {
+  const plannedMoveIds = planHumanMoves(enemy, actor, party, activeIndex);
+  clearPlannedHumanMoves(enemy);
+
+  if (plannedMoveIds.length === 0) {
+    return { log: `${enemy.name} could not act.` };
+  }
+
+  const logs: string[] = [];
+  let hitEffectiveness: EnemyTurnResult['hitEffectiveness'];
+
+  for (const moveId of plannedMoveIds) {
+    if (actor.hp <= 0) break;
+    const result = resolveHumanMove(actor, enemy, moveId, variance);
+    logs.push(result.log);
+    hitEffectiveness = result.hitEffectiveness ?? hitEffectiveness;
+  }
+
+  return { hitEffectiveness, log: logs.join(' ') };
+}
+function resolveEnemyTurn(
+  actor: RuntimeMonster,
+  enemy: RuntimeMonster,
+  variance: number,
+  party: RuntimeMonster[] = [actor],
+  activeIndex = 0,
+): EnemyTurnResult {
   if (enemy.stunned) {
     enemy.stunned = false;
     return { log: `${enemy.name} is stunned.` };
   }
 
-  if (enemy.isBoss) {
-    return resolveBossTurn(actor, enemy, variance);
+  if (isHumanEnemy(enemy)) {
+    return resolveHumanTurn(actor, enemy, variance, party, activeIndex);
   }
 
   const enemyMoveId = enemy.moveset[0];
@@ -394,8 +453,11 @@ function finishBattleRound(
   }
 
   const effectLog = statusDamageLog(actor, actorEffectDamage, enemy, enemyEffectDamage);
-  if (enemy.isBoss && actor.hp > 0 && enemy.hp > 0 && !enemy.bossMaintenanceQueued) {
-    planBossMove(enemy, actor);
+  if (enemy.isBoss && enemy.hp > 0 && enemy.hp <= enemy.maxHp / 2) {
+    enemy.bossPhase2Activated = true;
+  }
+  if (isHumanEnemy(enemy) && actor.hp > 0 && enemy.hp > 0) {
+    planHumanMoves(enemy, actor, state.party, state.activeIndex);
   }
   state.phase = 'battle';
   state.battleResultLog = undefined;
@@ -429,8 +491,8 @@ export function resolvePlayerMove(
     return nextState;
   }
 
-  if (enemy.isBoss) {
-    planBossMove(enemy, actor);
+  if (isHumanEnemy(enemy)) {
+    planHumanMoves(enemy, actor, nextState.party, nextState.activeIndex);
   }
 
   const stagedMove = currentMoveData(move, actor);
@@ -439,7 +501,7 @@ export function resolvePlayerMove(
   if (missesFromSensoryAbnormality(actor, hitRoll)) {
     advanceStagedMove(actor, move);
     applyAttackTriggeredStatusDamage(actor);
-    const enemyLog = resolveEnemyTurn(actor, enemy, variance);
+    const enemyLog = resolveEnemyTurn(actor, enemy, variance, nextState.party, nextState.activeIndex);
     return finishBattleRound(
       nextState,
       actor,
@@ -465,7 +527,7 @@ export function resolvePlayerMove(
     return setWinState(nextState, defeatedOpponentMessage(enemy), learningDetail);
   }
 
-  const enemyLog = resolveEnemyTurn(actor, enemy, variance);
+  const enemyLog = resolveEnemyTurn(actor, enemy, variance, nextState.party, nextState.activeIndex);
   const actorLog = formatMoveDescription(resolvedMove, actor);
   return finishBattleRound(nextState, actor, enemy, actorLog, enemyLog, learningDetail);
 }
@@ -500,9 +562,9 @@ export function resolveForcedSwitchMonster(state: RunState, targetIndex: number)
 
   nextState.activeIndex = targetIndex;
   nextState.phase = 'battle';
-  if (nextState.enemy?.isBoss) {
-    nextState.enemy.plannedMoveId = undefined;
-    planBossMove(nextState.enemy, target);
+  if (nextState.enemy && isHumanEnemy(nextState.enemy)) {
+    clearPlannedHumanMoves(nextState.enemy);
+    planHumanMoves(nextState.enemy, target, nextState.party, targetIndex);
   }
   nextState.lastLog = `${target.name}이 나왔다.`;
   return nextState;
@@ -525,12 +587,12 @@ export function resolveSwitchMonster(state: RunState, targetIndex: number, varia
     return nextState;
   }
 
-  if (enemy.isBoss) {
+  if (isHumanEnemy(enemy)) {
     const currentActor = state.party[state.activeIndex];
-    if (currentActor) planBossMove(enemy, currentActor);
+    if (currentActor) planHumanMoves(enemy, currentActor, state.party, state.activeIndex);
   }
 
-  const enemyLog = resolveEnemyTurn(target, enemy, variance);
+  const enemyLog = resolveEnemyTurn(target, enemy, variance, nextState.party, targetIndex);
   return finishBattleRound(nextState, target, enemy, `${target.name} switched in.`, enemyLog, defaultLearningDetail(nextState));
 }
 

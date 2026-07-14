@@ -32,43 +32,55 @@ function createMonster(overrides: Partial<RuntimeMonster> = {}): RuntimeMonster 
 }
 
 describe('boss attack matchup', () => {
-  it('builds defense profiles from explicit traits, tags, category, and derived traits', () => {
+  it('builds countermeasure profiles from direct and symptom/tag note data', () => {
     const profile = createBossDefenseProfile(createMonster({
-      ability: 'capsule',
-      abilities: ['capsule'],
-      moveset: ['anthrax_toxin'],
-      tags: { wall: 'gram_positive', location: 'extracellular', size: 'microscopic' },
-    }));
+      countermeasures: {
+        direct: ['알벤다졸'],
+        symptomTags: ['탈수', '장관기생'],
+      },
+    } as Partial<RuntimeMonster>)) as any;
 
-    expect(profile.traits).toEqual(expect.arrayContaining([
-      'capsule',
-      'gram_positive',
-      'extracellular',
-      'category_bacteria',
-      'bacterial_cell_wall',
-      'toxin_axis',
-    ]));
+    expect(profile.direct).toEqual(['알벤다졸']);
+    expect(profile.symptomTags).toEqual(['탈수', '장관기생']);
   });
 
-  it('uses only none, normal, and super effectiveness for boss attacks', () => {
-    const capsuleProfile = createBossDefenseProfile(createMonster({ ability: 'capsule', abilities: ['capsule'] }));
-    const viralProfile = createBossDefenseProfile(createMonster({
-      category: '바이러스',
-      tags: { wall: 'enveloped_virus', location: 'intracellular_cytosol', size: 'microscopic' },
-      ability: 'antigen_var',
-      abilities: ['antigen_var'],
-    }));
+  it('uses direct treatment as 4x, symptom/tag treatment as 2x, and unrelated moves as 1x', () => {
+    const profile = createBossDefenseProfile(createMonster({
+      countermeasures: {
+        direct: ['알벤다졸'],
+        symptomTags: ['탈수', '장관기생'],
+      },
+    } as Partial<RuntimeMonster>));
+    const directMove = { ...MOVES.m_anthelmintic, targetTags: ['알벤다졸', '선충'] };
+    const symptomMove = { ...MOVES.m_th2, targetTags: ['탈수', '구토'] };
+    const unrelatedMove = { ...MOVES.m_interferon, targetTags: ['바이러스'] };
 
-    expect(bossMoveEffectiveness(MOVES.m_phago, capsuleProfile).kind).toBe('none');
-    expect(bossMoveEffectiveness(MOVES.m_opsonin, capsuleProfile).kind).toBe('super');
-    expect(bossMoveEffectiveness(MOVES.m_interferon, viralProfile).kind).toBe('super');
-    expect(bossMoveEffectiveness(MOVES.m_cell_wall_inhibitor, viralProfile).kind).toBe('none');
+    expect(bossMoveEffectiveness(directMove, profile)).toMatchObject({
+      kind: 'super',
+      multiplier: 4,
+      matchedTags: ['알벤다졸'],
+    });
+    expect(bossMoveEffectiveness(symptomMove, profile)).toMatchObject({
+      kind: 'effective',
+      multiplier: 2,
+      matchedTags: ['탈수'],
+    });
+    expect(bossMoveEffectiveness(unrelatedMove, profile)).toMatchObject({
+      kind: 'normal',
+      multiplier: 1,
+      matchedTags: [],
+    });
   });
 
-  it('chooses a super-effective unsealed boss move before neutral options', () => {
-    const profile = createBossDefenseProfile(createMonster({ ability: 'capsule', abilities: ['capsule'] }));
-    const moveId = chooseBossMove(['m_phago', 'm_opsonin', 'm_antibody'], profile, [], () => 0);
+  it('chooses an effective boss move for the first half of the random range', () => {
+    const profile = createBossDefenseProfile(createMonster({
+      countermeasures: {
+        direct: ['알벤다졸'],
+        symptomTags: [],
+      },
+    } as Partial<RuntimeMonster>));
+    const moveId = chooseBossMove(['m_interferon', 'm_anthelmintic', 'm_antibody'], profile, [], () => 0.25);
 
-    expect(moveId).toBe('m_opsonin');
+    expect(moveId).toBe('m_anthelmintic');
   });
 });

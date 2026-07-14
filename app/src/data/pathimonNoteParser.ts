@@ -1,6 +1,7 @@
 import type {
   AbilityId,
   AttackType,
+  CountermeasureProfile,
   EffectPrimitive,
   MonsterData,
   MoveData,
@@ -38,6 +39,7 @@ interface NoteMove {
 
 interface ParsedPathimonNote {
   category: string;
+  countermeasures: CountermeasureProfile;
   defenseAbilities: AbilityId[];
   koreanScientificName: string;
   memo: string[];
@@ -394,6 +396,55 @@ function parseMemoLines(lines: string[]): string[] {
     .filter((line) => line.length > 0);
 }
 
+function normalizeTerm(term: string): string {
+  return term.trim().replace(/\s+/g, ' ');
+}
+
+function uniqueTerms(terms: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const term of terms.map(normalizeTerm).filter(Boolean)) {
+    const key = term.toLocaleLowerCase('ko');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(term);
+  }
+
+  return result;
+}
+
+function splitCountermeasureList(value: string): string[] {
+  return uniqueTerms(value.split(/[,/]/).map((token) => token.trim()));
+}
+
+function expandSymptomTerm(value: string): string[] {
+  const whole = normalizeTerm(value);
+  if (!whole) return [];
+  const parts = whole.split(/[·,/]/).map(normalizeTerm).filter(Boolean);
+  return uniqueTerms([whole, ...parts]);
+}
+
+function countermeasureField(lines: string[], key: string): string {
+  const prefix = `${key}:`;
+  for (const line of lines) {
+    const normalized = line.trimStart().replace(/^-\s*/, '').trimStart();
+    if (normalized.startsWith(prefix)) return normalized.slice(prefix.length).trim();
+  }
+  return '';
+}
+
+function parseCountermeasures(lines: string[], moves: NoteMove[]): CountermeasureProfile {
+  const direct = splitCountermeasureList(countermeasureField(lines, '직접'));
+  const manualSymptomTags = splitCountermeasureList(countermeasureField(lines, '증상/태그'));
+  const moveSymptoms = moves.flatMap((move) => move.results.flatMap((result) => expandSymptomTerm(result.symptom ?? '')));
+
+  return {
+    direct,
+    symptomTags: uniqueTerms([...manualSymptomTags, ...moveSymptoms]),
+  };
+}
+
 function parsePercent(value: string, fallback = 1): number {
   const numeric = Number(value.replace('%', '').trim());
   return Number.isFinite(numeric) ? numeric / 100 : fallback;
@@ -510,13 +561,15 @@ function parseMove(block: string[]): NoteMove {
 function parseNote(note: string, fallbackName?: string): ParsedPathimonNote {
   const lines = normalizeLines(note);
   const scientific = parseScientificName(readField(lines, '학명'));
+  const moves = parseMoveBlocks(sectionLines(lines, '기술')).map(parseMove);
 
   return {
     category: readField(lines, '타입'),
+    countermeasures: parseCountermeasures(sectionLines(lines, '대처법'), moves),
     defenseAbilities: parseDefenseAbilities(readField(lines, '방어특성')),
     koreanScientificName: scientific.koreanScientificName,
     memo: parseMemoLines(sectionLines(lines, '메모')),
-    moves: parseMoveBlocks(sectionLines(lines, '기술')).map(parseMove),
+    moves,
     name: readField(lines, '이름') || fallbackName || scientific.koreanScientificName,
     scientificName: scientific.scientificName,
     tags: parseTags(sectionLines(lines, '태그')),
@@ -732,6 +785,7 @@ export function buildPathimonFromNote(noteText: string, options: PathimonNoteBui
       abilities,
       learnset: moveEntries.map(([moveId]) => moveId),
       profileMemo: note.memo,
+      countermeasures: note.countermeasures,
       prep,
       signature,
     },

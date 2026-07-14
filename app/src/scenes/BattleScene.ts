@@ -661,8 +661,7 @@ export class BattleScene extends Phaser.Scene {
       });
     } else if (enemy.isBoss) {
       addLabel(this, 238, 414, '보스 공격', 14).setAlpha(0.86);
-      addLabel(this, 424, 414, '효과 굉장한 방어특성', 14).setAlpha(0.86);
-      addLabel(this, 632, 414, '무효 방어특성', 14).setAlpha(0.86);
+      addLabel(this, 424, 414, '대상태그', 14).setAlpha(0.86);
       this.drawBossMatchupRows(formatBossAttackMatchupRows(enemy), 238, 438, 586);
     }
 
@@ -688,15 +687,8 @@ export class BattleScene extends Phaser.Scene {
         minSize: 9,
         maxLines: 1,
       });
-      addBoxLabel(this, x + 186, rowY, row.superTargets, {
-        width: 194,
-        height: 18,
-        size: 11,
-        minSize: 8,
-        maxLines: 1,
-      }).setAlpha(0.9);
-      addBoxLabel(this, x + 394, rowY, row.noneTargets, {
-        width: width - 394,
+      addBoxLabel(this, x + 186, rowY, row.targetTags, {
+        width: width - 186,
         height: 18,
         size: 11,
         minSize: 8,

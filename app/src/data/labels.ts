@@ -21,6 +21,7 @@ export const ATTACK_TYPE_LABELS: Record<AttackType, string> = {
   interferon: '인터페론',
   cell_wall_drug: '세포벽억제',
   protein_synthesis_drug: '단백합성억제',
+  targeted_antibacterial: '표적항균',
   antifungal_membrane: '항진균막',
   anthelmintic: '구충제',
   antitoxin_therapy: '항독소',

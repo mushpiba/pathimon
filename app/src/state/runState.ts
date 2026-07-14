@@ -18,7 +18,13 @@ function cloneMonster(monster: RuntimeMonster): RuntimeMonster {
     plannedMoveId: monster.plannedMoveId,
     sealedMoveIds: monster.sealedMoveIds ? [...monster.sealedMoveIds] : undefined,
     bossMaintenanceQueued: monster.bossMaintenanceQueued,
+    plannedMoveIds: monster.plannedMoveIds ? [...monster.plannedMoveIds] : undefined,
+    bossPhase2Activated: monster.bossPhase2Activated,
     profileMemo: monster.profileMemo ? [...monster.profileMemo] : undefined,
+    countermeasures: monster.countermeasures ? {
+      direct: [...monster.countermeasures.direct],
+      symptomTags: [...monster.countermeasures.symptomTags],
+    } : undefined,
     effects: monster.effects.map((effect) => ({ ...effect })),
     statusConditions: monster.statusConditions ? { ...monster.statusConditions } : undefined,
     symptoms: monster.symptoms ? [...monster.symptoms] : undefined,
@@ -130,12 +136,14 @@ function createBgmSeed(random: () => number): number {
   return Math.floor(random() * 0x100000000);
 }
 
-function planInitialBossMove(state: RunState): void {
+function planInitialHumanMove(state: RunState): void {
   const enemy = state.enemy;
   const actor = state.party[state.activeIndex];
-  if (!enemy?.isBoss || !actor) return;
+  if (!enemy?.isTrainer || !actor) return;
 
-  enemy.plannedMoveId = chooseBossMove(enemy.moveset, createBossDefenseProfile(actor), enemy.sealedMoveIds ?? []);
+  const plannedMoveId = chooseBossMove(enemy.moveset, createBossDefenseProfile(actor));
+  enemy.plannedMoveId = plannedMoveId;
+  enemy.plannedMoveIds = plannedMoveId ? [plannedMoveId] : [];
 }
 
 export function encounterKindForFloor(floor: number): EncounterKind {
@@ -211,7 +219,7 @@ export function enterBattle(state: RunState, enemyIndex?: number): RunState {
   if (nextState.encounterKind === 'boss') {
     const bossIndex = selectBossIndex(enemyIndex, nextState.floor, nextState.bossRosterIds);
     nextState.enemy = createBossInstance(bossIndex, nextState.floor);
-    planInitialBossMove(nextState);
+    planInitialHumanMove(nextState);
     nextState.phase = 'bossIntro';
     nextState.lastLog = `${nextState.enemy.name}이 길을 막아섰다.`;
     return nextState;

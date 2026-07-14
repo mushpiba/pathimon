@@ -19,6 +19,7 @@ export type AttackType =
   | 'interferon'
   | 'cell_wall_drug'
   | 'protein_synthesis_drug'
+  | 'targeted_antibacterial'
   | 'antifungal_membrane'
   | 'anthelmintic'
   | 'antitoxin_therapy'
@@ -95,6 +96,11 @@ export type AbilityId =
   | 'receptor_defect'
   | 'immune_regulation';
 export type MoveId = string;
+
+export interface CountermeasureProfile {
+  direct: string[];
+  symptomTags: string[];
+}
 
 export type StatusConditionId =
   | 'fever'
@@ -184,6 +190,7 @@ export interface MoveData {
   outcomes?: MoveOutcome[];
   stageCycle?: MoveStageData[];
   symptom?: string;
+  targetTags?: string[];
 }
 
 export interface MonsterData {
@@ -203,6 +210,7 @@ export interface MonsterData {
   abilities?: AbilityId[];
   learnset: MoveId[];
   profileMemo?: string[];
+  countermeasures?: CountermeasureProfile;
   prep?: MoveId;
   signature?: MoveId;
   evolvesTo?: string;
@@ -270,7 +278,10 @@ export interface RuntimeMonster {
   plannedMoveId?: MoveId;
   sealedMoveIds?: MoveId[];
   bossMaintenanceQueued?: boolean;
+  plannedMoveIds?: MoveId[];
+  bossPhase2Activated?: boolean;
   profileMemo?: string[];
+  countermeasures?: CountermeasureProfile;
   effects: ActiveEffect[];
   statusConditions?: StatusConditionStacks;
   stunned: boolean;

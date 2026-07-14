@@ -640,14 +640,18 @@ describe('battle engine', () => {
     expect(sensoryMiss.lastLog).toContain('감각 이상으로 빗나갔다');
   });
 
-  it('lets bosses choose a super-effective unsealed move instead of always using the first move', () => {
+  it('lets bosses choose a direct countermeasure move instead of always using the first move', () => {
     const battle = createBattleState({
-      party: [createMonster({ ability: 'capsule', abilities: ['capsule'], hp: 100, maxHp: 100 })],
+      party: [createMonster({
+        hp: 500,
+        maxHp: 500,
+        countermeasures: { direct: ['알벤다졸'], symptomTags: [] },
+      })],
       enemy: createMonster({
         name: '면역챔피언',
         category: '보스 사람',
-        moveset: ['m_phago', 'm_opsonin'],
-        moveSlots: ['m_phago', 'm_opsonin', null, null],
+        moveset: ['m_interferon', 'm_anthelmintic'],
+        moveSlots: ['m_interferon', 'm_anthelmintic', null, null],
         isBoss: true,
         isTrainer: true,
         attack: 12,
@@ -658,21 +662,32 @@ describe('battle engine', () => {
 
     const result = resolvePlayerMove(battle, 'coagulase', 1);
 
-    expect(result.lastLog).toContain('옵소닌 표적');
-    expect(result.party[0].hp).toBeLessThan(100);
+    expect(result.lastLog).toContain('구충 신경마비');
+    expect(result.lastLog).toContain('효과가 굉장했다');
+    expect(result.party[0].hp).toBeLessThan(500);
   });
 
-  it('seals a planned boss move when switching into a no-effect defense profile', () => {
+  it('does not seal boss moves after switching; damage is recalculated against the final active pathimon', () => {
     const battle = createBattleState({
       party: [
-        createMonster({ ability: 'none', abilities: [], hp: 100, maxHp: 100 }),
-        createMonster({ name: '피막몬', ability: 'capsule', abilities: ['capsule'], hp: 100, maxHp: 100 }),
+        createMonster({
+          hp: 100,
+          maxHp: 100,
+          countermeasures: { direct: ['알벤다졸'], symptomTags: [] },
+        }),
+        createMonster({
+          name: '비표적몬',
+          hp: 100,
+          maxHp: 100,
+          countermeasures: { direct: [], symptomTags: [] },
+        }),
       ],
       enemy: createMonster({
         name: '면역챔피언',
         category: '보스 사람',
-        moveset: ['m_phago'],
-        moveSlots: ['m_phago', null, null, null],
+        moveset: ['m_anthelmintic'],
+        moveSlots: ['m_anthelmintic', null, null, null],
+        plannedMoveId: 'm_anthelmintic',
         isBoss: true,
         isTrainer: true,
         attack: 12,
@@ -683,68 +698,50 @@ describe('battle engine', () => {
 
     const result = resolveSwitchMonster(battle, 1, 1);
 
-    expect(result.party[1].hp).toBe(100);
-    expect(result.enemy?.sealedMoveIds).toEqual(['m_phago']);
-    expect(result.enemy?.bossMaintenanceQueued).toBe(true);
-    expect(result.lastLog).toContain('봉인');
+    expect(result.party[1].hp).toBeLessThan(100);
+    expect(result.enemy?.sealedMoveIds ?? []).toEqual([]);
+    expect(result.enemy?.bossMaintenanceQueued ?? false).toBe(false);
+    expect(result.lastLog).not.toContain('봉인');
+    expect(result.lastLog).not.toContain('효과가 굉장했다');
   });
 
-  it('replans boss intent for the forced-switch replacement instead of keeping a stale move', () => {
+  it('uses two telegraphed boss moves in phase two and both hit the final active pathimon', () => {
     const battle = createBattleState({
-      phase: 'forcedSwitch',
-      activeIndex: 0,
       party: [
-        createMonster({ ability: 'none', abilities: [], hp: 0, fainted: true }),
-        createMonster({ name: '피막몬', ability: 'capsule', abilities: ['capsule'], hp: 100, maxHp: 100 }),
+        createMonster({
+          hp: 500,
+          maxHp: 500,
+          countermeasures: { direct: ['알벤다졸'], symptomTags: [] },
+        }),
+        createMonster({
+          name: '바이러스몬',
+          hp: 100,
+          maxHp: 100,
+          countermeasures: { direct: ['인터페론'], symptomTags: [] },
+        }),
       ],
       enemy: createMonster({
         name: '면역챔피언',
         category: '보스 사람',
-        moveset: ['m_phago', 'm_opsonin'],
-        moveSlots: ['m_phago', 'm_opsonin', null, null],
-        plannedMoveId: 'm_phago',
+        moveset: ['m_anthelmintic', 'm_interferon'],
+        moveSlots: ['m_anthelmintic', 'm_interferon', null, null],
+        plannedMoveIds: ['m_anthelmintic', 'm_interferon'],
+        bossPhase2Activated: true,
         isBoss: true,
         isTrainer: true,
         attack: 12,
-        hp: 999,
-        maxHp: 999,
-      }),
-    });
-
-    const switched = resolveForcedSwitchMonster(battle, 1);
-    const result = resolvePlayerMove(switched, 'coagulase', 1);
-
-    expect(switched.enemy?.plannedMoveId).toBe('m_opsonin');
-    expect(result.lastLog).toContain('옵소닌 표적');
-  });
-
-  it('spends one boss turn on maintenance and gains a fresh four-move set after all moves are sealed', () => {
-    const battle = createBattleState({
-      party: [createMonster({ hp: 100, maxHp: 100 })],
-      enemy: createMonster({
-        name: '면역챔피언',
-        category: '보스 사람',
-        moveset: ['m_phago'],
-        moveSlots: ['m_phago', null, null, null],
-        sealedMoveIds: ['m_phago'],
-        bossMaintenanceQueued: true,
-        isBoss: true,
-        isTrainer: true,
-        attack: 12,
-        hp: 999,
+        hp: 400,
         maxHp: 999,
       }),
     });
 
     const result = resolvePlayerMove(battle, 'coagulase', 1);
 
-    expect(result.party[0].hp).toBe(100);
-    expect(result.enemy?.sealedMoveIds).toEqual([]);
-    expect(result.enemy?.bossMaintenanceQueued).toBe(false);
-    expect(result.enemy?.moveset).toHaveLength(4);
-    expect(result.lastLog).toContain('대응책을 재정비');
+    expect(result.lastLog).toContain('구충 신경마비');
+    expect(result.lastLog).toContain('인터페론');
+    expect(result.party[0].hp).toBeLessThan(500);
+    expect(result.enemy?.plannedMoveIds).toHaveLength(2);
   });
-
   it('can resolve dyspnea as a turn-end instant collapse chance', () => {
     const monster = createMonster({
       hp: 30,

@@ -7,9 +7,9 @@ const VIRAL_CORE: TrainerData['movePool'] = ['m_interferon', 'm_ctl', 'm_th1', '
 const COMPLEMENT_CORE: TrainerData['movePool'] = ['m_complement', 'm_phago', 'm_opsonin', 'm_th2'];
 const ELITE_CORE: TrainerData['movePool'] = ['m_antibody', 'm_complement', 'm_th1', 'm_interferon'];
 const INNATE_CORE: TrainerData['movePool'] = ['m_oxidative_burst', 'm_phago', 'm_complement', 'm_th1'];
-const DRUG_CORE: TrainerData['movePool'] = ['m_cell_wall_inhibitor', 'm_protein_synthesis_inhibitor', 'm_antitoxin_therapy', 'm_antiviral_replication'];
-const PARASITE_CORE: TrainerData['movePool'] = ['m_th2', 'm_anthelmintic', 'm_opsonin', 'm_phago'];
-const FUNGAL_CORE: TrainerData['movePool'] = ['m_antifungal_membrane', 'm_th1', 'm_oxidative_burst', 'm_complement'];
+const DRUG_CORE: TrainerData['movePool'] = ['m_cell_wall_inhibitor', 'm_protein_synthesis_inhibitor', 'm_targeted_antibacterial', 'm_antitoxin_therapy', 'm_antiviral_replication', 'm_rehydration', 'm_surgery_drainage'];
+const PARASITE_CORE: TrainerData['movePool'] = ['m_th2', 'm_anthelmintic', 'm_rehydration', 'm_surgery_drainage'];
+const FUNGAL_CORE: TrainerData['movePool'] = ['m_antifungal_membrane', 'm_antiprotozoal', 'm_th1', 'm_oxidative_burst'];
 
 export const TRAINER_COMBAT_STATS = {
   attack: 75,
