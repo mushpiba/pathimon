@@ -20,6 +20,8 @@ describe('BgmPreloadScene', () => {
     expect(bgmPreloadSceneSource).toContain("this.load.on('progress'");
     expect(bgmPreloadSceneSource).toContain('this.load.audio(path, path)');
     expect(bgmPreloadSceneSource).toContain("this.registry.set('battleBgmPreloadComplete', true)");
+    expect(bgmPreloadSceneSource).toContain("if (this.registry.get('introStoryComplete'))");
+    expect(bgmPreloadSceneSource).toContain('this.removePathimonScreensaver();');
     expect(bgmPreloadSceneSource).not.toContain('this.removePathimonScreensaver();\r\n    this.registry.set');
   });
 });

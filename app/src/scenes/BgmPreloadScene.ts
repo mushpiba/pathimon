@@ -39,6 +39,9 @@ export class BgmPreloadScene extends Phaser.Scene {
   create(): void {
     this.load.off('progress', this.updateLoadingProgress, this);
     this.registry.set('battleBgmPreloadComplete', true);
+    if (this.registry.get('introStoryComplete')) {
+      this.removePathimonScreensaver();
+    }
     this.scene.stop();
   }
 

@@ -23,6 +23,7 @@ export class StoryScene extends Phaser.Scene {
 
   create(): void {
     this.pageIndex = 0;
+    this.registry.set('introStoryComplete', false);
     if (!this.registry.get('battleBgmPreloadStarted')) {
       this.scene.launch('BgmPreloadScene');
     }
@@ -85,8 +86,11 @@ export class StoryScene extends Phaser.Scene {
   }
 
   private finishStory(): void {
-    const preloadScene = this.scene.get('BgmPreloadScene') as BgmPreloadSceneHandle;
-    preloadScene.stopPathimonScreensaver?.();
+    this.registry.set('introStoryComplete', true);
+    if (this.registry.get('battleBgmPreloadComplete')) {
+      const preloadScene = this.scene.get('BgmPreloadScene') as BgmPreloadSceneHandle;
+      preloadScene.stopPathimonScreensaver?.();
+    }
     this.scene.start('DisclaimerScene');
   }
 
