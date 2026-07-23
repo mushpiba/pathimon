@@ -15,9 +15,13 @@ const BOSS_ABILITIES: BossData['abilityPool'] = [
 
 const BOSS_MOVES: BossData['movePool'] = BOSS_ATTACK_MOVE_IDS;
 
+// 보스·트레이너는 스탯을 공유하고 트레이너만 HP를 1/5로 줄인다(state/factory.ts).
+// 공격 68은 STATS.md 밴드 3 중간(방어 60 / HP 60)을 기준 패시몬으로 잡고 역산한 값이다.
+// 보스 기술 위력 평균 16.1 × 68 / 60 = 18.2 → 기준 패시몬 HP의 30%. 보통 배율로 3.3대, ×2에 61%, ×4에 122%다.
+// 방어 8은 플레이어 화력을 방어 6 대비 25% 낮춰 보스 전투를 길게 만든다.
 export const BOSS_COMBAT_STATS = {
-  attack: 100,
-  defense: 6,
+  attack: 68,
+  defense: 8,
 } as const;
 
 function bossAssetPath(id: string, index = 0): string {

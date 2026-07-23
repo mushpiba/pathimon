@@ -555,8 +555,31 @@ export function formatBossAttackMatchupRows(enemy: RuntimeMonster): BossAttackMa
     }));
 }
 
+function hasFinalConsonant(text: string): boolean {
+  const letters = [...text.trim()];
+  for (let index = letters.length - 1; index >= 0; index -= 1) {
+    const code = letters[index]!.charCodeAt(0);
+    if (code >= 0xac00 && code <= 0xd7a3) {
+      return (code - 0xac00) % 28 !== 0;
+    }
+  }
+  return false;
+}
+
+function objectParticle(text: string): '을' | '를' {
+  return hasFinalConsonant(text) ? '을' : '를';
+}
+
+function joinIntentMoveLabels(labels: string[]): string {
+  return labels.reduce((text, label, index) => {
+    if (index === 0) return label;
+    const previous = labels[index - 1]!;
+    return `${text}${hasFinalConsonant(previous) ? '과' : '와'} ${label}`;
+  }, '');
+}
+
 function intentMoveLabel(move: MoveData): string {
-  return `${ATTACK_TYPE_LABELS[move.type]}(${move.name})`;
+  return move.name;
 }
 
 export function enemyIntentText(enemy: RuntimeMonster): string {
@@ -566,8 +589,10 @@ export function enemyIntentText(enemy: RuntimeMonster): string {
   const plannedMoves = plannedIds.map((moveId) => MOVES[moveId]).filter((move): move is MoveData => Boolean(move));
 
   if (plannedMoves.length === 0) return `${enemy.name}은 공격을 준비하고 있다.`;
-  if (plannedMoves.length === 1) return `${enemy.name}은 ${intentMoveLabel(plannedMoves[0])}을 하려고 한다.`;
-  return `${enemy.name}은 ${plannedMoves.map(intentMoveLabel).join('와 ')}을 준비하고 있다.`;
+  const labels = plannedMoves.map(intentMoveLabel);
+  if (labels.length === 1) return `${enemy.name}은 ${labels[0]}${objectParticle(labels[0]!)} 하려고 한다.`;
+  const joinedLabels = joinIntentMoveLabels(labels);
+  return `${enemy.name}은 ${joinedLabels}${objectParticle(joinedLabels)} 준비하고 있다.`;
 }
 export function commandViewLines(
   player: RuntimeMonster,
@@ -659,15 +684,32 @@ function conditionEffectLabels(move: MoveData): string[] {
   return [...new Set(labels)];
 }
 
+// effectText는 결과별 조각을 ' / '로 이어붙인 문자열이고, 각 조각이 `상태이상: …`을 품을 수 있다.
+// (예: `95% 공격 +1랭크 / 4% 공격 +2랭크, 상태이상: 통증 / 1% 공격 +4랭크, 상태이상: 발열, 기침`)
+// 첫 마커에서만 자르면 두 번째 조각부터 상태이상 줄에 섞여 들어가므로 조각 단위로 나눈다.
 function splitEffectText(effectText: string): { conditions: string; effect: string } {
   const marker = '상태이상:';
-  const markerIndex = effectText.indexOf(marker);
-  if (markerIndex < 0) return { effect: effectText.trim(), conditions: '' };
+  const effects: string[] = [];
+  const conditions: string[] = [];
 
-  return {
-    effect: effectText.slice(0, markerIndex).replace(/[\s,]+$/, '').trim(),
-    conditions: effectText.slice(markerIndex + marker.length).trim(),
-  };
+  for (const segment of effectText.split(' / ')) {
+    const markerIndex = segment.indexOf(marker);
+    if (markerIndex < 0) {
+      const effect = segment.trim();
+      if (effect) effects.push(effect);
+      continue;
+    }
+
+    const effect = segment.slice(0, markerIndex).replace(/[\s,]+$/, '').trim();
+    if (effect) effects.push(effect);
+
+    for (const condition of segment.slice(markerIndex + marker.length).split(',')) {
+      const trimmed = condition.trim();
+      if (trimmed && !conditions.includes(trimmed)) conditions.push(trimmed);
+    }
+  }
+
+  return { effect: effects.join(' / '), conditions: conditions.join(', ') };
 }
 
 function moveEffectParts(move: MoveData): { conditions: string; effect: string } {

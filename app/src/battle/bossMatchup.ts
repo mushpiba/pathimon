@@ -42,6 +42,15 @@ export function createBossDefenseProfile(monster: RuntimeMonster): BossDefensePr
   };
 }
 
+// 적 기술이 패시몬을 때릴 때의 배율. **노트의 태그 적중 여부 하나로만 정해진다.**
+//
+//   `대처법:`의 약제명이 기술 targetTags에 걸리면 ×4 (직접 처치)
+//   `증상/태그:`가 걸리면 ×2 (간접)
+//   아무것도 안 걸리면 ×1
+//
+// **반감(×0.5)·무효(×0)는 두지 않는다.** 어떤 게 무효고 어떤 게 반감인지 유저가 따로 외워야 하는 규칙이 되고,
+// ×4와 ×1의 격차만으로도 "이 약이 이 병원체를 잡는다"는 감각은 충분히 전달된다.
+// 패시몬의 `evasion` 태그는 배율에 걸리지 않고 **학습 텍스트로만** 쓴다(MATCHUP.md §1).
 export function bossMoveEffectiveness(move: MoveData | undefined, profile: BossDefenseProfile): BossMoveEffectiveness {
   const targetTags = uniqueTags(move?.targetTags ?? []);
   if (targetTags.length === 0) return { kind: 'normal', multiplier: 1, matchedTags: [] };

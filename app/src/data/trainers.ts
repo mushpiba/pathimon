@@ -11,8 +11,9 @@ const DRUG_CORE: TrainerData['movePool'] = ['m_cell_wall_inhibitor', 'm_protein_
 const PARASITE_CORE: TrainerData['movePool'] = ['m_th2', 'm_anthelmintic', 'm_rehydration', 'm_surgery_drainage'];
 const FUNGAL_CORE: TrainerData['movePool'] = ['m_antifungal_membrane', 'm_antiprotozoal', 'm_th1', 'm_oxidative_burst'];
 
+// 보스와 동일하게 맞춘다. 차이는 HP뿐이다(state/factory.ts의 TRAINER_BOSS_HP_RATIO).
 export const TRAINER_COMBAT_STATS = {
-  attack: 75,
+  attack: 68,
   defense: 8,
 } as const;
 

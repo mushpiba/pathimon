@@ -5,6 +5,7 @@ import { battleBgmAudioPaths } from '../ui/battleUi';
 import {
   createInitialPathimonScreensaverItems,
   createPathimonScreensaverPair,
+  pathimonScreensaverImageSize,
   pathimonScreensaverSpritePool,
   type PathimonScreensaverItem,
 } from '../ui/pathimonScreensaver';
@@ -84,11 +85,11 @@ export class BgmPreloadScene extends Phaser.Scene {
     height: number,
     sprites: string[],
   ): void {
-    const images = pair.map((item) => this.createScreensaverImage(layer, item));
+    const images = pair.map((item) => this.createScreensaverImage(layer, item, width));
     this.animateScreensaverPair(images, pair, width, height, sprites);
   }
 
-  private createScreensaverImage(layer: HTMLDivElement, item: PathimonScreensaverItem): HTMLImageElement {
+  private createScreensaverImage(layer: HTMLDivElement, item: PathimonScreensaverItem, viewportWidth: number): HTMLImageElement {
     const image = document.createElement('img');
     image.alt = '';
     image.decoding = 'async';
@@ -101,7 +102,7 @@ export class BgmPreloadScene extends Phaser.Scene {
       opacity: '0.9',
       position: 'absolute',
       top: '0',
-      width: '129px',
+      width: `${pathimonScreensaverImageSize(viewportWidth)}px`,
       willChange: 'transform',
     });
     layer.appendChild(image);

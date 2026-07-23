@@ -3,6 +3,7 @@ import {
   createInitialPathimonScreensaverItems,
   createPathimonScreensaverItems,
   createPathimonScreensaverPair,
+  pathimonScreensaverImageSize,
   pathimonScreensaverSpritePool,
   pathimonScreensaverSpriteCount,
 } from './pathimonScreensaver';
@@ -42,6 +43,11 @@ describe('pathimon screensaver', () => {
     expect(pathimonScreensaverSpriteCount(() => 0.999)).toBe(12);
   });
 
+  it('sizes sprites slightly larger than the skip button at the same screen ratio', () => {
+    expect(pathimonScreensaverImageSize(1024)).toBe(118);
+    expect(pathimonScreensaverImageSize(512)).toBe(59);
+  });
+
   it('creates synchronized pairs that collide at the same point and timing', () => {
     const items = createPathimonScreensaverItems({
       height: 576,
@@ -77,8 +83,8 @@ describe('pathimon screensaver', () => {
       if (second.endY > 0) expect(second.endY).toBeLessThanOrEqual(576 * 0.52);
       expect(first.respawnDelayMs).toBe(1000);
       expect(second.respawnDelayMs).toBe(1000);
-      expect(first.scale).toBeGreaterThanOrEqual(0.81);
-      expect(first.scale).toBeLessThanOrEqual(1.53);
+      expect(first.scale).toBeGreaterThanOrEqual(0.92);
+      expect(first.scale).toBeLessThanOrEqual(1.08);
       expect(first.durationMs).toBeGreaterThanOrEqual(4500);
       expect(first.durationMs).toBeLessThanOrEqual(7000);
     }

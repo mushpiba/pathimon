@@ -399,7 +399,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_opsonin: {
     id: 'm_opsonin',
-    name: '옵소닌 표적',
+    name: '옵소닌 표적화',
     type: 'opsonin',
     power: 17,
     accuracy: 0.88,
@@ -419,7 +419,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_complement: {
     id: 'm_complement',
-    name: '보체 MAC',
+    name: '보체 MAC 형성',
     type: 'complement',
     power: 16,
     accuracy: 0.88,
@@ -429,7 +429,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_ctl: {
     id: 'm_ctl',
-    name: 'CTL 저격',
+    name: 'CTL 활성화',
     type: 'ctl',
     power: 18,
     accuracy: 0.85,
@@ -439,7 +439,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_th1: {
     id: 'm_th1',
-    name: '대식세포 각성',
+    name: 'Th1 대식세포 활성화',
     type: 'th1',
     power: 16,
     accuracy: 0.85,
@@ -450,7 +450,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_th2: {
     id: 'm_th2',
-    name: '호산구 포위',
+    name: 'Th2 호산구 활성화',
     type: 'th2',
     power: 17,
     accuracy: 0.86,
@@ -461,7 +461,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_interferon: {
     id: 'm_interferon',
-    name: '인터페론',
+    name: '인터페론 활성화',
     type: 'interferon',
     power: 13,
     accuracy: 0.92,
@@ -471,7 +471,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_oxidative_burst: {
     id: 'm_oxidative_burst',
-    name: '산화폭발',
+    name: '산화폭발 유도',
     type: 'oxidative',
     power: 16,
     accuracy: 0.87,
@@ -481,7 +481,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_cell_wall_inhibitor: {
     id: 'm_cell_wall_inhibitor',
-    name: '세포벽 억제제',
+    name: '세포벽 억제제 투약',
     type: 'cell_wall_drug',
     power: 18,
     accuracy: 0.9,
@@ -491,7 +491,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_protein_synthesis_inhibitor: {
     id: 'm_protein_synthesis_inhibitor',
-    name: '단백합성 억제제',
+    name: '단백합성 억제제 투약',
     type: 'protein_synthesis_drug',
     power: 16,
     accuracy: 0.88,
@@ -501,7 +501,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_targeted_antibacterial: {
     id: 'm_targeted_antibacterial',
-    name: '표적 항균요법',
+    name: '표적 항균제 투약',
     type: 'targeted_antibacterial',
     power: 17,
     accuracy: 0.88,
@@ -511,7 +511,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_antifungal_membrane: {
     id: 'm_antifungal_membrane',
-    name: '항진균막 표적',
+    name: '항진균제 투약',
     type: 'antifungal_membrane',
     power: 17,
     accuracy: 0.88,
@@ -521,7 +521,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_anthelmintic: {
     id: 'm_anthelmintic',
-    name: '구충 신경마비',
+    name: '구충제 투약',
     type: 'anthelmintic',
     power: 18,
     accuracy: 0.86,
@@ -531,7 +531,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_antitoxin_therapy: {
     id: 'm_antitoxin_therapy',
-    name: '항독소 요법',
+    name: '항독소 투여',
     type: 'antitoxin_therapy',
     power: 15,
     accuracy: 0.92,
@@ -541,7 +541,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_antiviral_replication: {
     id: 'm_antiviral_replication',
-    name: '항바이러스 복제차단',
+    name: '항바이러스제 투약',
     type: 'antiviral_replication',
     power: 16,
     accuracy: 0.9,
@@ -551,7 +551,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_antiprotozoal: {
     id: 'm_antiprotozoal',
-    name: '항원충제',
+    name: '항원충제 투약',
     type: 'protein_synthesis_drug',
     power: 17,
     accuracy: 0.88,
@@ -571,7 +571,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   },
   m_surgery_drainage: {
     id: 'm_surgery_drainage',
-    name: '수술·배농',
+    name: '수술·배농 처치',
     type: 'lysis',
     power: 18,
     accuracy: 0.82,

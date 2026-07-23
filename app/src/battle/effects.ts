@@ -132,9 +132,9 @@ function tickStatusConditions(monster: RuntimeMonster, random: () => number): nu
     damage += positiveRoundedDamage(effectiveMaxHp(monster) * 0.02 * feverStacks);
   }
 
-  const painStacks = statusConditionStacks(monster, 'pain');
-  if (painStacks > 0) {
-    damage += positiveRoundedDamage(effectiveMaxHp(monster) * 0.02 * painStacks);
+  const anemiaStacks = statusConditionStacks(monster, 'anemia');
+  if (anemiaStacks > 0) {
+    damage += positiveRoundedDamage(effectiveMaxHp(monster) * 0.01 * anemiaStacks);
   }
 
   const bleedingStacks = statusConditionStacks(monster, 'bleeding');
@@ -142,15 +142,19 @@ function tickStatusConditions(monster: RuntimeMonster, random: () => number): nu
     damage += positiveRoundedDamage(monster.hp * 0.02 * bleedingStacks);
   }
 
+  const excretoryStacks = statusConditionStacks(monster, 'excretory_dysfunction');
+  if (excretoryStacks > 0) {
+    damage += positiveRoundedDamage(effectiveMaxHp(monster) * 0.01 * excretoryStacks);
+  }
+
   damage = positiveRoundedDamage(damage * statusDamageMultiplier(monster));
 
-  const excretoryStacks = statusConditionStacks(monster, 'excretory_dysfunction');
   if (excretoryStacks > 0 && random() < adjustedStatusChance(monster, 0.2 * excretoryStacks)) {
     addStatusCondition(monster, 'dehydration');
   }
 
   const dyspneaStacks = statusConditionStacks(monster, 'dyspnea');
-  if (dyspneaStacks > 0 && random() < adjustedStatusChance(monster, 0.01 * dyspneaStacks)) {
+  if (dyspneaStacks > 0 && random() < adjustedStatusChance(monster, 0.005 * dyspneaStacks)) {
     damage = Math.max(damage, monster.hp);
   }
 

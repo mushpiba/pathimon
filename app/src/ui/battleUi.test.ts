@@ -152,7 +152,7 @@ describe('battle UI helpers', () => {
 
   it('keeps unit panel text focused on role-specific battle information', () => {
     const playerRows = battleUnitPanelRows(createMonster(), 'player');
-    const wildRows = battleUnitPanelRows(createMonster({ name: '레트로잠' }), 'enemy');
+    const wildRows = battleUnitPanelRows(createMonster({ name: '결핵잠' }), 'enemy');
     const trainerRows = battleUnitPanelRows(createMonster({ isTrainer: true, name: '역학 분석가', scientificName: '일반 사람 (Human Host)' }), 'enemy');
     const bossRows = battleUnitPanelRows(createMonster({ isTrainer: true, isBoss: true, name: '면역 지휘관', scientificName: '보스 사람' }), 'enemy');
 
@@ -276,10 +276,10 @@ describe('battle UI helpers', () => {
       '종류: 준비기',
       '위력: 0',
       '명중률: 100%',
-      '효과: 95% 공격력 +1랭크 / 4% 공격력 +2랭크 / 1% 공격력 +4랭크',
-      '상태이상: 발열, 기침, 피로',
+      '효과: 95% 공격 +1랭크 / 4% 공격 +2랭크 / 1% 공격 +4랭크',
+      '상태이상: 통증, 발열, 기침, 피로',
       '기술 설명: 탄저록스가 아포를 발아시켜 감염을 준비한다.',
-      '학습: 탄저균은 아포 상태로 버티다가 숙주 안에서 발아해 감염을 시작한다.',
+      '학습: 탄저균은 아포 상태로 토양과 동물 제품에서 버티다가 숙주 안에서 발아해 감염을 시작한다.',
     ]);
   });
 
@@ -294,10 +294,10 @@ describe('battle UI helpers', () => {
       kind: '종류: 준비기',
       power: '위력: 0',
       accuracy: '명중률: 100%',
-      effect: '효과: 95% 공격력 +1랭크 / 4% 공격력 +2랭크 / 1% 공격력 +4랭크',
-      conditions: '상태이상: 발열, 기침, 피로',
+      effect: '효과: 95% 공격 +1랭크 / 4% 공격 +2랭크 / 1% 공격 +4랭크',
+      conditions: '상태이상: 통증, 발열, 기침, 피로',
       description: '기술 설명: 탄저록스가 아포를 발아시켜 감염을 준비한다.',
-      learnText: '학습: 탄저균은 아포 상태로 버티다가 숙주 안에서 발아해 감염을 시작한다.',
+      learnText: '학습: 탄저균은 아포 상태로 토양과 동물 제품에서 버티다가 숙주 안에서 발아해 감염을 시작한다.',
     });
   });
 
@@ -329,19 +329,19 @@ describe('battle UI helpers', () => {
     expect(formatMoveDetails('anthrax_toxin', monster)).toEqual([
       '탄저 독소 3단계',
       '종류: 공격기',
-      '위력: 200',
+      '위력: 95',
       '명중률: 100%',
       '효과: 없음',
-      '상태이상: 괴사',
+      '상태이상: 괴사, 혈압 이상',
       '기술 설명: 화농성연쇄상구균은 LF(lethal factor)로 MAP kinase를 잘라 세포를 괴사시켰다.',
-      '학습: LF는 MAPK 경로를 방해해 세포 손상과 괴사를 유도한다.',
+      '학습: LF는 MAP kinase를 절단한다. 스트레스와 염증을 조절하던 축이 끊기면 세포가 조절을 잃고 괴사한다. PA와 합쳐 치사독소가 된다.',
     ]);
   });
 
   it('describes the enemy planned move for the command view', () => {
     const enemy = createMonster({ name: '황색포도알균', moveset: ['tsst', 'alpha_toxin', 'pvl', 'coagulase'] });
 
-    expect(enemyIntentText(enemy)).toBe('황색포도알균은 초항원(TSST 폭주)을 하려고 한다.');
+    expect(enemyIntentText(enemy)).toBe('황색포도알균은 TSST 폭주를 하려고 한다.');
   });
 
   it('uses the boss planned move when one has been selected', () => {
@@ -353,7 +353,7 @@ describe('battle UI helpers', () => {
       plannedMoveId: 'm_opsonin',
     });
 
-    expect(enemyIntentText(enemy)).toBe('면역챔피언은 옵소닌표적(옵소닌 표적)을 하려고 한다.');
+    expect(enemyIntentText(enemy)).toBe('면역챔피언은 옵소닌 표적화를 하려고 한다.');
   });
 
   it('describes two planned boss moves during phase two', () => {
@@ -365,7 +365,7 @@ describe('battle UI helpers', () => {
       plannedMoveIds: ['m_anthelmintic', 'm_interferon'],
     });
 
-    expect(enemyIntentText(enemy)).toBe('면역챔피언은 구충제(구충 신경마비)와 인터페론(인터페론)을 준비하고 있다.');
+    expect(enemyIntentText(enemy)).toBe('면역챔피언은 구충제 투약과 인터페론 활성화를 준비하고 있다.');
   });
 
   it('orders human battle command copy as prompt, entry log, then planned move', () => {
@@ -375,17 +375,17 @@ describe('battle UI helpers', () => {
     expect(commandViewLines(player, enemy, 'trainer', '검체 연구원이 승부를 걸어왔다.', '도움말')).toEqual([
       '플루리온은 무엇을 할까?',
       '검체 연구원이 승부를 걸어왔다.',
-      '검체 연구원은 인터페론(인터페론)을 하려고 한다.',
+      '검체 연구원은 인터페론 활성화를 하려고 한다.',
     ]);
   });
 
   it('does not show planned enemy moves for wild pathimon command copy', () => {
     const player = createMonster({ name: '플루리온' });
-    const enemy = createMonster({ name: '레트로잠', moveset: ['hiv_cd4'] });
+    const enemy = createMonster({ name: '결핵잠', moveset: ['tb_chronic'] });
 
-    expect(commandViewLines(player, enemy, 'wild', '레트로잠이 나타났다.', '도움말')).toEqual([
+    expect(commandViewLines(player, enemy, 'wild', '결핵잠이 나타났다.', '도움말')).toEqual([
       '플루리온은 무엇을 할까?',
-      '레트로잠이 나타났다.',
+      '결핵잠이 나타났다.',
     ]);
   });
 
@@ -438,7 +438,7 @@ describe('battle UI helpers', () => {
 
     expect(statusConditionDetailLines(monster)).toEqual([
       '발열(2): 매 턴 최대 체력 2% 피해',
-      '탈수: 받는 직접 피해 10% 증가',
+      '탈수: 체력 회복량 12.5% 감소',
     ]);
   });
 
@@ -487,7 +487,8 @@ describe('battle UI helpers', () => {
     const monster = createMonster({
       maxHp: 200,
       hp: 95,
-      statusConditions: { necrosis: 1 },
+      // 괴사는 스택당 2.5%다. 2스택이면 상한 190이 되어 95가 정확히 절반이다.
+      statusConditions: { necrosis: 2 },
     });
 
     expect(hpPct(monster)).toBe(0.5);
@@ -579,7 +580,7 @@ describe('battle UI helpers', () => {
       targetTags: '대식세포 포식, 포식, 세포외, 미세병원체',
     });
     expect(rows[2]).toMatchObject({
-      attackName: '세포벽 억제제',
+      attackName: '세포벽 억제제 투약',
       attackType: '세포벽억제',
       targetTags: expect.stringContaining('베타락탐'),
     });

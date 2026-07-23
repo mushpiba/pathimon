@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MOVES } from '../data/moves';
 import { MONSTERS } from '../data/monsters';
-import { adjustedStatusChance, effectiveMaxHp } from '../data/statusConditions';
+import { actionFailureChance, actionFailureLabel, adjustedStatusChance, effectiveMaxHp, healingMultiplier } from '../data/statusConditions';
 import { createBossInstance, createMonsterInstance } from '../state/factory';
 import type { EffectPrimitive, MonsterData, RunState, RuntimeMonster } from '../types/game';
 import { tryCapture } from './capture';
-import { calculateDamage, randomDamageVariance } from './damage';
+import { calculateDamage, criticalHitChance, randomDamageVariance, rollsCriticalHit } from './damage';
 import { applyEffects, tickEffects } from './effects';
 import { calculateMultiplier } from './effectiveness';
 import { buildLoadout, buildMoveSlots } from './loadout';
@@ -153,9 +153,10 @@ describe('battle engine', () => {
     expect(currentMoveName(MOVES.anthrax_toxin, monster)).toBe('탄저 독소 2단계');
     expect(currentMoveData(MOVES.anthrax_toxin, monster)).toMatchObject({
       name: '탄저 독소 2단계',
+      // STATS.md §6-1: 다단계는 합계 상한 없이 단계별 병인 기여도로 정한다. EF는 부종만 만들어 40.
       power: 40,
       description: '{name}이 EF(edema factor)로 cAMP를 증가시켜 부종을 만들었다.',
-      learnText: 'EF는 adenylate cyclase로 작동해 세포 내 cAMP를 올린다.',
+      learnText: 'EF는 adenylate cyclase로 작동해 세포 내 cAMP를 올린다. PA와 합쳐 부종독소가 된다.',
     });
   });
 
@@ -189,6 +190,18 @@ describe('battle engine', () => {
     expect(result.damage).toBe(33);
     expect(result.multiplier.total).toBe(1);
     expect(result.blockedByInvulnerability).toBe(false);
+    expect(result.critical).toBe(false);
+  });
+
+  it('uses Pokerogue-style critical hits at stage 0: 1/24 chance and 1.5x damage', () => {
+    const normal = calculateDamage(attacker, capsuleTarget, MOVES.hyaluronidase, 1);
+    const critical = calculateDamage(attacker, capsuleTarget, MOVES.hyaluronidase, 1, undefined, true);
+
+    expect(criticalHitChance()).toBeCloseTo(1 / 24);
+    expect(rollsCriticalHit(0)).toBe(true);
+    expect(rollsCriticalHit(1 / 24)).toBe(false);
+    expect(critical.critical).toBe(true);
+    expect(critical.damage).toBe(Math.round(normal.damage * 1.5));
   });
 
   it('uses move power times attack over defense times random variance and matchup', () => {
@@ -237,7 +250,9 @@ describe('battle engine', () => {
     expect(result.damage).toBe(17);
   });
 
-  it('calibrates boss hp so anthrax toxin stage 2 removes about five to eight percent after prep', () => {
+  // 적 스탯 재조정 후 값이다. 보스 공격 68 / 방어 8 / HP 배수 26.
+  // 탄저록스 공격 95에 25% 버프가 붙고 2단계 위력 40이면 보스 HP 5,980의 8~10%를 깎는다.
+  it('calibrates boss hp so anthrax toxin stage 2 removes about eight to ten percent after prep', () => {
     const anthraxData = MONSTERS.find((monster) => monster.id === 'anthrax');
     if (!anthraxData) throw new Error('anthrax missing');
 
@@ -250,8 +265,8 @@ describe('battle engine', () => {
     const lowestRollPct = calculateDamage(anthrax, boss, toxinStage2, 0.85).damage / boss.maxHp;
     const highestRollPct = calculateDamage(anthrax, boss, toxinStage2, 1).damage / boss.maxHp;
 
-    expect(lowestRollPct).toBeGreaterThanOrEqual(0.05);
-    expect(highestRollPct).toBeLessThanOrEqual(0.08);
+    expect(lowestRollPct).toBeGreaterThanOrEqual(0.08);
+    expect(highestRollPct).toBeLessThanOrEqual(0.10);
   });
 
   it('applies active attack and defense buffs to damage', () => {
@@ -368,37 +383,65 @@ describe('battle engine', () => {
     applyEffects(user, enemy, effects);
 
     expect(enemy.statusConditions).toMatchObject({ fever: 3, necrosis: 1 });
-    expect(effectiveMaxHp(enemy)).toBe(Math.floor(enemy.maxHp * 0.95));
+    expect(effectiveMaxHp(enemy)).toBe(Math.floor(enemy.maxHp * 0.975));
   });
 
-  it('applies dehydration, jaundice, fatigue, and immune abnormality in combat math', () => {
+  it('applies dyspnea, pain, blood pressure, fatigue, and immune abnormality in combat math', () => {
     const normalDamage = calculateDamage(attacker, capsuleTarget, MOVES.hyaluronidase, 1).damage;
-    const dehydratedTarget = createMonster({ ...capsuleTarget, statusConditions: { dehydration: 2, jaundice: 1 } });
+    // 저산소는 예비력을 없애 받는 피해를 늘린다.
+    const dyspneicTarget = createMonster({ ...capsuleTarget, statusConditions: { dyspnea: 2 } });
+    // 통증 -10%, 혈압 이상 -15%로 방어가 깎인다. 방어가 작으면 반올림에 묻히므로 크게 잡는다.
+    const sturdyTarget = createMonster({ ...capsuleTarget, defense: 50 });
+    const painedTarget = createMonster({ ...capsuleTarget, defense: 50, statusConditions: { pain: 1 } });
+    const shockedTarget = createMonster({ ...capsuleTarget, defense: 50, statusConditions: { blood_pressure: 1 } });
     const fatiguedAttacker = createMonster({ statusConditions: { fatigue: 2 } });
     const protectedTarget = createMonster({ ability: 'capsule', abilities: ['capsule'] });
-    const eosinophilTarget = createMonster({ ability: 'capsule', abilities: ['capsule'], statusConditions: { immune_abnormal: 1 } });
-    const abnormalTarget = createMonster({ ability: 'capsule', abilities: ['capsule'], statusConditions: { immune_abnormal: 2 } });
+    const eosinophilTarget = createMonster({ ability: 'capsule', abilities: ['capsule'], statusConditions: { immune_abnormal: 3 } });
+    const abnormalTarget = createMonster({ ability: 'capsule', abilities: ['capsule'], statusConditions: { immune_abnormal: 4 } });
 
-    expect(calculateDamage(attacker, dehydratedTarget, MOVES.hyaluronidase, 1).damage).toBeGreaterThan(normalDamage);
+    expect(calculateDamage(attacker, dyspneicTarget, MOVES.hyaluronidase, 1).damage).toBeGreaterThan(normalDamage);
+    // 공격 10 대 방어 50이면 피해가 2라 반올림에 묻힌다. 공격을 올려 해상도를 확보한다.
+    const strongAttacker = createMonster({ attack: 100 });
+    const sturdyDamage = calculateDamage(strongAttacker, sturdyTarget, MOVES.hyaluronidase, 1).damage;
+    const painedDamage = calculateDamage(strongAttacker, painedTarget, MOVES.hyaluronidase, 1).damage;
+    expect(painedDamage).toBeGreaterThan(sturdyDamage);
+    expect(calculateDamage(strongAttacker, shockedTarget, MOVES.hyaluronidase, 1).damage).toBeGreaterThan(painedDamage);
     expect(calculateDamage(fatiguedAttacker, capsuleTarget, MOVES.hyaluronidase, 1).damage).toBeLessThan(normalDamage);
     expect(calculateMultiplier(MOVES.m_phago, attacker, protectedTarget).total).toBe(0);
     expect(calculateMultiplier(MOVES.m_phago, attacker, eosinophilTarget).total).toBe(0);
     expect(calculateMultiplier(MOVES.m_phago, attacker, abnormalTarget).total).toBe(1.4);
   });
 
-  it('uses edema, neurologic, paralysis, and itching stacks as status chance bonuses', () => {
+  it('uses edema and neurologic stacks as status chance bonuses', () => {
     const target = createMonster({
       statusConditions: {
         edema: 2,
         neurologic: 1,
-        paralysis: 2,
-        itching: 3,
       },
     });
 
     expect(adjustedStatusChance(target, 0.2)).toBeCloseTo(0.22);
-    expect(adjustedStatusChance(target, 0.2, 'confusion')).toBeCloseTo(0.32);
-    expect(adjustedStatusChance(target, 0.2, 'stun')).toBeCloseTo(0.38);
+    expect(adjustedStatusChance(target, 0.2, 'confusion')).toBeCloseTo(0.27);
+    // 마비와 가려움은 stun 확률 보정이 아니라 행동 실패 확률로 분리됐다(자기참조 제거).
+    expect(adjustedStatusChance(target, 0.2, 'stun')).toBeCloseTo(0.22);
+  });
+
+  it('turns paralysis, vomiting, and itching into a single action failure roll', () => {
+    const paralyzed = createMonster({ statusConditions: { paralysis: 2 } });
+    const nauseated = createMonster({ statusConditions: { vomiting: 1, itching: 1 } });
+
+    expect(actionFailureChance(paralyzed)).toBeCloseTo(0.1);
+    expect(actionFailureLabel(paralyzed)).toBe('마비');
+    expect(actionFailureChance(nauseated)).toBeCloseTo(0.065);
+    expect(actionFailureLabel(nauseated)).toBe('구토');
+  });
+
+  it('scales healing down with dehydration and jaundice instead of vomiting', () => {
+    const dehydrated = createMonster({ statusConditions: { dehydration: 2 } });
+    const jaundiced = createMonster({ statusConditions: { jaundice: 1 } });
+
+    expect(healingMultiplier(dehydrated)).toBeCloseTo(0.75);
+    expect(healingMultiplier(jaundiced)).toBeCloseTo(0.925);
   });
 
   it('advances staged moves after use and wraps after the final stage', () => {
@@ -552,18 +595,28 @@ describe('battle engine', () => {
       hp: 100,
       statusConditions: {
         fever: 2,
-        pain: 1,
         bleeding: 1,
         blood_pressure: 1,
         excretory_dysfunction: 1,
       },
     });
 
+    // 발열 4 + 출혈 2 + 배설 이상 1 = 7, 혈압 이상으로 ×1.05 → 7. 통증은 더 이상 도트가 아니다.
     const damage = tickEffects(monster, () => 0);
 
-    expect(damage).toBe(9);
-    expect(monster.hp).toBe(91);
+    expect(damage).toBe(7);
+    expect(monster.hp).toBe(93);
     expect(monster.statusConditions?.dehydration).toBe(1);
+  });
+
+  it('ticks anemia at half the rate of fever and scales it with blood pressure', () => {
+    const anemic = createMonster({ maxHp: 300, hp: 300, statusConditions: { anemia: 2 } });
+    const febrile = createMonster({ maxHp: 300, hp: 300, statusConditions: { fever: 2 } });
+    const shocked = createMonster({ maxHp: 300, hp: 300, statusConditions: { anemia: 2, blood_pressure: 1 } });
+
+    expect(tickEffects(anemic, () => 0)).toBe(6);
+    expect(tickEffects(febrile, () => 0)).toBe(12);
+    expect(tickEffects(shocked, () => 0)).toBe(6);
   });
 
   it('reports turn-end status damage in the battle log', () => {
@@ -588,7 +641,7 @@ describe('battle engine', () => {
     expect(result.enemy?.hp).toBeLessThan(999);
   });
 
-  it('uses visual and hearing abnormality as 25% accuracy penalties', () => {
+  it('uses visual (12.5%) and hearing (7.5%) abnormality as accuracy penalties', () => {
     const baseState: RunState = {
       floor: 5,
       bgmSeed: 1,
@@ -625,14 +678,14 @@ describe('battle engine', () => {
       'hyaluronidase',
       1,
       0,
-      0.75,
+      0.95,
     );
     const sensoryMiss = resolvePlayerMove(
       { ...baseState, party: [createMonster({ moveset: ['hyaluronidase'], statusConditions: { blindness: 1, hearing_abnormal: 1 } })] },
       'hyaluronidase',
       1,
       0,
-      0.5,
+      0.85,
     );
 
     expect(visualHit.lastLog).not.toContain('시력 이상으로 빗나갔다');
@@ -664,7 +717,7 @@ describe('battle engine', () => {
     try {
       const result = resolvePlayerMove(battle, 'coagulase', 1, 0, 0);
 
-      expect(result.lastLog).toContain('구충 신경마비');
+      expect(result.lastLog).toContain('구충제 투약');
       expect(result.lastLog).toContain('효과가 굉장했다');
       expect(result.party[0].hp).toBeLessThan(500);
     } finally {
@@ -742,8 +795,8 @@ describe('battle engine', () => {
 
     const result = resolvePlayerMove(battle, 'coagulase', 1);
 
-    expect(result.lastLog).toContain('구충 신경마비');
-    expect(result.lastLog).toContain('인터페론');
+    expect(result.lastLog).toContain('구충제 투약');
+    expect(result.lastLog).toContain('인터페론 활성화');
     expect(result.party[0].hp).toBeLessThan(500);
     expect(result.enemy?.plannedMoveIds).toHaveLength(2);
   });

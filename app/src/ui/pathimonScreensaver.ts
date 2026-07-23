@@ -31,11 +31,16 @@ const MIN_VISIBLE_PATHIMON = 8;
 const MAX_VISIBLE_PATHIMON = 12;
 const RESPAWN_DELAY_MS = 1000;
 const SAFE_LAUNCH_ZONES: PathimonLaunchZone[] = ['top', 'left', 'right'];
+const SKIP_BUTTON_WIDTH_RATIO = 108 / 1024;
 
 export function pathimonScreensaverSpritePool(): string[] {
   return [...new Set(
     wildEncounterRoster().map((monster) => `images/pathimon/${monster.assetBaseId ?? monster.id}-front.png`),
   )];
+}
+
+export function pathimonScreensaverImageSize(width: number): number {
+  return Math.round(width * SKIP_BUTTON_WIDTH_RATIO * 1.09);
 }
 
 export function pathimonScreensaverSpriteCount(random: RandomSource = Math.random): number {
@@ -108,7 +113,7 @@ function createPairItem(
     impactY: shared.impactY,
     launchZone: zone,
     respawnDelayMs: RESPAWN_DELAY_MS,
-    scale: randomRange(0.81, 1.53, random),
+    scale: randomRange(0.92, 1.08, random),
     startX: start.x,
     startY: start.y,
     wobblePx: randomRange(-26, 26, random),

@@ -6,6 +6,15 @@ const G = 2.0;
 const N = 0.0;
 const W = 0.5;
 
+// **패시몬이 적(보스·트레이너)을 때릴 때만 쓴다.** 행은 패시몬 기술 타입, 값은 적의 방어 특성·태그다.
+//
+// 반대 방향(적 → 패시몬)은 이 표를 타지 않는다. 노트 `대처법:`·`증상/태그:` 적중으로 ×4·×2·×1만 정한다
+// (`battle/bossMatchup.ts`, MATCHUP.md §1). 패시몬의 `evasion`은 배율에 걸리지 않고 학습 텍스트로만 쓴다.
+//
+// **주의 — 위 8행(`phago`·`opsonin`·`antibody`·`complement`·`ctl`·`th1`·`th2`·`interferon`)은 죽은 행이다.**
+// 전부 적(치료 행위) 기술 타입이라 이 표를 탈 일이 없다. 협막·항산성·잠복 같은 패시몬 방어 특성이 값으로 들어 있는 것도
+// 그 흔적이다. 실제로 도는 것은 노트 기술 타입이 접히는 5행뿐이다 — `special`·`lysis`·`toxin`·`spread`·`immune_mediated`.
+// 구 상성 시스템의 잔재이며, 정리 여부는 사용자 판단을 기다린다.
 export const EFFECTIVENESS: EffectivenessTable = {
   phago: {
     none: 1.4,

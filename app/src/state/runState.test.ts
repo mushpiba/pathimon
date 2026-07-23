@@ -92,7 +92,7 @@ describe('run state loop', () => {
     expect(challenge.party[0].signatureUnlocked).toBe(false);
   });
 
-  it('enters a normal wild battle', () => {
+  it('enters a wild encounter without starting a fight', () => {
     const initial = createInitialRunState();
     const firstWildPathimon = wildMonsterForRun(initial);
     const state = enterBattle(initial);
@@ -122,20 +122,30 @@ describe('run state loop', () => {
     expect(encounterKindForFloor(20)).toBe('boss');
   });
 
-  it('keeps late roster pathimon reachable through wild floor rotation', () => {
+  it('keeps every active pathimon in the wild pool and never repeats one within a run', () => {
+    // 한 판에 전 종이 등장하도록 설계한 적이 없다. 야생은 활성 패시몬 풀에서 무작위로 뽑고,
+    // 로스터(83종)가 야생 층(80층)보다 많아 매 판 몇 종은 나오지 않는다. 그건 정상이다.
+    // 여기서 지켜야 할 것은 두 가지다 — 풀이 앞쪽 몇 종으로 잘리지 않을 것, 한 판 안에서 겹치지 않을 것.
+    const pool = wildEncounterRoster().map((monster) => monster.id);
+    expect(pool).toContain('anthrax');
+    expect(pool).toContain('cereus');
+
     const seen = new Set<string>();
     const run = createInitialRunState();
+    let wildFloors = 0;
 
     for (let floor = 1; floor <= TOTAL_FLOORS; floor += 1) {
       if (encounterKindForFloor(floor) !== 'wild') continue;
+      wildFloors += 1;
       const state = { ...run };
       state.floor = floor;
       const battle = enterBattle(state);
       if (battle.enemy) seen.add(battle.enemy.templateId);
     }
 
-    expect(seen).toContain('anthrax');
-    expect(seen).toContain('cereus');
+    expect(wildFloors).toBeGreaterThan(0);
+    expect(seen.size).toBe(wildFloors);
+    expect(pool.length).toBeGreaterThanOrEqual(wildFloors);
   });
 
   it('creates one shuffled wild roster when a run starts', () => {
@@ -284,7 +294,8 @@ describe('run state loop', () => {
   });
 
   it('skips the maintenance shop after learning-mode victories without result-screen learning feedback', () => {
-    const battle = enterBattle(createInitialRunState('learning'));
+    // 패시몬끼리는 싸우지 않는다. 전투는 트레이너·보스와만 성립하므로 5층(트레이너)에서 확인한다.
+    const battle = enterBattle({ ...createInitialRunState('learning'), floor: 5 });
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.hp = 1;
 
@@ -385,15 +396,22 @@ describe('run state loop', () => {
   });
 
   it('uses pathogen-specific learning feedback instead of the generic type-matchup sentence', () => {
+    // 패시몬끼리는 싸우지 않는다. 전투는 트레이너·보스와만 성립하므로 5층(트레이너)에서 확인한다.
     const initial = createInitialRunState('learning');
-    const firstWildPathimon = wildMonsterForRun(initial);
+    initial.floor = 5;
     const battle = enterBattle(initial);
+    const enemy = battle.enemy;
+    if (!enemy) throw new Error('trainer enemy missing');
+    // 트레이너 공격력 68에 v2 앵커 탄저록스(HP 40)는 반격 한 번에 쓰러질 수 있다. 적 턴 피해는
+    // `randomDamageVariance()` 기본값을 쓰므로 결과가 실행마다 달라진다. 여기서 볼 것은 피드백
+    // 문구지 전투 결과가 아니라서 플레이어 체력을 고정해 결정적으로 만든다.
+    battle.party[0].maxHp = 999;
+    battle.party[0].hp = 999;
 
     const result = resolvePlayerMove(battle, 'influenza_spread', 1);
 
     expect(result.lastLog).toContain('학습 피드백');
-    expect(result.lastLog).toContain(firstWildPathimon.scientificName);
-    expect(result.lastLog).toContain(firstWildPathimon.category);
+    expect(result.lastLog).toContain(enemy.scientificName);
     expect(result.lastLog).not.toContain('기술 타입과 방어특성/태그 상성이 피해량을 결정합니다.');
   });
 
@@ -470,7 +488,10 @@ describe('run state loop', () => {
     ];
 
     try {
-      const battle = enterBattle(createInitialRunState());
+      // 패시몬끼리는 싸우지 않는다. 전투는 트레이너·보스와만 성립하므로 5층(트레이너)에서 확인한다.
+      const battle = enterBattle({ ...createInitialRunState(), floor: 5 });
+      if (!battle.enemy) throw new Error('enemy missing');
+
       const result = resolvePlayerMove(battle, 'enterotoxin', 1);
 
       expect(result.enemy?.effects).toContainEqual({ kind: 'confusion', turns: 1 });
@@ -480,7 +501,8 @@ describe('run state loop', () => {
   });
 
   it('lets a surviving enemy take a turn after the player acts', () => {
-    const battle = enterBattle(createInitialRunState());
+    // 패시몬끼리는 싸우지 않는다. 전투는 트레이너·보스와만 성립하므로 5층(트레이너)에서 확인한다.
+    const battle = enterBattle({ ...createInitialRunState(), floor: 5 });
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.moveset = ['hiv_cd4'];
     const startingHp = battle.party[0].hp;
@@ -493,7 +515,8 @@ describe('run state loop', () => {
   });
 
   it('ticks round-end effects after both sides act', () => {
-    const battle = enterBattle(createInitialRunState());
+    // 패시몬끼리는 싸우지 않는다. 전투는 트레이너·보스와만 성립하므로 5층(트레이너)에서 확인한다.
+    const battle = enterBattle({ ...createInitialRunState(), floor: 5 });
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.effects.push({ kind: 'dot', power: 4, turns: 2 });
     const startingEnemyHp = battle.enemy.hp;
@@ -524,7 +547,7 @@ describe('run state loop', () => {
     const state = createInitialRunState('challenge');
     state.floor = 5;
     const battle = enterBattle(state, 0);
-    battle.party.push({ ...battle.party[0], templateId: 'hiv', name: '레트로잠' });
+    battle.party.push({ ...battle.party[0], templateId: 'tb', name: '결핵잠' });
     const benchedHp = battle.party[1].hp;
 
     const result = resolveSwitchMonster(battle, 1, 1);
@@ -592,7 +615,8 @@ describe('run state loop', () => {
     if (!firstBattle.enemy) throw new Error('enemy missing');
     firstBattle.enemy.hp = 1;
     const captured = resolveCapsuleAction(firstBattle, 0);
-    const secondBattle = advanceFromShop(captured);
+    // 패시몬끼리는 싸우지 않는다. 포획은 야생 1층에서 하고, 전투 검증은 5층(트레이너)에서 한다.
+    const secondBattle = enterBattle({ ...advanceFromShop(captured), floor: 5 });
     secondBattle.party[0].hp = 1;
     if (secondBattle.enemy) {
       secondBattle.enemy.hp = 999;
@@ -761,7 +785,7 @@ describe('run state loop', () => {
     state.floor = 5;
     state.phase = 'shop';
     state.money = 5;
-    state.party.push({ ...state.party[0], templateId: 'hiv', name: '레트로잠', hp: 1 });
+    state.party.push({ ...state.party[0], templateId: 'tb', name: '결핵잠', hp: 1 });
     state.party[0].hp = 1;
 
     const result = purchaseShopItemForPartyMember(state, 'slot-potion-a', 0);
@@ -778,7 +802,7 @@ describe('run state loop', () => {
     state.floor = 5;
     state.phase = 'shop';
     state.money = 5;
-    state.party.push({ ...state.party[0], templateId: 'hiv', name: '레트로잠', hp: 1 });
+    state.party.push({ ...state.party[0], templateId: 'tb', name: '결핵잠', hp: 1 });
     state.party[0].hp = 1;
 
     const result = purchaseShopItem(state, 'slot-potion-b');
@@ -789,7 +813,7 @@ describe('run state loop', () => {
   });
 
   it('asks for a party target before using rare candy', () => {
-    const state = createInitialRunState('challenge', 'character', ['anthrax', 'hiv']);
+    const state = createInitialRunState('challenge', 'character', ['anthrax', 'tb']);
     state.phase = 'shop';
     state.money = 3;
     state.activeIndex = 0;
@@ -804,7 +828,7 @@ describe('run state loop', () => {
   });
 
   it('uses rare candy to unlock only the selected pathimon signature move', () => {
-    const state = createInitialRunState('challenge', 'character', ['anthrax', 'hiv']);
+    const state = createInitialRunState('challenge', 'character', ['anthrax', 'tb']);
     state.phase = 'shop';
     state.money = 3;
     state.activeIndex = 1;

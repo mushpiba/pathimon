@@ -69,6 +69,13 @@ export const ABILITIES: Record<AbilityId, AbilityData> = {
       },
     },
   },
+  cyst: { id: 'cyst', name: '낭종' },
+  larval_migration: { id: 'larval_migration', name: '유충이행' },
+  autoinfection: { id: 'autoinfection', name: '자가감염' },
+  acid_tolerance: { id: 'acid_tolerance', name: '위산저항' },
+  environmental_resistance: { id: 'environmental_resistance', name: '환경저항' },
+  iron_piracy: { id: 'iron_piracy', name: '철획득' },
+  tissue_migration: { id: 'tissue_migration', name: '조직이행' },
   lysozyme: {
     id: 'lysozyme',
     name: '라이소자임',

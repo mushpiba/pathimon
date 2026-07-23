@@ -10,7 +10,7 @@ export interface MultiplierResult {
 
 function defenseAbilities(monster: RuntimeMonster): AbilityId[] {
   const abilities = monster.abilities?.length ? monster.abilities : [monster.ability];
-  const disabledCount = Math.floor(statusConditionStacks(monster, 'immune_abnormal') / 2);
+  const disabledCount = Math.floor(statusConditionStacks(monster, 'immune_abnormal') / 4);
   const activeAbilities = abilities.slice(disabledCount);
   return activeAbilities.length > 0 ? activeAbilities : ['none'];
 }

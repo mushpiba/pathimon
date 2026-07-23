@@ -709,22 +709,29 @@ export class BattleScene extends Phaser.Scene {
       this.render();
     }, this.dexTab === 'effectiveness');
 
-    drawPanel(this, 220, 400, 628, 150).setAlpha(0.98);
+    drawPanel(this, 220, 394, 628, 168).setAlpha(0.98);
     if (this.dexTab === 'moves') {
       dex.moveRows.forEach((row, index) => {
-        const y = 411 + index * 34;
-        addBoxLabel(this, 238, y, `${row.name} · ${row.type} · 위력 ${row.power} · 명중 ${row.accuracy}`, {
-          width: 586,
+        const y = 404 + index * 40;
+        addBoxLabel(this, 238, y, row.name, {
+          width: 190,
           height: 18,
           size: 15,
-          minSize: 12,
+          minSize: 11,
           maxLines: 1,
         });
-        addBoxLabel(this, 238, y + 18, `${row.description} ${row.learnText}`, {
-          width: 586,
+        addBoxLabel(this, 452, y + 1, `${row.type} · 위력 ${row.power} · 명중 ${row.accuracy}`, {
+          width: 372,
           height: 16,
           size: 12,
-          minSize: 10,
+          minSize: 9,
+          maxLines: 1,
+        }).setAlpha(0.88);
+        addBoxLabel(this, 258, y + 20, row.description, {
+          width: 566,
+          height: 16,
+          size: 11,
+          minSize: 9,
           maxLines: 1,
         }).setAlpha(0.88);
       });
@@ -791,7 +798,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     const previousState = this.state;
-    this.state = resolvePlayerMove(this.state, moveId);
+    this.state = resolvePlayerMove(this.state, moveId, undefined, undefined, undefined, Math.random);
     this.notice = this.state.battleResultLog ?? this.state.lastLog;
     this.viewMode = 'command';
     this.playBattleResolutionCue(previousState, this.state, () => this.afterBattleAction());
@@ -1514,7 +1521,7 @@ export class BattleScene extends Phaser.Scene {
   private handlePartySwitch(index: number): void {
     this.state = this.state.phase === 'forcedSwitch'
       ? resolveForcedSwitchMonster(this.state, index)
-      : resolveSwitchMonster(this.state, index);
+      : resolveSwitchMonster(this.state, index, undefined, Math.random);
     const player = this.state.party[this.state.activeIndex];
     this.selectedMoveId = firstUsableMove(player);
     this.armedMoveId = this.selectedMoveId;

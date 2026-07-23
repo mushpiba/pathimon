@@ -94,7 +94,16 @@ export type AbilityId =
   | 'iron_limitation'
   | 'antitoxin'
   | 'receptor_defect'
-  | 'immune_regulation';
+  | 'immune_regulation'
+  // VOCAB.md §2-3 evasion 중 기존 값으로 표현되지 않던 것 (구 파서는 large_resistance로 뭉갰다)
+  | 'cyst'
+  | 'larval_migration'
+  | 'autoinfection'
+  | 'acid_tolerance'
+  | 'environmental_resistance'
+  | 'iron_piracy'
+  // 성충이 조직을 옮겨 다니며 정착을 회피한다. `larval_migration`(유충)과 생활사 단계가 다르다.
+  | 'tissue_migration';
 export type MoveId = string;
 
 export interface CountermeasureProfile {
@@ -115,6 +124,7 @@ export type StatusConditionId =
   | 'neurologic'
   | 'paralysis'
   | 'bleeding'
+  | 'anemia'
   | 'immune_abnormal'
   | 'necrosis'
   | 'blindness'

@@ -60,6 +60,30 @@
 | 54 | cestode/Taenia solium.md | 유구조충(Taenia solium) | f | 리본돼지 |
 | 55 | bacteria/Mycoplasma hominis.md | 마이코플라스마 호미니스(Mycoplasma hominis) | f | 벽없호미 |
 | 56 | bacteria/Mycoplasma spp.md | 마이코플라스마속(Mycoplasma spp.) | a | 마이코막 |
-| 57 | bacteria/Ureaplasma urealyticum.md | 유레아플라스마 유레아리티쿰(Ureaplasma urealyticum) | a | 유레아플라 |
 | 58 | bacteria/Gardnerella vaginalis.md | 가드네렐라균(Gardnerella vaginalis) | a | 가드네라 |
 | 59 | bacteria/Nocardia spp.md | 노카르디아속(Nocardia spp.) | a | 노카가지 |
+| 60 | cestode/Cysticercus cellulosae.md | 유구낭미충(Cysticercus cellulosae) | b | 물혹돼지 |
+| 61 | bacteria/Clostridium perfringens.md | 웰치균(Clostridium perfringens) | a | 가스괴저 |
+| 62 | bacteria/Bacteroides spp.md | 박테로이데스속(Bacteroides spp.) | a | 프라질장 |
+| 63 | bacteria/Vibrio cholerae.md | 콜레라균(Vibrio cholerae) | b | 콜레라비 |
+| 64 | bacteria/Vibrio parahaemolyticus.md | 장염비브리오균(Vibrio parahaemolyticus) | b | 파라비브 |
+| 65 | bacteria/Vibrio vulnificus.md | 패혈증비브리오균(Vibrio vulnificus) | c | 불니피쿠 |
+| 66 | bacteria/Rickettsia spp.md | 리케차속(Rickettsia spp.) | a | 진드케치 |
+| 67 | bacteria/Chlamydia trachomatis.md | 트라코마 클라미디아(Chlamydia trachomatis) | a | 트라코마 |
+| 68 | bacteria/Chlamydia spp.md | 클라미디아속(Chlamydia spp.) | a | 클라미속 |
+| 69 | bacteria/Pseudomonas aeruginosa.md | 녹농균(Pseudomonas aeruginosa) | e | 녹슬농 |
+| 70 | bacteria/Haemophilus influenzae.md | 헤모필루스 인플루엔자균(Haemophilus influenzae) | a | 헤모필루 |
+| 71 | cestode/Taenia saginata.md | 무구조충(Taenia saginata) | a | 민머리소 |
+| 72 | cestode/Hymenolepis nana.md | 왜소조충(Hymenolepis nana) | c | 나나조충 |
+| 73 | cestode/Echinococcus granulosus.md | 단방조충(Echinococcus granulosus) | d | 딸낭조충 |
+| 74 | cestode/Diphyllobothrium latum.md | 광절열두조충(Diphyllobothrium latum) | a | 광절리본 |
+| 75 | nematode/Gnathostoma spp.md | 악구충속(Gnathostoma spp.) | a | 가시악구 |
+| 76 | trematode/Metagonimus.md | 요코가와흡충(Metagonimus yokogawai) | b | 은어흡충 |
+| 77 | nematode/Ancylostoma braziliense.md | 브라질구충(Ancylostoma braziliense) | a | 기어가기 |
+| 78 | protozoa/Giardia lamblia.md | 람블편모충(Giardia lamblia) | a | 장도리충 |
+| 79 | protozoa/Trichomonas vaginalis.md | 질편모충(Trichomonas vaginalis) | a | 딸기질 |
+| 80 | virus/HSV-1.md | 단순포진바이러스 1형(Herpes simplex virus 1, HSV-1) | a | 헤르페원 |
+| 81 | virus/HSV-2.md | 단순포진바이러스 2형(Herpes simplex virus 2, HSV-2) | a | 헤르페투 |
+| 82 | virus/VZV.md | 수두대상포진바이러스(Varicella-zoster virus, VZV) | a | 띠포진 |
+| 83 | virus/EBV.md | 엡스타인-바 바이러스(Epstein-Barr virus, EBV) | a | 엡스타인 |
+| 84 | virus/HCMV.md | 인간거대세포바이러스(Human cytomegalovirus, HCMV) | a | 선천빅 |

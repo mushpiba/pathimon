@@ -15,25 +15,25 @@ export function modeSelectButtonOptions(): ModeSelectOption[] {
       kind: 'mode',
       value: 'learning',
       label: '학습모드',
-      lines: ['정비구역 없이 진행', '전투 시작마다 회복', '학습 피드백 강화'],
+      lines: ['정비구역 없이 진행', '자동 회복', '학습 피드백 강화'],
     },
     {
       kind: 'mode',
       value: 'challenge',
       label: '도전모드',
-      lines: ['정비구역 이용', '자동 회복 없음', '자원 관리 중심'],
+      lines: ['정비구역 등장', '회복 없음'],
     },
     {
       kind: 'visualStyle',
       value: 'character',
       label: '캐릭터풍',
-      lines: ['패시몬 몬스터풍', '기존 픽셀 감성'],
+      lines: [],
     },
     {
       kind: 'visualStyle',
       value: 'micro',
       label: '실사풍',
-      lines: ['현미경 표본에 가까움', '학습 관찰감 우선'],
+      lines: [],
     },
   ];
 }

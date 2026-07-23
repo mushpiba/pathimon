@@ -67,7 +67,11 @@ describe('Pathimon data', () => {
   });
 
   it('loads every selected first-wave pathimon note into the note roster', () => {
-    expect(NOTE_MONSTERS).toHaveLength(59);
+    // 59 → 77 → 84 → 83 → 81. 41~50강 승격 17종 + `물혹돼지`(60~77번), 57·58강 신규 7종(78~84번)이 추가됐고,
+    // `유레아플라`(57번)는 강의 근거가 없어 `마이코막` 노트의 감별점으로 흡수하며 제외했다.
+    // `레트로잠`(31번, HIV)과 `가드네라`(58번)는 v2 전환에 필요한 강의 자산이 없어 승격을 취소했다.
+    // 전자는 `65_리트로바이러스` 미도착, 후자는 48강에 스치듯 1회뿐이다.
+    expect(NOTE_MONSTERS).toHaveLength(81);
     expect(NOTE_MONSTERS.map((monster) => monster.name).slice(0, 5)).toEqual([
       '탄저록스',
       '세레우톡스',
@@ -75,14 +79,21 @@ describe('Pathimon data', () => {
       '디프막스',
       '디피실룩',
     ]);
-    expect(NOTE_MONSTERS[NOTE_MONSTERS.length - 1]?.name).toBe('노카가지');
+    // `레트로잠`(31번) 승격 취소로 한 칸 당겨졌다. 노트 순서가 NAME_SELECTIONS.json의 selections 배열 순서라는 점을 잡아 두는 검사다.
+    expect(NOTE_MONSTERS[55]?.name).toBe('노카가지');
+    // `pathimonNoteData.ts`의 createParasiteEvolutionMonsters가 기생충 노트를 무조건 유충/성충으로 쪼개면서
+    // 이름에 `-유충`을 붙인다. 노트의 `진화: 패턴 B`(사람 안에서 성충이 되지 못함)와 어긋나는 지점이라 재검토 대상이다.
+    expect(NOTE_MONSTERS[73]?.name).toBe('기어가기-유충');
+    expect(NOTE_MONSTERS[NOTE_MONSTERS.length - 1]?.name).toBe('선천빅');
   });
 
   it('uses note stats as battle-ready hp, attack, and defense values', () => {
     const byId = new Map(NOTE_MONSTERS.map((monster) => [monster.id, monster]));
 
-    expect(byId.get('anthrax')).toMatchObject({ maxHp: 100, attack: 100, defense: 100 });
-    expect(byId.get('cereus')).toMatchObject({ maxHp: 95, attack: 20, defense: 30 });
+    // 탄저록스는 STATS.md §5 앵커(95/45/40)로 재작성됐다. 밴드 주석이 붙은 `- 공격: 95   # 밴드: 5 …`도 읽혀야 한다.
+    expect(byId.get('anthrax')).toMatchObject({ maxHp: 40, attack: 95, defense: 45 });
+    // 세레우톡스도 STATS.md §5 앵커(35/25/20)로 재작성됐다. v1의 HP 95는 자가 한정 식중독을 만성으로 오독시켰다.
+    expect(byId.get('cereus')).toMatchObject({ maxHp: 20, attack: 35, defense: 25 });
 
     for (const monster of NOTE_MONSTERS) {
       expect(monster.maxHp).toBeGreaterThan(0);
@@ -93,18 +104,18 @@ describe('Pathimon data', () => {
 
   it('loads display memo lines from every selected pathimon note', () => {
     for (const monster of NOTE_MONSTERS) {
-      expect(monster.profileMemo).toHaveLength(4);
+      // v1 `메모:`는 4줄 고정이었지만 v2 `학습포인트:`는 최소 4개다(TEMPLATE-v2).
+      expect(monster.profileMemo?.length, `${monster.id} memo lines`).toBeGreaterThanOrEqual(4);
       for (const line of monster.profileMemo ?? []) {
         expect(line.trim().length).toBeGreaterThan(8);
       }
     }
 
-    expect(NOTE_MONSTERS.find((monster) => monster.id === 'anthrax')?.profileMemo).toEqual([
-      '세균 타입이며 방어특성은 아포이다.',
-      '그람양성 구조와 세포외 위치가 핵심이다.',
-      '상처, 호흡기, 소화기 경로로 감염될 수 있다.',
-      '아포 발아와 탄저 독소, 협막 형성이 대표 병인이다.',
-    ]);
+    // 탄저록스는 v2로 재작성되어 메모 대신 번호 붙은 학습포인트가 실린다.
+    const anthraxMemo = NOTE_MONSTERS.find((monster) => monster.id === 'anthrax')?.profileMemo ?? [];
+    expect(anthraxMemo).toHaveLength(15);
+    expect(anthraxMemo[0]).toMatch(/^L1 \[감별점\]/);
+    expect(anthraxMemo[anthraxMemo.length - 1]).toMatch(/^L15 \[생활사·역학\]/);
   });
   it('loads countermeasure profiles from every selected pathimon note', () => {
     for (const monster of NOTE_MONSTERS) {
@@ -128,10 +139,39 @@ describe('Pathimon data', () => {
     }
   });
 
+  // VOCAB.md §2-3은 `없음`을 정식 evasion 값으로 둔다("특기할 회피 구조 없음").
+  // 아래는 강의 근거상 회피 구조가 실제로 없다고 판정한 노트다. 그 외에 'none'이 나오면 파서 매핑 실패로 본다.
+  const INTENTIONAL_NO_EVASION = [
+    'clonorchis_sinensis', // 프라지콴텔 1~2일이면 구제된다. 방어 60은 담관이라는 위치에서 온다
+    'taenia_solium', // 장 성충형. 프라지콴텔 단회로 끝난다. 낭종은 분리된 `물혹돼지`가 가져갔다
+    'bacteroides_spp', // 46·20·21강 어디에도 협막 언급이 없다. 장관 파열이라는 계기로만 성립하는 내인성 감염
+    'vibrio_cholerae', // 병독인자가 독소·TCP·전사인자뿐이다. 수액만으로 치명률이 1% 미만이 된다
+    'vibrio_parahaemolyticus', // 자가 한정 장염. v1의 `염분선호`는 VOCAB §2-6이 폐기로 분류한 값이다
+    'taenia_saginata', // 장 성충형. 편절 탈락은 회피가 아니라 전파 구조라 공격기로 갔다
+    'diphyllobothrium_latum', // 44강이 회피 구조를 다루지 않는다. 프라지콴텔 단회로 끝난다
+    'metagonimus', // v1의 `장점막부착`은 회피가 아니라 정착이다. 강의가 "임상적으로 큰 문제 없음"이라 못 박았다
+    'escherichia_coli', // v1 `부착선모`는 회피가 아니라 정착이다. 33강이 대장균 기본형의 회피 구조를 다루지 않는다
+    'etec', // 위와 동일. 병원성은 정착인자와 장독소 두 축이고 침습도 회피도 없다
+    'epec', // 위와 동일. 병인이 A/E 부착 그 자체다. 소장 조에서 생물막을 가진 것은 EAEC뿐이다
+    'ehec_stec_e_coli_o157_h7', // v1 `산저항`은 33강에 없다. 낮은 감염량에서 역추론한 값이라 뺐다. 방어력은 항생제 금기에서 온다
+    'upec', // v1 `부착선모`는 회피가 아니라 정착이다. 병독인자는 부착소와 용혈소 HlyA 둘뿐이다
+    'wuchereria_bancrofti', // v1 `림프정착`은 회피가 아니라 정착이다. 방어력은 약이 미세사상충에만 듣는다는 사실에서 온다
+    'brugia_malayi', // 위와 동일. 29강이 이 종의 회피 구조를 따로 다루지 않는다
+    'thelazia_callipaeda', // v1 `눈기생`은 기생 부위이지 회피가 아니다. 눈에 보여 집어내면 끝나는 것이 오히려 약점이다
+    'ancylostoma_duodenale', // v1 `흡혈`은 공격이지 회피가 아니다. 흡혈은 공격기로, 항응고 물질은 전용기로 옮겼다
+    'necator_americanus', // 위와 동일. 23강이 구충의 회피 구조를 다루지 않는다
+    'trichuris_trichiura', // v1 `장점막고정`은 정착이지 회피가 아니다. 19강이 편충의 회피 구조를 다루지 않는다
+    'capillaria_hepatica', // v1 `간이행`은 경로이지 회피가 아니다. 방어력은 알이 간에 갇혀 대변검사가 음성이라는 데서 온다
+    'ascaris', // 빙글회충. v1 `대형저항`은 크기일 뿐 회피가 아니다. 26강이 회충의 회피 구조를 다루지 않는다 (id는 NOTE_OPTION_OVERRIDES가 지정)
+    'corynebacterium_diphtheriae', // 디프막스. v1 `위막장벽`은 VOCAB §2-6이 병인 산물로 분류해 공격기로 이관했다. 24강이 회피 구조를 다루지 않는다
+    'schistosoma', // 달팽혈충 (id는 NOTE_OPTION_OVERRIDES가 지정). v1 `항원위장`은 38·30강 어디에도 없다. 14강이 숙주 항원 가장을 기생충 일반 기전으로만 가르치고 종을 지목하지 않는다
+  ];
+
   it('does not leave selected first-wave notes with an accidental empty defense trait', () => {
     const emptyDefenseIds = NOTE_MONSTERS
       .filter((monster) => monster.ability === 'none' || !monster.abilities?.length)
-      .map((monster) => monster.id);
+      .map((monster) => monster.id)
+      .filter((id) => !INTENTIONAL_NO_EVASION.includes(id));
 
     expect(emptyDefenseIds).toEqual([]);
   });
@@ -169,12 +209,13 @@ describe('Pathimon data', () => {
       'staph',
       'strep',
       'tb',
-      'hiv',
       'ascaris',
       'schistosoma',
       'nocardia_spp',
     ]));
-    expect(NOTE_MONSTERS).toHaveLength(59);
+    expect(NOTE_MONSTERS).toHaveLength(81);
+    expect(monsterIds).not.toContain('hiv');
+    expect(monsterIds).not.toContain('gardnerella_vaginalis');
     expect(MONSTERS.length).toBeGreaterThan(NOTE_MONSTERS.length);
     expect(BOSSES.map((boss) => boss.id)).toContain('immune_hq');
     expect(BOSSES.length).toBeGreaterThanOrEqual(12);
@@ -203,6 +244,42 @@ describe('Pathimon data', () => {
     expect(trichinellaAdult?.maxHp).toBeGreaterThan(trichinellaLarva?.maxHp ?? 0);
   });
 
+  // STATS.md §7 패턴 B(유충 정점)는 사람 안에서 성충이 되지 못하는 기생충이다.
+  // `pathimonNoteData.ts`의 evolutionPattern이 노트의 `- 패턴: B`를 읽어 성충 단계를 만들지 않는다.
+  it('stops larva-peak parasites at the larval stage instead of inventing an adult form', () => {
+    const byId = new Map(MONSTERS.map((monster) => [monster.id, monster]));
+
+    // 감염원을 유충으로 먹는 쪽: 유충 하나로 끝난다
+    for (const id of ['anisakis_simplex', 'gnathostoma_spp', 'ancylostoma_braziliense']) {
+      expect(byId.get(id)?.name, `${id} name`).toContain('유충');
+      expect(byId.get(id)?.evolvesTo, `${id} evolvesTo`).toBeUndefined();
+      expect(byId.get(`${id}_adult`), `${id} adult form`).toBeUndefined();
+    }
+
+    // 충란으로 먹는 쪽: 충란 → 유충까지만 간다. 사람은 중간숙주라 포충낭이 종점이다
+    const hydatidEgg = byId.get('echinococcus_granulosus');
+    expect(hydatidEgg?.name).toContain('충란');
+    expect(hydatidEgg?.evolvesTo).toBe('echinococcus_granulosus_larva');
+    expect(byId.get('echinococcus_granulosus_larva')?.evolvesTo).toBeUndefined();
+    expect(byId.get('echinococcus_granulosus_adult')).toBeUndefined();
+  });
+
+  // STATS.md §7 패턴 C(분기 진화)는 한 종에서 갈라진 두 병을 별개 패시몬으로 둔 것이다.
+  // 양쪽 다 종점이라 단계를 자동 생성하면 서로의 자리를 침범한다 — 유구조충은 장 성충, 유구낭미충은 낭미충이다.
+  it('leaves branching parasites as two standalone pathimon without inventing stages', () => {
+    const byId = new Map(MONSTERS.map((monster) => [monster.id, monster]));
+
+    for (const id of ['taenia_solium', 'cysticercus_cellulosae']) {
+      expect(byId.get(id)?.name, `${id} name`).not.toMatch(/-(충란|유충|성충)$/);
+      expect(byId.get(id)?.evolvesTo, `${id} evolvesTo`).toBeUndefined();
+      expect(byId.get(`${id}_larva`), `${id} larva form`).toBeUndefined();
+      expect(byId.get(`${id}_adult`), `${id} adult form`).toBeUndefined();
+    }
+
+    expect(byId.get('taenia_solium')?.name).toBe('리본돼지');
+    expect(byId.get('cysticercus_cellulosae')?.name).toBe('물혹돼지');
+  });
+
   it('uses every image from the organized trainers boss and trainer folders', () => {
     expect(TRAINER_CHARACTER_ASSETS).toHaveLength(Object.keys(trainerCharacterAssets).length);
     expect(BOSS_CHARACTER_ASSETS).toHaveLength(Object.keys(bossCharacterAssets).length);
@@ -225,8 +302,10 @@ describe('Pathimon data', () => {
   it('scales boss runtime hp to the anthrax-calibrated boss value', () => {
     const boss = createBossInstance(0, 10);
 
-    expect(boss.maxHp).toBe(BOSSES[0].maxHp * 60);
-    expect(boss.hp).toBe(BOSSES[0].maxHp * 60);
+    // 배수 60 → 26. 플레이어 턴당 화력 약 650(앵커 12종 실측) 기준 약 9턴이 되어
+    // 전투당 패시몬 2~3마리가 쓰러지는 사이에 끝난다.
+    expect(boss.maxHp).toBe(BOSSES[0].maxHp * 26);
+    expect(boss.hp).toBe(BOSSES[0].maxHp * 26);
   });
 
   it('starts boss encounters without pre-existing symptoms', () => {
@@ -235,12 +314,15 @@ describe('Pathimon data', () => {
     expect(boss.symptoms).toEqual([]);
   });
 
-  it('sets trainer runtime hp to one fifth of the paired boss hp', () => {
+  it('sets trainer runtime hp to one quarter of the paired boss hp', () => {
     const boss = createBossInstance(0, 10);
     const trainer = createTrainerInstance(0);
 
-    expect(trainer.maxHp).toBe(Math.round(boss.maxHp / 5));
-    expect(trainer.hp).toBe(Math.round(boss.maxHp / 5));
+    // 1/5은 트레이너 전투가 2턴으로 너무 짧아 1/4로 올렸다. 스탯은 보스와 동일하고 HP만 다르다.
+    expect(trainer.maxHp).toBe(Math.round(boss.maxHp / 4));
+    expect(trainer.hp).toBe(Math.round(boss.maxHp / 4));
+    expect(trainer.attack).toBe(boss.attack);
+    expect(trainer.defense).toBe(boss.defense);
   });
 
   it('adds the v3 pathogen sheet fields to every representative pathogen', () => {
@@ -255,22 +337,28 @@ describe('Pathimon data', () => {
 
   it('covers every ability and move id from the domain types', () => {
     expect(Object.keys(ABILITIES).sort()).toEqual([
+      'acid_tolerance',
       'acidfast',
       'antigen_disguise',
       'antigen_var',
       'antitoxin',
+      'autoinfection',
       'barrier',
       'biofilm',
       'capsule',
       'catalase',
       'comp_evade',
       'comp_patrol',
+      'cyst',
+      'environmental_resistance',
       'epithelial_barrier',
       'gastric_acid',
       'immune_cell_kill',
       'immune_regulation',
       'iron_limitation',
+      'iron_piracy',
       'large_resistance',
+      'larval_migration',
       'latency',
       'lysozyme',
       'mask',
@@ -283,6 +371,7 @@ describe('Pathimon data', () => {
       'proteinA',
       'receptor_defect',
       'spore',
+      'tissue_migration',
     ]);
 
     const requiredMoveIds = [
@@ -338,6 +427,7 @@ describe('Pathimon data', () => {
   });
 
   it('includes the required effectiveness core rows', () => {
+    // 이 표는 **패시몬 → 적** 방향에만 쓴다. 반대 방향은 노트 태그 적중으로 ×4·×2·×1만 정한다(bossMatchup.ts).
     expect(Object.keys(EFFECTIVENESS).sort()).toEqual([
       'antibody',
       'complement',
@@ -355,6 +445,24 @@ describe('Pathimon data', () => {
       'th2',
       'toxin',
     ]);
+  });
+
+  it('keeps pathimon evasion traits out of the matchup table', () => {
+    // 방어 특성은 학습 텍스트 전용이다. 상성표에 들어가면 적 공격에 반감·무효가 생겨 설계와 어긋난다.
+    const evasionOnlyAbilities = [
+      'cyst',
+      'larval_migration',
+      'tissue_migration',
+      'autoinfection',
+      'acid_tolerance',
+      'environmental_resistance',
+      'iron_piracy',
+    ] as const;
+
+    for (const ability of evasionOnlyAbilities) {
+      const rows = Object.entries(EFFECTIVENESS).filter(([, row]) => row?.[ability] !== undefined);
+      expect(rows.map(([type]) => type), `${ability} must stay out of EFFECTIVENESS`).toEqual([]);
+    }
   });
 
   it('references only defined abilities and moves', () => {
@@ -399,7 +507,10 @@ describe('Pathimon data', () => {
     expect(MOVES.capsule_formation.effects).toEqual([{ kind: 'invuln', turns: 3, target: 'self' }]);
     expect(MOVES.capsule_formation.symptom).toBeUndefined();
     expect(MOVES.cereus_emetic_toxin.effects).toEqual([{ kind: 'condition', condition: 'vomiting', chance: 1, target: 'enemy' }]);
-    expect(MOVES.cereus_diarrheal_toxin.effects).toEqual([{ kind: 'condition', condition: 'excretory_dysfunction', chance: 1, target: 'enemy' }]);
+    expect(MOVES.cereus_diarrheal_toxin.effects).toEqual([
+      { kind: 'condition', condition: 'excretory_dysfunction', chance: 1, target: 'enemy' },
+      { kind: 'condition', condition: 'dehydration', chance: 1, target: 'enemy' },
+    ]);
     expect(MOVES.cereus_endophthalmitis.effects).toEqual([
       { kind: 'condition', condition: 'blindness', chance: 1, target: 'enemy', stacks: 2 },
     ]);

@@ -520,23 +520,6 @@
                                           }
                        },
                        {
-                           "number":  31,
-                           "file":  "virus/HIV.md",
-                           "scientific":  "인간면역결핍바이러스(HIV, Human immunodeficiency virus)",
-                           "choiceNumber":  1,
-                           "choiceLetter":  "a",
-                           "selectedName":  "레트로잠",
-                           "candidates":  {
-                                              "a":  "레트로잠",
-                                              "b":  "씨디포식",
-                                              "c":  "면역도둑",
-                                              "d":  "에이치잠",
-                                              "e":  "씨디도둑",
-                                              "f":  "면역슬쩍",
-                                              "g":  "씨디뺏쥐"
-                                          }
-                       },
-                       {
                            "number":  32,
                            "file":  "nematode/Ascaris lumbricoides.md",
                            "scientific":  "회충(Ascaris lumbricoides)",
@@ -962,40 +945,6 @@
                                           }
                        },
                        {
-                           "number":  57,
-                           "file":  "bacteria/Ureaplasma urealyticum.md",
-                           "scientific":  "유레아플라스마 유레아리티쿰(Ureaplasma urealyticum)",
-                           "choiceNumber":  1,
-                           "choiceLetter":  "a",
-                           "selectedName":  "유레아플라",
-                           "candidates":  {
-                                              "a":  "유레아플라",
-                                              "b":  "요소플라",
-                                              "c":  "요도리아",
-                                              "d":  "유레아요도",
-                                              "e":  "요소라마",
-                                              "f":  "요소톡톡",
-                                              "g":  "유레플룽"
-                                          }
-                       },
-                       {
-                           "number":  58,
-                           "file":  "bacteria/Gardnerella vaginalis.md",
-                           "scientific":  "가드네렐라균(Gardnerella vaginalis)",
-                           "choiceNumber":  1,
-                           "choiceLetter":  "a",
-                           "selectedName":  "가드네라",
-                           "candidates":  {
-                                              "a":  "가드네라",
-                                              "b":  "단서가드",
-                                              "c":  "질균가든",
-                                              "d":  "가드질정",
-                                              "e":  "클루가드",
-                                              "f":  "가든단서",
-                                              "g":  "가드가든"
-                                          }
-                       },
-                       {
                            "number":  59,
                            "file":  "bacteria/Nocardia spp.md",
                            "scientific":  "노카르디아속(Nocardia spp.)",
@@ -1010,6 +959,383 @@
                                               "e":  "노카가닥",
                                               "f":  "가지노카",
                                               "g":  "노카노카"
+                                          }
+                       },
+                       {
+                           "number":  60,
+                           "file":  "cestode/Cysticercus cellulosae.md",
+                           "scientific":  "유구낭미충(Cysticercus cellulosae)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "물혹돼지",
+                           "candidates":  {
+                                              "a":  "뇌낭충",
+                                              "b":  "물혹돼지",
+                                              "c":  "씨스티코",
+                                              "d":  "포도낭",
+                                              "e":  "잠복낭포",
+                                              "f":  "갈고리낭",
+                                              "g":  "파열낭충"
+                                          }
+                       },
+                       {
+                           "number":  61,
+                           "file":  "bacteria/Clostridium perfringens.md",
+                           "scientific":  "웰치균(Clostridium perfringens)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "가스괴저",
+                           "candidates":  {
+                                              "a":  "가스괴저",
+                                              "b":  "뽀글웰치",
+                                              "c":  "부글괴사",
+                                              "d":  "웰치가스",
+                                              "e":  "괴저뽀글"
+                                          }
+                       },
+                       {
+                           "number":  62,
+                           "file":  "bacteria/Bacteroides spp.md",
+                           "scientific":  "박테로이데스속(Bacteroides spp.)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "프라질장",
+                           "candidates":  {
+                                              "a":  "프라질장",
+                                              "b":  "배속무산",
+                                              "c":  "장터짐균",
+                                              "d":  "프라기스",
+                                              "e":  "속썩테로"
+                                          }
+                       },
+                       {
+                           "number":  63,
+                           "file":  "bacteria/Vibrio cholerae.md",
+                           "scientific":  "콜레라균(Vibrio cholerae)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "콜레라비",
+                           "candidates":  {
+                                              "a":  "쌀뜨물비",
+                                              "b":  "콜레라비",
+                                              "c":  "콜레톡스",
+                                              "d":  "쌀물콜레",
+                                              "e":  "비브콜레"
+                                          }
+                       },
+                       {
+                           "number":  64,
+                           "file":  "bacteria/Vibrio parahaemolyticus.md",
+                           "scientific":  "장염비브리오균(Vibrio parahaemolyticus)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "파라비브",
+                           "candidates":  {
+                                              "a":  "해산장염",
+                                              "b":  "파라비브",
+                                              "c":  "회장염비",
+                                              "d":  "파라해산",
+                                              "e":  "장염비브"
+                                          }
+                       },
+                       {
+                           "number":  65,
+                           "file":  "bacteria/Vibrio vulnificus.md",
+                           "scientific":  "패혈증비브리오균(Vibrio vulnificus)",
+                           "choiceNumber":  3,
+                           "choiceLetter":  "c",
+                           "selectedName":  "불니피쿠",
+                           "candidates":  {
+                                              "a":  "패혈비브",
+                                              "b":  "바다괴사",
+                                              "c":  "불니피쿠",
+                                              "d":  "해수괴사",
+                                              "e":  "간독비브"
+                                          }
+                       },
+                       {
+                           "number":  66,
+                           "file":  "bacteria/Rickettsia spp.md",
+                           "scientific":  "리케차속(Rickettsia spp.)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "진드케치",
+                           "candidates":  {
+                                              "a":  "진드케치",
+                                              "b":  "리케블러드",
+                                              "c":  "세포속케치",
+                                              "d":  "리케치진",
+                                              "e":  "혈관케치"
+                                          }
+                       },
+                       {
+                           "number":  67,
+                           "file":  "bacteria/Chlamydia trachomatis.md",
+                           "scientific":  "트라코마 클라미디아(Chlamydia trachomatis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "트라코마",
+                           "candidates":  {
+                                              "a":  "트라코마",
+                                              "b":  "눈봉입체",
+                                              "c":  "클라트라",
+                                              "d":  "봉입트라코",
+                                              "e":  "클라미눈"
+                                          }
+                       },
+                       {
+                           "number":  68,
+                           "file":  "bacteria/Chlamydia spp.md",
+                           "scientific":  "클라미디아속(Chlamydia spp.)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "클라미속",
+                           "candidates":  {
+                                              "a":  "클라미속",
+                                              "b":  "봉입클라",
+                                              "c":  "클라미다",
+                                              "d":  "세포속클라",
+                                              "e":  "클라미봉"
+                                          }
+                       },
+                       {
+                           "number":  69,
+                           "file":  "bacteria/Pseudomonas aeruginosa.md",
+                           "scientific":  "녹농균(Pseudomonas aeruginosa)",
+                           "choiceNumber":  5,
+                           "choiceLetter":  "e",
+                           "selectedName":  "녹슬농",
+                           "candidates":  {
+                                              "a":  "녹농슈도",
+                                              "b":  "초록고름",
+                                              "c":  "슈도녹농",
+                                              "d":  "물때슈도",
+                                              "e":  "녹슬농"
+                                          }
+                       },
+                       {
+                           "number":  70,
+                           "file":  "bacteria/Haemophilus influenzae.md",
+                           "scientific":  "헤모필루스 인플루엔자균(Haemophilus influenzae)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "헤모필루",
+                           "candidates":  {
+                                              "a":  "헤모필루",
+                                              "b":  "소구헤모",
+                                              "c":  "숨결헤모",
+                                              "d":  "헤모막대",
+                                              "e":  "협막헤모"
+                                          }
+                       },
+                       {
+                           "number":  71,
+                           "file":  "cestode/Taenia saginata.md",
+                           "scientific":  "무구조충(Taenia saginata)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "민머리소",
+                           "candidates":  {
+                                              "a":  "민머리소",
+                                              "b":  "무구리본",
+                                              "c":  "쇠고기충",
+                                              "d":  "민두절소",
+                                              "e":  "리본소"
+                                          }
+                       },
+                       {
+                           "number":  72,
+                           "file":  "cestode/Hymenolepis nana.md",
+                           "scientific":  "왜소조충(Hymenolepis nana)",
+                           "choiceNumber":  3,
+                           "choiceLetter":  "c",
+                           "selectedName":  "나나조충",
+                           "candidates":  {
+                                              "a":  "꼬마조충",
+                                              "b":  "왜소나나",
+                                              "c":  "나나조충",
+                                              "d":  "작은리본",
+                                              "e":  "나나루프"
+                                          }
+                       },
+                       {
+                           "number":  73,
+                           "file":  "cestode/Echinococcus granulosus.md",
+                           "scientific":  "단방조충(Echinococcus granulosus)",
+                           "choiceNumber":  4,
+                           "choiceLetter":  "d",
+                           "selectedName":  "딸낭조충",
+                           "candidates":  {
+                                              "a":  "포충물혹",
+                                              "b":  "물주머니",
+                                              "c":  "에키노낭",
+                                              "d":  "딸낭조충",
+                                              "e":  "포충낭"
+                                          }
+                       },
+                       {
+                           "number":  74,
+                           "file":  "cestode/Diphyllobothrium latum.md",
+                           "scientific":  "광절열두조충(Diphyllobothrium latum)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "광절리본",
+                           "candidates":  {
+                                              "a":  "광절리본",
+                                              "b":  "긴마디충",
+                                              "c":  "물고기촌",
+                                              "d":  "열두조충",
+                                              "e":  "B12도둑"
+                                          }
+                       },
+                       {
+                           "number":  75,
+                           "file":  "nematode/Gnathostoma spp.md",
+                           "scientific":  "악구충속(Gnathostoma spp.)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "가시악구",
+                           "candidates":  {
+                                              "a":  "가시악구",
+                                              "b":  "유극악구",
+                                              "c":  "뾰족머리",
+                                              "d":  "악구가시",
+                                              "e":  "헤맴가시"
+                                          }
+                       },
+                       {
+                           "number":  76,
+                           "file":  "trematode/Metagonimus.md",
+                           "scientific":  "요코가와흡충(Metagonimus yokogawai)",
+                           "choiceNumber":  2,
+                           "choiceLetter":  "b",
+                           "selectedName":  "은어흡충",
+                           "candidates":  {
+                                              "a":  "요코가와",
+                                              "b":  "은어흡충",
+                                              "c":  "꼬마장흡",
+                                              "d":  "메타흡",
+                                              "e":  "작은장흡"
+                                          }
+                       },
+                       {
+                           "number":  77,
+                           "file":  "nematode/Ancylostoma braziliense.md",
+                           "scientific":  "브라질구충(Ancylostoma braziliense)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "기어가기",
+                           "candidates":  {
+                                              "a":  "기어가기",
+                                              "b":  "표피여행",
+                                              "c":  "개구충길",
+                                              "d":  "뱀길구충",
+                                              "e":  "피부헤맴"
+                                          }
+                       },
+                       {
+                           "number":  78,
+                           "file":  "protozoa/Giardia lamblia.md",
+                           "scientific":  "람블편모충(Giardia lamblia)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "장도리충",
+                           "candidates":  {
+                                              "a":  "장도리충",
+                                              "b":  "람블편모",
+                                              "c":  "흡반편모",
+                                              "d":  "기름똥충",
+                                              "e":  "네핵포낭"
+                                          }
+                       },
+                       {
+                           "number":  79,
+                           "file":  "protozoa/Trichomonas vaginalis.md",
+                           "scientific":  "질편모충(Trichomonas vaginalis)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "딸기질",
+                           "candidates":  {
+                                              "a":  "딸기질",
+                                              "b":  "파동막충",
+                                              "c":  "트리코질",
+                                              "d":  "거품편모",
+                                              "e":  "질편모"
+                                          }
+                       },
+                       {
+                           "number":  80,
+                           "file":  "virus/HSV-1.md",
+                           "scientific":  "단순포진바이러스 1형(Herpes simplex virus 1, HSV-1)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "헤르페원",
+                           "candidates":  {
+                                              "a":  "헤르페원",
+                                              "b":  "삼차잠복",
+                                              "c":  "입술헤르",
+                                              "d":  "신경절잠",
+                                              "e":  "입가불씨"
+                                          }
+                       },
+                       {
+                           "number":  81,
+                           "file":  "virus/HSV-2.md",
+                           "scientific":  "단순포진바이러스 2형(Herpes simplex virus 2, HSV-2)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "헤르페투",
+                           "candidates":  {
+                                              "a":  "헤르페투",
+                                              "b":  "천골잠복",
+                                              "c":  "성기헤르",
+                                              "d":  "신생아헤르",
+                                              "e":  "아랫잠복"
+                                          }
+                       },
+                       {
+                           "number":  82,
+                           "file":  "virus/VZV.md",
+                           "scientific":  "수두대상포진바이러스(Varicella-zoster virus, VZV)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "띠포진",
+                           "candidates":  {
+                                              "a":  "띠포진",
+                                              "b":  "후근잠복",
+                                              "c":  "수두대상",
+                                              "d":  "물집띠",
+                                              "e":  "대상포진"
+                                          }
+                       },
+                       {
+                           "number":  83,
+                           "file":  "virus/EBV.md",
+                           "scientific":  "엡스타인-바 바이러스(Epstein-Barr virus, EBV)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "엡스타인",
+                           "candidates":  {
+                                              "a":  "엡스타인",
+                                              "b":  "단핵구증",
+                                              "c":  "키스병",
+                                              "d":  "B세포엡",
+                                              "e":  "목림프엡"
+                                          }
+                       },
+                       {
+                           "number":  84,
+                           "file":  "virus/HCMV.md",
+                           "scientific":  "인간거대세포바이러스(Human cytomegalovirus, HCMV)",
+                           "choiceNumber":  1,
+                           "choiceLetter":  "a",
+                           "selectedName":  "선천빅",
+                           "candidates":  {
+                                              "a":  "선천빅",
+                                              "b":  "선천거대",
+                                              "c":  "거대세포",
+                                              "d":  "태아침입",
+                                              "e":  "시엠브이"
                                           }
                        }
                    ]

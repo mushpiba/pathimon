@@ -19,6 +19,7 @@ export const STATUS_CONDITION_IDS: StatusConditionId[] = [
   'neurologic',
   'paralysis',
   'bleeding',
+  'anemia',
   'immune_abnormal',
   'necrosis',
   'blindness',
@@ -28,26 +29,28 @@ export const STATUS_CONDITION_IDS: StatusConditionId[] = [
   'jaundice',
 ];
 
+// 효과는 claudecode/VOCAB.md §3과 1:1로 맞춘다. 계열은 도트 / 능력치 / 명중 / 행동 / 회복 / 메타 여섯이다.
 export const STATUS_CONDITIONS: Record<StatusConditionId, StatusConditionData> = {
   fever: { id: 'fever', label: '발열', effect: '매 턴 최대 체력 2% 피해' },
-  dehydration: { id: 'dehydration', label: '탈수', effect: '받는 직접 피해 10% 증가' },
-  fatigue: { id: 'fatigue', label: '피로', effect: '공격력 10% 감소' },
-  vomiting: { id: 'vomiting', label: '구토', effect: '체력 회복량 10% 감소' },
-  excretory_dysfunction: { id: 'excretory_dysfunction', label: '배설 이상', effect: '턴 종료 시 20% 확률로 탈수 1스택 추가' },
-  cough: { id: 'cough', label: '기침', effect: '보스가 공격할 때마다 현재 체력 2% 피해' },
-  blood_pressure: { id: 'blood_pressure', label: '혈압 이상', effect: '상태이상으로 받는 피해 10% 증가' },
-  dyspnea: { id: 'dyspnea', label: '호흡 곤란', effect: '즉사 확률 1% 증가' },
+  dehydration: { id: 'dehydration', label: '탈수', effect: '체력 회복량 12.5% 감소' },
+  fatigue: { id: 'fatigue', label: '피로', effect: '공격력 5% 감소' },
+  vomiting: { id: 'vomiting', label: '구토', effect: '행동 실패 확률 4% 증가' },
+  excretory_dysfunction: { id: 'excretory_dysfunction', label: '배설 이상', effect: '매 턴 최대 체력 1% 피해, 턴 종료 시 20% 확률로 탈수 1스택 추가' },
+  cough: { id: 'cough', label: '기침', effect: '공격할 때마다 현재 체력 2% 피해' },
+  blood_pressure: { id: 'blood_pressure', label: '혈압 이상', effect: '방어력 7.5% 감소, 상태이상으로 받는 피해 5% 증가' },
+  dyspnea: { id: 'dyspnea', label: '호흡 곤란', effect: '받는 직접 피해 5% 증가, 즉사 확률 0.5% 증가' },
   edema: { id: 'edema', label: '부종', effect: '모든 상태이상의 확률 1%p 증가' },
-  neurologic: { id: 'neurologic', label: '신경 이상', effect: '혼란 확률 10%p 증가' },
-  paralysis: { id: 'paralysis', label: '마비', effect: '마비 확률 5%p 증가' },
+  neurologic: { id: 'neurologic', label: '신경 이상', effect: '혼란 확률 5%p 증가' },
+  paralysis: { id: 'paralysis', label: '마비', effect: '행동 불가 확률 5% 증가' },
   bleeding: { id: 'bleeding', label: '출혈', effect: '매 턴 현재 체력 2% 피해' },
-  immune_abnormal: { id: 'immune_abnormal', label: '면역 이상', effect: '2스택마다 방어 특성 1개 무력화' },
-  necrosis: { id: 'necrosis', label: '괴사', effect: '최대 체력 상한 5% 감소' },
-  blindness: { id: 'blindness', label: '시력 이상', effect: '명중률 25% 감소' },
-  hearing_abnormal: { id: 'hearing_abnormal', label: '청력 이상', effect: '명중률 25% 감소' },
-  pain: { id: 'pain', label: '통증', effect: '매 턴 최대 체력 2% 피해' },
-  itching: { id: 'itching', label: '가려움', effect: '마비 확률 2%p 증가' },
-  jaundice: { id: 'jaundice', label: '황달', effect: '받는 직접 피해 5% 증가' },
+  anemia: { id: 'anemia', label: '빈혈', effect: '매 턴 최대 체력 1% 피해' },
+  immune_abnormal: { id: 'immune_abnormal', label: '면역 이상', effect: '4스택마다 방어 특성 1개 무력화' },
+  necrosis: { id: 'necrosis', label: '괴사', effect: '최대 체력 상한 2.5% 감소' },
+  blindness: { id: 'blindness', label: '시력 이상', effect: '명중률 12.5% 감소' },
+  hearing_abnormal: { id: 'hearing_abnormal', label: '청력 이상', effect: '명중률 7.5% 감소' },
+  pain: { id: 'pain', label: '통증', effect: '방어력 5% 감소' },
+  itching: { id: 'itching', label: '가려움', effect: '행동 실패 확률 2.5% 증가' },
+  jaundice: { id: 'jaundice', label: '황달', effect: '체력 회복량 7.5% 감소' },
 };
 
 function clampChance(chance: number): number {
@@ -88,7 +91,7 @@ export function statusConditionLabels(monster: RuntimeMonster): string[] {
 
 export function effectiveMaxHp(monster: RuntimeMonster): number {
   const necrosisStacks = statusConditionStacks(monster, 'necrosis');
-  return Math.max(1, Math.floor(monster.maxHp * Math.max(0.01, 1 - necrosisStacks * 0.05)));
+  return Math.max(1, Math.floor(monster.maxHp * Math.max(0.01, 1 - necrosisStacks * 0.025)));
 }
 
 export function clampHpToEffectiveMax(monster: RuntimeMonster): void {
@@ -96,26 +99,60 @@ export function clampHpToEffectiveMax(monster: RuntimeMonster): void {
   monster.fainted = monster.hp <= 0;
 }
 
+// 저산소는 예비력을 없애 같은 공격도 더 아프게 만든다.
 export function directDamageMultiplier(monster: RuntimeMonster): number {
-  return 1 + statusConditionStacks(monster, 'dehydration') * 0.1 + statusConditionStacks(monster, 'jaundice') * 0.05;
+  return 1 + statusConditionStacks(monster, 'dyspnea') * 0.05;
 }
 
 export function statusDamageMultiplier(monster: RuntimeMonster): number {
-  return 1 + statusConditionStacks(monster, 'blood_pressure') * 0.1;
+  return 1 + statusConditionStacks(monster, 'blood_pressure') * 0.05;
 }
 
 export function attackStatMultiplier(monster: RuntimeMonster): number {
-  return Math.max(0.1, 1 - statusConditionStacks(monster, 'fatigue') * 0.1);
+  return Math.max(0.1, 1 - statusConditionStacks(monster, 'fatigue') * 0.05);
+}
+
+// 통증은 버티지 못하게 하고, 혈압 이상(쇼크)은 관류를 떨어뜨려 더 크게 깎는다.
+export function defenseStatMultiplier(monster: RuntimeMonster): number {
+  return Math.max(
+    0.1,
+    1 - statusConditionStacks(monster, 'pain') * 0.05 - statusConditionStacks(monster, 'blood_pressure') * 0.075,
+  );
 }
 
 export function healingMultiplier(monster: RuntimeMonster): number {
-  return Math.max(0, 1 - statusConditionStacks(monster, 'vomiting') * 0.1);
+  return Math.max(
+    0,
+    1 - statusConditionStacks(monster, 'dehydration') * 0.125 - statusConditionStacks(monster, 'jaundice') * 0.075,
+  );
+}
+
+// 마비는 행동 불가, 구토와 가려움은 행동 실패다. 셋 다 그 턴을 통째로 날린다.
+export function actionFailureChance(monster: RuntimeMonster): number {
+  return clampChance(
+    statusConditionStacks(monster, 'paralysis') * 0.05
+    + statusConditionStacks(monster, 'vomiting') * 0.04
+    + statusConditionStacks(monster, 'itching') * 0.025,
+  );
+}
+
+export function actionFailureLabel(monster: RuntimeMonster): string {
+  if (statusConditionStacks(monster, 'paralysis') > 0) return '마비';
+  if (statusConditionStacks(monster, 'vomiting') > 0) return '구토';
+  return '가려움';
+}
+
+// 시력 상실이 청력 상실보다 명중에 더 치명적이다.
+export function accuracyMultiplier(monster: RuntimeMonster): number {
+  return Math.max(
+    0,
+    1 - statusConditionStacks(monster, 'blindness') * 0.125 - statusConditionStacks(monster, 'hearing_abnormal') * 0.075,
+  );
 }
 
 export function statusChanceBonus(monster: RuntimeMonster, status?: 'confusion' | 'stun'): number {
   let bonus = statusConditionStacks(monster, 'edema') * 0.01;
-  if (status === 'confusion') bonus += statusConditionStacks(monster, 'neurologic') * 0.1;
-  if (status === 'stun') bonus += statusConditionStacks(monster, 'paralysis') * 0.05 + statusConditionStacks(monster, 'itching') * 0.02;
+  if (status === 'confusion') bonus += statusConditionStacks(monster, 'neurologic') * 0.05;
   return bonus;
 }
 

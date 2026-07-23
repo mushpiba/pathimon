@@ -67,7 +67,6 @@ const NOTE_OPTION_OVERRIDES: Record<number, NoteBuildSpec> = {
   8: { id: 'staph', glyph: 'STA' },
   9: { id: 'strep', glyph: 'STR' },
   30: { id: 'tb', glyph: 'TB' },
-  31: { id: 'hiv', glyph: 'HIV' },
   32: { id: 'ascaris', glyph: 'ASC' },
   52: { id: 'schistosoma', glyph: 'SCH' },
 };
@@ -150,6 +149,13 @@ function startsFromEgg(noteText: string): boolean {
   return /pathway:\s*.*충란|이름:\s*(?:접촉\s*)?충란|이름:\s*.*충란 섭취/.test(noteText);
 }
 
+// v2 노트는 `진화:` 절 첫 줄에 STATS.md §7의 진화 패턴을 적는다.
+// 패턴 B(유충 정점)는 "사람 안에서 성충이 되지 못한다"는 뜻이라 자동 성충 단계를 만들면 노트와 정면으로 어긋난다.
+// v1 노트에는 이 줄이 없어 undefined로 떨어지고, 그 경우 기존 동작(무조건 성충 생성)을 유지한다.
+function evolutionPattern(noteText: string): string | undefined {
+  return noteText.match(/^-\s*패턴:\s*([A-D])\b/m)?.[1];
+}
+
 function stageLabel(stage: ParasiteStage): string {
   if (stage === 'egg') return '충란';
   if (stage === 'larva') return '유충';
@@ -189,19 +195,32 @@ function createParasiteEvolutionMonsters(entry: BuiltNoteEntry): MonsterData[] {
   const base = entry.built.monster;
   if (!isParasiteCategory(base.category)) return [];
 
+  const pattern = evolutionPattern(entry.noteText);
+
+  // 패턴 C(분기 진화)는 갈라진 양쪽이 각각 독립 패시몬이고 둘 다 종점이다.
+  // `리본돼지`는 장 성충, `물혹돼지`는 낭미충이라 자동 단계를 붙이면 서로의 자리를 침범한다.
+  if (pattern === 'C') return [];
+
+  const larvaPeak = pattern === 'B';
+
   if (startsFromEgg(entry.noteText)) {
     const larvaId = `${base.id}_larva`;
     const adultId = `${base.id}_adult`;
     base.name = stageName(base.name, 'egg');
     base.evolvesTo = larvaId;
+
+    if (larvaPeak) return [createStageMonster(base, 'larva', larvaId, 1.15)];
+
     return [
       createStageMonster(base, 'larva', larvaId, 1.15, adultId),
       createStageMonster(base, 'adult', adultId, 1.35),
     ];
   }
 
-  const adultId = `${base.id}_adult`;
   base.name = stageName(base.name, 'larva');
+  if (larvaPeak) return [];
+
+  const adultId = `${base.id}_adult`;
   base.evolvesTo = adultId;
   return [createStageMonster(base, 'adult', adultId, 1.28)];
 }

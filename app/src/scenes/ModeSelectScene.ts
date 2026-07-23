@@ -37,10 +37,10 @@ export class ModeSelectScene extends Phaser.Scene {
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, COLORS.ink).setOrigin(0);
     drawPanel(this, 104, 62, 816, 462);
     addLabel(this, 150, 96, '모드 선택', 34);
-    addLabel(this, 152, 138, '진행 방식과 표현 방식을 선택합니다.', 20).setAlpha(0.9);
+    addLabel(this, 152, 138, '진행 방식과 디자인을 선택합니다.', 20).setAlpha(0.9);
 
     addLabel(this, 154, 208, '진행 방식', 15).setAlpha(0.75);
-    addLabel(this, 154, 362, '표현 방식', 15).setAlpha(0.75);
+    addLabel(this, 154, 362, '디자인', 15).setAlpha(0.75);
 
     modeSelectButtonOptions().forEach((option, index) => {
       const column = index % 2;

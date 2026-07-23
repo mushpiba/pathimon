@@ -104,6 +104,38 @@ const KIND_BY_NOTE_VALUE: Record<string, MoveData['kind']> = {
 };
 
 const TAG_BY_NOTE_VALUE: Record<string, TagValue> = {
+  // ── VOCAB.md §2 정식 값 ──────────────────────────────────────
+  // 정본에 있는 값은 전부 여기서 받아야 한다. 매핑이 없으면 firstMappedTag가 조용히 건너뛴다.
+  // (그래서 페스트의 `매개곤충`, 결핵의 `폐`, CRE의 `의료관련`이 유실되고 있었다)
+  // TagValue에 대응이 없는 값(나선균·담관·뇌·눈·근육·림프계·간·피하)은 일부러 비워 둔다 —
+  // 그래야 다음 토큰으로 넘어가고, 억지 매핑으로 상성이 틀어지지 않는다.
+  세포벽없음: 'none',
+  외피없음: 'none',
+  DNA바이러스: 'none',
+  RNA바이러스: 'none',
+  성충: 'large',
+  충란: 'large',
+  효모형: 'fungal',
+  균사형: 'fungal_hypha',
+  이형성: 'fungal_dimorphic',
+  // 54강(원충 총론) 반영. `protozoa`는 TagValue·캡슐·라벨에 이미 있었는데 노트 어휘만 비어 있었다.
+  원충: 'protozoa',
+  편모충: 'protozoa',
+  섬모충: 'protozoa',
+  포자충: 'protozoa',
+  영양형: 'protozoa',
+  포낭형: 'protozoa',
+  세포내외겸용: 'intracellular',
+  점막표면: 'mucosal',
+  폐: 'respiratory',
+  피부접촉: 'contact',
+  매개곤충: 'blood',
+  토양접촉: 'transcutaneous',
+  육류섭취: 'gut',
+  채소섭취: 'gut',
+  분변경구: 'gut',
+  의료관련: 'contact',
+  // ── v1 노트 표기 ─────────────────────────────────────────────
   그람양성: 'gram_positive',
   그람음성: 'gram_negative',
   그람음성쌍알균: 'gram_negative',
@@ -206,6 +238,7 @@ const TAG_BY_NOTE_VALUE: Record<string, TagValue> = {
   가재섭취: 'gut',
   민물고기: 'gut',
   민물고기생식: 'gut',
+  갑각류생식: 'gut',
   민물고기섭취: 'gut',
   어류: 'gut',
   어류섭취: 'gut',
@@ -283,6 +316,30 @@ const ABILITY_BY_NOTE_VALUE: Record<string, AbilityId> = {
   항원위장: 'antigen_disguise',
 };
 
+// VOCAB.md §2-3 evasion 정식 값 → AbilityId. v2 노트의 `태그.evasion`이 여기를 탄다.
+// 구 `방어특성` 표기는 위 ABILITY_BY_NOTE_VALUE가 계속 받는다(§2-5 정규화 전 노트 호환).
+const ABILITY_BY_EVASION_VALUE: Record<string, AbilityId> = {
+  협막: 'capsule',
+  아포: 'spore',
+  세포벽없음: 'barrier',
+  항산성: 'acidfast',
+  세포내은신: 'phagolysosome_block',
+  잠복: 'latency',
+  항원변이: 'antigen_var',
+  생물막: 'biofilm',
+  낭종: 'cyst',
+  유충이행: 'larval_migration',
+  조직이행: 'tissue_migration',
+  항원위장: 'antigen_disguise',
+  자가감염: 'autoinfection',
+  내성효소: 'antitoxin',
+  보체회피: 'comp_evade',
+  위산저항: 'acid_tolerance',
+  환경저항: 'environmental_resistance',
+  철획득: 'iron_piracy',
+  없음: 'none',
+};
+
 const CONDITION_BY_NOTE_VALUE: Record<string, StatusConditionId> = {
   발열: 'fever',
   열: 'fever',
@@ -302,6 +359,10 @@ const CONDITION_BY_NOTE_VALUE: Record<string, StatusConditionId> = {
   '신경 이상': 'neurologic',
   마비: 'paralysis',
   출혈: 'bleeding',
+  빈혈: 'anemia',
+  철결핍: 'anemia',
+  '철결핍성 빈혈': 'anemia',
+  철결핍성빈혈: 'anemia',
   '면역 이상': 'immune_abnormal',
   '면역 붕괴': 'immune_abnormal',
   '호산구 증가': 'immune_abnormal',
@@ -359,9 +420,10 @@ function parseScientificName(value: string): { koreanScientificName: string; sci
   };
 }
 
+// v1은 `structure: 선충/유충`처럼 슬래시로, v2(TEMPLATE-v2)는 `structure: 그람양성, 아포형성`처럼 쉼표로 나눈다.
 function firstMappedTag(value: string): TagValue | undefined {
   return value
-    .split('/')
+    .split(/[,/]/)
     .map((token) => TAG_BY_NOTE_VALUE[token.trim()])
     .find(Boolean);
 }
@@ -379,13 +441,20 @@ function parseTags(lines: string[]): ParsedPathimonNote['tags'] {
   };
 }
 
-function parseDefenseAbilities(value: string): AbilityId[] {
-  const abilities = value
+function mapAbilityTokens(value: string, table: Record<string, AbilityId>): AbilityId[] {
+  return value
     .split(/[,\s/]+/)
-    .map((token) => ABILITY_BY_NOTE_VALUE[token.trim()])
+    .map((token) => table[token.trim()])
     .filter((ability): ability is AbilityId => Boolean(ability) && ability !== 'none');
+}
 
-  return abilities.length > 0 ? abilities : ['none'];
+// v2 `태그.evasion`을 우선하고, 없으면 v1 `방어특성:`으로 되돌아간다.
+function parseDefenseAbilities(evasionValue: string, legacyValue: string): AbilityId[] {
+  const fromEvasion = mapAbilityTokens(evasionValue, ABILITY_BY_EVASION_VALUE);
+  if (fromEvasion.length > 0) return fromEvasion;
+
+  const fromLegacy = mapAbilityTokens(legacyValue, ABILITY_BY_NOTE_VALUE);
+  return fromLegacy.length > 0 ? fromLegacy : ['none'];
 }
 
 function parseMemoLines(lines: string[]): string[] {
@@ -394,6 +463,12 @@ function parseMemoLines(lines: string[]): string[] {
     .filter((line) => line.startsWith('- '))
     .map((line) => line.slice(2).trim())
     .filter((line) => line.length > 0);
+}
+
+// v2는 `메모:`를 폐기하고 `학습포인트:`로 대체했다(TEMPLATE-v2). 둘 다 같은 패널에 실린다.
+function parseNoteMemo(lines: string[]): string[] {
+  const learningPoints = parseMemoLines(sectionLines(lines, '학습포인트'));
+  return learningPoints.length > 0 ? learningPoints : parseMemoLines(sectionLines(lines, '메모'));
 }
 
 function normalizeTerm(term: string): string {
@@ -434,8 +509,29 @@ function countermeasureField(lines: string[], key: string): string {
   return '';
 }
 
+// v2 대처법은 `- 1차: 시프로플록사신 | 계열: 핵산합성억제 | 기전: … | 표적 태그: …` 구조다(TEMPLATE-v2).
+// 보스 상성은 약제명 문자열로 판정하므로(battle/bossMatchup.ts) 첫 칸의 약제명만 direct로 모은다.
+// `무효/금기:` 줄은 안 통하는 약이므로 제외한다.
+const V2_COUNTERMEASURE_KEYS = ['1차', '2차', '보조'];
+
+function parseV2Countermeasures(lines: string[]): string[] {
+  const drugs: string[] = [];
+
+  for (const line of lines) {
+    const normalized = line.trimStart().replace(/^-\s*/, '');
+    const key = V2_COUNTERMEASURE_KEYS.find((candidate) => normalized.startsWith(`${candidate}:`));
+    if (!key) continue;
+
+    const value = normalized.slice(key.length + 1).split('|')[0];
+    drugs.push(...splitCountermeasureList(value).filter((drug) => drug !== '—' && drug !== '없음'));
+  }
+
+  return uniqueTerms(drugs);
+}
+
 function parseCountermeasures(lines: string[], moves: NoteMove[]): CountermeasureProfile {
-  const direct = splitCountermeasureList(countermeasureField(lines, '직접'));
+  const v2Direct = parseV2Countermeasures(lines);
+  const direct = v2Direct.length > 0 ? v2Direct : splitCountermeasureList(countermeasureField(lines, '직접'));
   const manualSymptomTags = splitCountermeasureList(countermeasureField(lines, '증상/태그'));
   const moveSymptoms = moves.flatMap((move) => move.results.flatMap((result) => expandSymptomTerm(result.symptom ?? '')));
 
@@ -481,14 +577,20 @@ function parseMoveBlocks(lines: string[]): string[][] {
   return blocks;
 }
 
+// TEMPLATE-v2는 빈 필드를 금지하고 해당 없음을 `—`로 적게 한다. 파서에서는 빈 값과 동일하게 다룬다.
+// (정규화하지 않으면 `단계: —`가 다단계 기술 표식으로 잡혀 v2 노트가 전부 가짜 stageCycle이 된다)
+function withoutPlaceholder(value: string): string {
+  return value === '—' || value === '-' ? '' : value;
+}
+
 function fieldFromBlock(block: string[], key: string): string {
   const match = block.find((line) => line.trimStart().startsWith(`${key}:`));
-  return match?.trimStart().slice(key.length + 1).trim() ?? '';
+  return withoutPlaceholder(match?.trimStart().slice(key.length + 1).trim() ?? '');
 }
 
 function topLevelFieldFromBlock(block: string[], key: string): string {
   const prefix = `  ${key}:`;
-  return block.find((line) => line.startsWith(prefix))?.slice(prefix.length).trim() ?? '';
+  return withoutPlaceholder(block.find((line) => line.startsWith(prefix))?.slice(prefix.length).trim() ?? '');
 }
 
 function parseResultBlocks(block: string[]): string[][] {
@@ -566,9 +668,12 @@ function parseNote(note: string, fallbackName?: string): ParsedPathimonNote {
   return {
     category: readField(lines, '타입'),
     countermeasures: parseCountermeasures(sectionLines(lines, '대처법'), moves),
-    defenseAbilities: parseDefenseAbilities(readField(lines, '방어특성')),
+    defenseAbilities: parseDefenseAbilities(
+      readListValue(sectionLines(lines, '태그'), 'evasion'),
+      readField(lines, '방어특성'),
+    ),
     koreanScientificName: scientific.koreanScientificName,
-    memo: parseMemoLines(sectionLines(lines, '메모')),
+    memo: parseNoteMemo(lines),
     moves,
     name: readField(lines, '이름') || fallbackName || scientific.koreanScientificName,
     scientificName: scientific.scientificName,
@@ -576,23 +681,30 @@ function parseNote(note: string, fallbackName?: string): ParsedPathimonNote {
   };
 }
 
+// VOCAB.md §4는 `공격 +n랭크` / `방어 -n랭크` 표기다. v1 노트는 `공격력 +1랭크`를 쓰므로 '력'을 선택적으로 받는다.
+// `명중 ±n랭크`는 EffectPrimitive의 buff.stat이 attack/defense뿐이라 아직 표현할 수 없다.
 function rankEffect(effect: string): EffectPrimitive | undefined {
-  const match = effect.match(/공격력\s*\+(\d+)랭크/);
+  const match = effect.match(/(공격|방어)력?\s*([+-])(\d+)\s*랭크/);
   if (!match) return undefined;
-  const rank = Number(match[1]);
+
+  const stat = match[1] === '공격' ? 'attack' : 'defense';
+  const sign = match[2] === '-' ? -1 : 1;
+  const rank = Number(match[3]);
+  const magnitude = (2 ** rank - 1) * 100;
 
   return {
     kind: 'buff',
-    stat: 'attack',
-    rank,
-    pct: (2 ** rank - 1) * 100,
+    stat,
+    rank: sign * rank,
+    pct: sign > 0 ? magnitude : -((1 - 2 ** -rank) * 100),
     turns: 99,
-    target: 'self',
+    target: sign > 0 ? 'self' : 'enemy',
   };
 }
 
+// VOCAB.md §4는 `무적(n)`. v1 노트는 `2턴 무적`으로 적어 구 정규식이 통째로 놓치고 있었다.
 function invulnerabilityEffect(effect: string): EffectPrimitive | undefined {
-  const match = effect.match(/무적\((\d+)\)/);
+  const match = effect.match(/무적\((\d+)\)/) ?? effect.match(/(\d+)\s*턴\s*무적/);
   if (!match) return undefined;
 
   return {
@@ -602,12 +714,38 @@ function invulnerabilityEffect(effect: string): EffectPrimitive | undefined {
   };
 }
 
+// VOCAB.md §4 `회복(n%)`
+function healEffect(effect: string): EffectPrimitive | undefined {
+  const match = effect.match(/회복\((\d+)%\)/);
+  if (!match) return undefined;
+
+  return { kind: 'heal', pct: Number(match[1]), target: 'self' };
+}
+
+// VOCAB.md §4 `반감(n)` — n턴간 받는 피해 절반
+function damageHalvingEffect(effect: string): EffectPrimitive | undefined {
+  const match = effect.match(/반감\((\d+)\)/);
+  if (!match) return undefined;
+
+  return { kind: 'field', side: 'incoming', factor: 0.5, turns: Number(match[1]), target: 'self' };
+}
+
+// VOCAB.md §4 `증식(n)` — 자가감염 표현(STATS.md §7 패턴 D).
+// 쓸 때마다 공격 랭크가 영구히 쌓여, 전투가 길어질수록 강해진다.
+// n턴 지연은 EffectPrimitive에 지연 발현 종류가 없어 아직 모델링하지 않는다.
+function proliferationEffect(effect: string): EffectPrimitive | undefined {
+  if (!/증식\(\d+\)/.test(effect)) return undefined;
+
+  return { kind: 'buff', stat: 'attack', rank: 1, pct: 100, turns: 99, target: 'self' };
+}
+
 function removeNonSignatureInvulnerabilityText(effect: string, kind?: MoveData['kind']): string {
   const trimmed = effect.trim();
   if (!trimmed || kind === 'signature') return trimmed;
 
   return trimmed
     .replace(/무적\(\d+\)/g, '')
+    .replace(/\d+\s*턴\s*무적/g, '')
     .replace(/\s*,\s*,\s*/g, ', ')
     .replace(/^\s*,\s*|\s*,\s*$/g, '')
     .trim();
@@ -643,6 +781,9 @@ function resultEffects(result: NoteMoveResult, kind?: MoveData['kind']): EffectP
   const effects = [
     rankEffect(result.effect),
     kind === 'signature' ? invulnerabilityEffect(result.effect) : undefined,
+    healEffect(result.effect),
+    damageHalvingEffect(result.effect),
+    proliferationEffect(result.effect),
     ...statusConditionEffects(result.statusConditions),
   ].filter((effect): effect is EffectPrimitive => Boolean(effect));
 
@@ -745,7 +886,8 @@ function buildScientificLabel(note: ParsedPathimonNote): string {
 }
 
 function readStat(noteValue: string, fallback: number): number {
-  const trimmed = noteValue.trim();
+  // v2는 `- 공격: 95   # 밴드: 5   근거: …` 처럼 판정 근거를 주석으로 남긴다(STATS.md §5).
+  const trimmed = noteValue.split('#')[0].trim();
   if (!trimmed) return fallback;
 
   const numeric = Number(trimmed);

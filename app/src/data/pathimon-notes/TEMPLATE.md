@@ -7,7 +7,7 @@
 - structure:
 - location:
 - pathway:
-방어특성:
+
 메모:
 - 
 - 

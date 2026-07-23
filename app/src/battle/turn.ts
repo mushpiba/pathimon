@@ -1,10 +1,16 @@
 import { tryCapture } from './capture';
-import { calculateDamage, randomDamageVariance, type DamageResult } from './damage';
+import { calculateDamage, randomDamageVariance, rollsCriticalHit, type DamageResult } from './damage';
 import { applyAttackTriggeredStatusDamage, applyEffects, tickEffects } from './effects';
 import { ABILITIES } from '../data/abilities';
 import { capsuleCanCatch, CAPSULE_LABELS, cloneCapsuleInventory, totalCapsules } from '../data/capsules';
 import { createMaintenanceInventory } from '../data/shop';
-import { clampHpToEffectiveMax, statusConditionStacks } from '../data/statusConditions';
+import {
+  accuracyMultiplier,
+  actionFailureChance,
+  actionFailureLabel,
+  clampHpToEffectiveMax,
+  statusConditionStacks,
+} from '../data/statusConditions';
 import { TAG_LABELS } from '../data/labels';
 import { MOVES } from '../data/moves';
 import { MONSTERS } from '../data/monsters';
@@ -21,6 +27,10 @@ interface EnemyTurnResult {
   hitEffectiveness?: HitEffectiveness;
   log: string;
 }
+
+type CriticalRandomSource = () => number;
+
+const noCriticalRandom: CriticalRandomSource = () => 1;
 
 function cloneMonster(monster: RuntimeMonster): RuntimeMonster {
   return {
@@ -188,6 +198,10 @@ function hitEffectivenessFromMultiplier(total: number, blockedByInvulnerability 
   return total > 1 ? 'super' : 'normal';
 }
 
+function criticalHitText(result: DamageResult): string {
+  return result.critical ? ' 급소에 맞았다!' : '';
+}
+
 function statusDamageLog(actor: RuntimeMonster, actorDamage: number, enemy: RuntimeMonster, enemyDamage: number): string {
   const damagedNames: string[] = [];
   if (enemyDamage > 0) damagedNames.push(enemy.name);
@@ -239,13 +253,14 @@ function sensoryMissLabel(actor: RuntimeMonster): string {
 }
 
 function missesFromSensoryAbnormality(actor: RuntimeMonster, roll = Math.random()): boolean {
-  const sensoryStacks = statusConditionStacks(actor, 'blindness') + statusConditionStacks(actor, 'hearing_abnormal');
-  if (sensoryStacks <= 0) {
-    return false;
-  }
+  const hitChance = accuracyMultiplier(actor);
+  return hitChance < 1 && roll >= hitChance;
+}
 
-  const hitChance = Math.max(0, 1 - sensoryStacks * 0.25);
-  return roll >= hitChance;
+// 마비·구토·가려움은 명중 판정 이전에 턴을 통째로 날린다.
+function failsToAct(actor: RuntimeMonster, roll = Math.random()): boolean {
+  const chance = actionFailureChance(actor);
+  return chance > 0 && roll < chance;
 }
 
 function isHumanEnemy(enemy: RuntimeMonster): boolean {
@@ -323,13 +338,23 @@ function clearPlannedHumanMoves(enemy: RuntimeMonster): void {
   enemy.plannedMoveIds = [];
 }
 
-function resolveHumanMove(actor: RuntimeMonster, enemy: RuntimeMonster, moveId: MoveId, variance: number): EnemyTurnResult {
+function resolveHumanMove(
+  actor: RuntimeMonster,
+  enemy: RuntimeMonster,
+  moveId: MoveId,
+  variance: number,
+  criticalRandom: CriticalRandomSource,
+): EnemyTurnResult {
   const enemyMove = MOVES[moveId];
   if (!enemyMove) {
     return { log: `${enemy.name} could not act.` };
   }
 
   const stagedMove = currentMoveData(enemyMove, enemy);
+  if (failsToAct(enemy)) {
+    return { log: `${enemy.name}은 ${actionFailureLabel(enemy)}으로 움직이지 못했다.` };
+  }
+
   if (missesFromSensoryAbnormality(enemy)) {
     advanceStagedMove(enemy, enemyMove);
     applyAttackTriggeredStatusDamage(enemy);
@@ -344,6 +369,7 @@ function resolveHumanMove(actor: RuntimeMonster, enemy: RuntimeMonster, moveId: 
     resolvedMove,
     variance,
     { total: effectiveness.multiplier, notes: effectiveness.matchedTags },
+    rollsCriticalHit(criticalRandom()),
   );
 
   markDamage(actor, enemyResult.damage);
@@ -360,7 +386,7 @@ function resolveHumanMove(actor: RuntimeMonster, enemy: RuntimeMonster, moveId: 
 
   return {
     hitEffectiveness: resolvedMove.power > 0 ? hitEffectivenessFromMultiplier(effectiveness.multiplier) : undefined,
-    log: `${enemy.name}의 ${resolvedMove.name}! ${formatMoveDescription(resolvedMove, enemy)}${label}`,
+    log: `${enemy.name}의 ${resolvedMove.name}! ${formatMoveDescription(resolvedMove, enemy)}${label}${criticalHitText(enemyResult)}`,
   };
 }
 
@@ -370,6 +396,7 @@ function resolveHumanTurn(
   variance: number,
   party: RuntimeMonster[] = [actor],
   activeIndex = 0,
+  criticalRandom: CriticalRandomSource = noCriticalRandom,
 ): EnemyTurnResult {
   const plannedMoveIds = planHumanMoves(enemy, actor, party, activeIndex);
   clearPlannedHumanMoves(enemy);
@@ -383,7 +410,7 @@ function resolveHumanTurn(
 
   for (const moveId of plannedMoveIds) {
     if (actor.hp <= 0) break;
-    const result = resolveHumanMove(actor, enemy, moveId, variance);
+    const result = resolveHumanMove(actor, enemy, moveId, variance, criticalRandom);
     logs.push(result.log);
     hitEffectiveness = result.hitEffectiveness ?? hitEffectiveness;
   }
@@ -396,6 +423,7 @@ function resolveEnemyTurn(
   variance: number,
   party: RuntimeMonster[] = [actor],
   activeIndex = 0,
+  criticalRandom: CriticalRandomSource = noCriticalRandom,
 ): EnemyTurnResult {
   if (enemy.stunned) {
     enemy.stunned = false;
@@ -403,7 +431,7 @@ function resolveEnemyTurn(
   }
 
   if (isHumanEnemy(enemy)) {
-    return resolveHumanTurn(actor, enemy, variance, party, activeIndex);
+    return resolveHumanTurn(actor, enemy, variance, party, activeIndex, criticalRandom);
   }
 
   const enemyMoveId = enemy.moveset[0];
@@ -413,6 +441,10 @@ function resolveEnemyTurn(
   }
 
   const stagedMove = currentMoveData(enemyMove, enemy);
+  if (failsToAct(enemy)) {
+    return { log: `${enemy.name}은 ${actionFailureLabel(enemy)}으로 움직이지 못했다.` };
+  }
+
   if (missesFromSensoryAbnormality(enemy)) {
     advanceStagedMove(enemy, enemyMove);
     applyAttackTriggeredStatusDamage(enemy);
@@ -420,7 +452,7 @@ function resolveEnemyTurn(
   }
 
   const resolvedMove = resolveMoveOutcome(stagedMove, Math.random());
-  const enemyResult = calculateDamage(enemy, actor, resolvedMove, variance);
+  const enemyResult = calculateDamage(enemy, actor, resolvedMove, variance, undefined, rollsCriticalHit(criticalRandom()));
   markDamage(actor, enemyResult.damage);
   applyEffects(enemy, actor, resolvedMove.effects);
   appendSymptom(actor, resolvedMove.symptom);
@@ -430,7 +462,7 @@ function resolveEnemyTurn(
     hitEffectiveness: resolvedMove.power > 0
       ? hitEffectivenessFromMultiplier(enemyResult.multiplier.total, enemyResult.blockedByInvulnerability)
       : undefined,
-    log: formatMoveDescription(resolvedMove, enemy),
+    log: `${formatMoveDescription(resolvedMove, enemy)}${criticalHitText(enemyResult)}`,
   };
 }
 
@@ -473,6 +505,7 @@ export function resolvePlayerMove(
   variance = randomDamageVariance(),
   outcomeRoll = Math.random(),
   hitRoll = Math.random(),
+  criticalRandom: CriticalRandomSource = noCriticalRandom,
 ): RunState {
   const nextState = cloneState(state);
   nextState.battleResultLog = undefined;
@@ -483,6 +516,14 @@ export function resolvePlayerMove(
   const move = MOVES[moveId];
 
   if (!actor || !enemy || !move) {
+    return nextState;
+  }
+
+  // 패시몬끼리는 싸우지 않는다. 야생 조우는 포획·통과 전용이고 전투는 보스·트레이너와만 성립한다.
+  // `battleActionOptions`(ui/battleUi.ts)가 야생에서 `싸운다`를 아예 내주지 않지만,
+  // 규칙이 UI에만 있으면 이 함수를 직접 부르는 쪽에서 깨진다. 여기서도 막는다.
+  if (nextState.encounterKind === 'wild') {
+    nextState.lastLog = '야생 패시몬과는 싸우지 않는다. 캡슐로 포획하거나 지나갈 수 있다.';
     return nextState;
   }
 
@@ -500,10 +541,22 @@ export function resolvePlayerMove(
   const stagedMove = currentMoveData(move, actor);
   const resolvedMove = resolveMoveOutcome(stagedMove, outcomeRoll);
   markSignatureMoveUsed(actor, moveId);
+  if (failsToAct(actor, hitRoll)) {
+    const enemyLog = resolveEnemyTurn(actor, enemy, variance, nextState.party, nextState.activeIndex, criticalRandom);
+    return finishBattleRound(
+      nextState,
+      actor,
+      enemy,
+      `${actor.name}은 ${actionFailureLabel(actor)}으로 움직이지 못했다.`,
+      enemyLog,
+      defaultLearningDetail(nextState),
+    );
+  }
+
   if (missesFromSensoryAbnormality(actor, hitRoll)) {
     advanceStagedMove(actor, move);
     applyAttackTriggeredStatusDamage(actor);
-    const enemyLog = resolveEnemyTurn(actor, enemy, variance, nextState.party, nextState.activeIndex);
+    const enemyLog = resolveEnemyTurn(actor, enemy, variance, nextState.party, nextState.activeIndex, criticalRandom);
     return finishBattleRound(
       nextState,
       actor,
@@ -514,7 +567,7 @@ export function resolvePlayerMove(
     );
   }
 
-  const result = calculateDamage(actor, enemy, resolvedMove, variance);
+  const result = calculateDamage(actor, enemy, resolvedMove, variance, undefined, rollsCriticalHit(criticalRandom()));
   nextState.lastPlayerHitEffectiveness = resolvedMove.power > 0
     ? hitEffectivenessFromMultiplier(result.multiplier.total, result.blockedByInvulnerability)
     : undefined;
@@ -529,8 +582,8 @@ export function resolvePlayerMove(
     return setWinState(nextState, defeatedOpponentMessage(enemy), learningDetail);
   }
 
-  const enemyLog = resolveEnemyTurn(actor, enemy, variance, nextState.party, nextState.activeIndex);
-  const actorLog = formatMoveDescription(resolvedMove, actor);
+  const enemyLog = resolveEnemyTurn(actor, enemy, variance, nextState.party, nextState.activeIndex, criticalRandom);
+  const actorLog = `${formatMoveDescription(resolvedMove, actor)}${criticalHitText(result)}`;
   return finishBattleRound(nextState, actor, enemy, actorLog, enemyLog, learningDetail);
 }
 
@@ -572,7 +625,12 @@ export function resolveForcedSwitchMonster(state: RunState, targetIndex: number)
   return nextState;
 }
 
-export function resolveSwitchMonster(state: RunState, targetIndex: number, variance = randomDamageVariance()): RunState {
+export function resolveSwitchMonster(
+  state: RunState,
+  targetIndex: number,
+  variance = randomDamageVariance(),
+  criticalRandom: CriticalRandomSource = noCriticalRandom,
+): RunState {
   const nextState = cloneState(state);
   const target = nextState.party[targetIndex];
   const enemy = nextState.enemy;
@@ -594,7 +652,7 @@ export function resolveSwitchMonster(state: RunState, targetIndex: number, varia
     if (currentActor) planHumanMoves(enemy, currentActor, state.party, state.activeIndex);
   }
 
-  const enemyLog = resolveEnemyTurn(target, enemy, variance, nextState.party, targetIndex);
+  const enemyLog = resolveEnemyTurn(target, enemy, variance, nextState.party, targetIndex, criticalRandom);
   return finishBattleRound(nextState, target, enemy, `${target.name} switched in.`, enemyLog, defaultLearningDetail(nextState));
 }
 

@@ -16,8 +16,13 @@ describe('mode select UI helpers', () => {
       '실사풍',
     ]);
     const copy = options.flatMap((option) => option.lines).join(' ');
+    expect(copy).toContain('자동 회복');
+    expect(copy).toContain('정비구역 등장');
+    expect(copy).toContain('회복 없음');
     expect(copy).not.toContain('전투 화면 가독성 우선');
     expect(copy).not.toContain('캐릭터화 최소화');
+    expect(copy).not.toContain('패시몬 몬스터풍');
+    expect(copy).not.toContain('현미경 표본에 가까움');
   });
 
   it('does not start until both a run mode and a visual style are selected', () => {
