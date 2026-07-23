@@ -401,6 +401,33 @@ describe('battle UI helpers', () => {
     ]);
   });
 
+  it('shows the completed round result without the next enemy intent while it is pending', () => {
+    const player = createMonster({ name: '디피실룩' });
+    const enemy = createMonster({ name: '현장 대응 요원 4', isTrainer: true, moveset: ['m_complement'] });
+
+    expect(commandViewLines(
+      player,
+      enemy,
+      'trainer',
+      '현장 대응 요원 4의 공격이 시력 이상으로 빗나갔다.',
+      '도움말',
+      false,
+    )).toEqual([
+      '디피실룩은 무엇을 할까?',
+      '현장 대응 요원 4의 공격이 시력 이상으로 빗나갔다.',
+    ]);
+  });
+
+  it('shows only the next enemy intent after the completed round result is dismissed', () => {
+    const player = createMonster({ name: '디피실룩' });
+    const enemy = createMonster({ name: '현장 대응 요원 4', isTrainer: true, moveset: ['m_complement'] });
+
+    expect(commandViewLines(player, enemy, 'trainer', '', '도움말')).toEqual([
+      '디피실룩은 무엇을 할까?',
+      '현장 대응 요원 4는 보체 MAC 형성을 하려고 한다.',
+    ]);
+  });
+
   it('does not show planned enemy moves for wild pathimon command copy', () => {
     const player = createMonster({ name: '플루리온' });
     const enemy = createMonster({ name: '결핵잠', moveset: ['tb_chronic'] });

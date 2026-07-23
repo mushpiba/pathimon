@@ -303,8 +303,8 @@ describe('Pathimon data', () => {
   it('scales boss runtime hp to the anthrax-calibrated boss value', () => {
     const boss = createBossInstance(0, 10);
 
-    expect(boss.maxHp).toBe(BOSSES[0].maxHp * 260);
-    expect(boss.hp).toBe(BOSSES[0].maxHp * 260);
+    expect(boss.maxHp).toBe(BOSSES[0].maxHp * 104);
+    expect(boss.hp).toBe(BOSSES[0].maxHp * 104);
     expect(boss.attack).toBe(136);
   });
 

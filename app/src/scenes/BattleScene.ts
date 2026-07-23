@@ -74,6 +74,7 @@ const OVERLAY_FILL = 0x8d8198;
 const OVERLAY_STROKE = 0xd8cde6;
 const OVERLAY_TEXT = 0xce6b5e;
 const BATTLE_EFFECT_DEPTH = 760;
+const BATTLE_NOTICE_HOLD_MS = 1000;
 
 export class BattleScene extends Phaser.Scene {
   private state!: RunState;
@@ -100,6 +101,8 @@ export class BattleScene extends Phaser.Scene {
   private playerCombatSprite?: Phaser.GameObjects.Image | Phaser.GameObjects.Text;
   private statusTooltip?: Phaser.GameObjects.Container;
   private statusTooltipTimer?: Phaser.Time.TimerEvent;
+  private battleNoticePending = false;
+  private battleNoticeTimer?: Phaser.Time.TimerEvent;
 
   constructor() {
     super('BattleScene');
@@ -128,6 +131,8 @@ export class BattleScene extends Phaser.Scene {
     this.isAnimating = false;
     this.enemyCombatSprite = undefined;
     this.playerCombatSprite = undefined;
+    this.battleNoticePending = false;
+    this.battleNoticeTimer = undefined;
   }
 
   preload(): void {
@@ -137,6 +142,7 @@ export class BattleScene extends Phaser.Scene {
   create(): void {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.clearStatusTooltip();
+      this.clearBattleNoticeTimer();
       destroySceneChildren(this);
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -561,7 +567,25 @@ export class BattleScene extends Phaser.Scene {
     const helperText = this.state.encounterKind === 'wild'
       ? '야생 패시몬은 포획하거나 지나갈 수 있습니다.'
       : '사람 전투에서는 싸운다, 도감, 패시몬을 선택할 수 있습니다.';
-    commandViewLines(player, enemy, this.state.encounterKind, this.notice, helperText).forEach((line, index) => {
+    commandViewLines(
+      player,
+      enemy,
+      this.state.encounterKind,
+      this.notice,
+      helperText,
+      !this.battleNoticePending,
+    ).forEach((line, index) => {
+      if (this.battleNoticePending && index === 1) {
+        addBoxLabel(this, 36, 450, line, {
+          width: APP_WIDTH - 72,
+          height: 104,
+          size: 17,
+          minSize: 11,
+          maxLines: 5,
+        }).setAlpha(0.9);
+        return;
+      }
+
       const fontSize = index === 0 ? 24 : index === 1 ? 17 : 15;
       addBoxLabel(this, index === 0 ? 34 : 36, 410 + index * 40, line, {
         width: 560,
@@ -571,6 +595,14 @@ export class BattleScene extends Phaser.Scene {
         maxLines: index === 0 ? 1 : 2,
       }).setAlpha(index === 0 ? 1 : 0.88);
     });
+
+    if (this.battleNoticePending) {
+      this.add.zone(APP_WIDTH / 2, APP_HEIGHT / 2, APP_WIDTH, APP_HEIGHT)
+        .setDepth(980)
+        .setInteractive({ useHandCursor: true })
+        .once('pointerdown', () => this.dismissBattleNotice());
+      return;
+    }
 
     battleActionOptions(this.state.encounterKind).forEach((option, index) => {
       const column = index % 2;
@@ -806,7 +838,36 @@ export class BattleScene extends Phaser.Scene {
     this.state = resolvePlayerMove(this.state, moveId, undefined, undefined, undefined, Math.random);
     this.notice = this.state.battleResultLog ?? this.state.lastLog;
     this.viewMode = 'command';
-    this.playBattleResolutionCue(previousState, this.state, () => this.afterBattleAction());
+    this.playBattleResolutionCue(previousState, this.state, () => this.startBattleNoticeHold());
+  }
+
+  private startBattleNoticeHold(): void {
+    if (this.state.phase !== 'battle' || !this.notice.trim()) {
+      this.afterBattleAction();
+      return;
+    }
+
+    this.clearBattleNoticeTimer();
+    this.battleNoticePending = true;
+    this.render();
+    this.battleNoticeTimer = this.time.delayedCall(BATTLE_NOTICE_HOLD_MS, () => {
+      this.battleNoticeTimer = undefined;
+      this.dismissBattleNotice();
+    });
+  }
+
+  private dismissBattleNotice(): void {
+    if (!this.battleNoticePending) return;
+
+    this.clearBattleNoticeTimer();
+    this.battleNoticePending = false;
+    this.notice = '';
+    this.render();
+  }
+
+  private clearBattleNoticeTimer(): void {
+    this.battleNoticeTimer?.remove(false);
+    this.battleNoticeTimer = undefined;
   }
 
   private playBattleResolutionCue(previousState: RunState, nextState: RunState, onComplete: () => void): void {
@@ -1525,6 +1586,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleConfirmInput(): void {
+    if (this.battleNoticePending) {
+      this.dismissBattleNotice();
+      return;
+    }
+
     if (this.isAnimating) {
       return;
     }
@@ -1573,6 +1639,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleCancelInput(): void {
+    if (this.battleNoticePending) {
+      this.dismissBattleNotice();
+      return;
+    }
+
     if (this.isAnimating) {
       return;
     }

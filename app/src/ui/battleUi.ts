@@ -571,6 +571,16 @@ function objectParticle(text: string): '을' | '를' {
   return hasFinalConsonant(text) ? '을' : '를';
 }
 
+function topicParticle(text: string): '은' | '는' {
+  const letters = [...text.trim()];
+  const last = letters[letters.length - 1];
+  if (!last) return '는';
+  if (/^\d$/.test(last)) return ['0', '1', '3', '6', '7', '8'].includes(last) ? '은' : '는';
+
+  const code = last.charCodeAt(0);
+  return code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 !== 0 ? '은' : '는';
+}
+
 function joinIntentMoveLabels(labels: string[]): string {
   return labels.reduce((text, label, index) => {
     if (index === 0) return label;
@@ -589,11 +599,12 @@ export function enemyIntentText(enemy: RuntimeMonster): string {
     : [enemy.plannedMoveId ?? enemy.moveset[0]].filter((moveId): moveId is MoveId => Boolean(moveId));
   const plannedMoves = plannedIds.map((moveId) => MOVES[moveId]).filter((move): move is MoveData => Boolean(move));
 
-  if (plannedMoves.length === 0) return `${enemy.name}은 공격을 준비하고 있다.`;
+  const topic = topicParticle(enemy.name);
+  if (plannedMoves.length === 0) return `${enemy.name}${topic} 공격을 준비하고 있다.`;
   const labels = plannedMoves.map(intentMoveLabel);
-  if (labels.length === 1) return `${enemy.name}은 ${labels[0]}${objectParticle(labels[0]!)} 하려고 한다.`;
+  if (labels.length === 1) return `${enemy.name}${topic} ${labels[0]}${objectParticle(labels[0]!)} 하려고 한다.`;
   const joinedLabels = joinIntentMoveLabels(labels);
-  return `${enemy.name}은 ${joinedLabels}${objectParticle(joinedLabels)} 준비하고 있다.`;
+  return `${enemy.name}${topic} ${joinedLabels}${objectParticle(joinedLabels)} 준비하고 있다.`;
 }
 export function commandViewLines(
   player: RuntimeMonster,
@@ -601,9 +612,15 @@ export function commandViewLines(
   encounterKind: EncounterKind,
   notice: string,
   helperText: string,
+  showEnemyIntent = true,
 ): string[] {
-  const lines = [`${player.name}은 무엇을 할까?`, notice || helperText];
-  if (encounterKind !== 'wild') {
+  const lines = [`${player.name}은 무엇을 할까?`];
+  if (notice) {
+    lines.push(notice);
+  } else if (encounterKind === 'wild') {
+    lines.push(helperText);
+  }
+  if (showEnemyIntent && encounterKind !== 'wild') {
     lines.push(enemyIntentText(enemy));
   }
   return lines.filter((line) => line.length > 0);

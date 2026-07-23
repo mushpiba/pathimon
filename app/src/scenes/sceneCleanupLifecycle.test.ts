@@ -14,6 +14,12 @@ describe('scene cleanup lifecycle wiring', () => {
     assertSceneCleanupLifecycle(battleSceneSource);
   });
 
+  it('holds a completed battle round for one second or until the player taps', () => {
+    expect(battleSceneSource).toContain('const BATTLE_NOTICE_HOLD_MS = 1000;');
+    expect(battleSceneSource).toMatch(/startBattleNoticeHold\(\)[\s\S]*?delayedCall\(BATTLE_NOTICE_HOLD_MS/);
+    expect(battleSceneSource).toMatch(/pointerdown[\s\S]{0,120}dismissBattleNotice/);
+  });
+
   it('keeps ShopScene cleanup on redraw and shutdown', () => {
     assertSceneCleanupLifecycle(shopSceneSource);
   });

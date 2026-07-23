@@ -4,9 +4,8 @@ import { selectBossMoveSet } from '../battle/bossMatchup';
 import { BOSSES } from '../data/bosses';
 import { TRAINERS } from '../data/trainers';
 
-// v2 패시몬은 준비기의 랭크 상승과 누적 상태이상으로 화력이 크게 오른다.
-// 보스 HP는 기존 런타임 값의 10배로 늘리고, 트레이너는 같은 보스 HP의 1/4만 사용한다.
-const BOSS_HP_MULTIPLIER = 260;
+// 트레이너는 같은 순번 보스 HP의 1/4을 사용한다.
+const BOSS_HP_MULTIPLIER = 104;
 const TRAINER_BOSS_HP_RATIO = 1 / 4;
 
 interface CreateMonsterOptions {

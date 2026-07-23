@@ -250,8 +250,8 @@ describe('battle engine', () => {
     expect(result.damage).toBe(17);
   });
 
-  // v2 1차 밸런스에서 보스 HP를 기존의 10배로 올렸으므로 같은 공격의 비율도 1/10이 된다.
-  it('calibrates boss hp so anthrax toxin stage 2 removes about one percent after prep', () => {
+  // 현재 보스 HP 기준에서 준비 후 탄저 독소 2단계의 체력 비율을 고정한다.
+  it('calibrates boss hp so anthrax toxin stage 2 removes about two percent after prep', () => {
     const anthraxData = MONSTERS.find((monster) => monster.id === 'anthrax');
     if (!anthraxData) throw new Error('anthrax missing');
 
@@ -264,8 +264,8 @@ describe('battle engine', () => {
     const lowestRollPct = calculateDamage(anthrax, boss, toxinStage2, 0.85).damage / boss.maxHp;
     const highestRollPct = calculateDamage(anthrax, boss, toxinStage2, 1).damage / boss.maxHp;
 
-    expect(lowestRollPct).toBeGreaterThanOrEqual(0.008);
-    expect(highestRollPct).toBeLessThanOrEqual(0.01);
+    expect(lowestRollPct).toBeGreaterThanOrEqual(0.02);
+    expect(highestRollPct).toBeLessThanOrEqual(0.025);
   });
 
   it('applies active attack and defense buffs to damage', () => {
