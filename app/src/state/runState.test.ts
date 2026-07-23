@@ -321,7 +321,9 @@ describe('run state loop', () => {
     expect(result.money).toBe(0);
     expect(result.party.length).toBe(2);
     expect(result.lastLog).toContain(`${battle.floor}층 클리어`);
-    expect(result.lastLog).toContain(firstWildPathimon.profileMemo?.[0] ?? firstWildPathimon.scientificName);
+    const displayedLearningPoints = firstWildPathimon.profileMemo
+      ?.filter((line) => result.lastLog.includes(line)) ?? [];
+    expect(displayedLearningPoints).toHaveLength(1);
     expect(result.lastLog).not.toContain('학습 피드백');
   });
 
@@ -376,7 +378,9 @@ describe('run state loop', () => {
     expect(result.party[0].usedSignatureMoveIds).toEqual([]);
     expect(result.lastLog).toContain(`${battle.floor}층 클리어`);
     expect(result.lastLog).toContain('지나갔다');
-    expect(result.lastLog).toContain(battle.enemy.profileMemo?.[0] ?? battle.enemy.scientificName);
+    const displayedLearningPoints = battle.enemy.profileMemo
+      ?.filter((line) => result.lastLog.includes(line)) ?? [];
+    expect(displayedLearningPoints).toHaveLength(1);
     expect(result.lastLog).not.toContain('학습 피드백');
   });
 

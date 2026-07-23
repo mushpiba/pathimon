@@ -15,6 +15,7 @@ import { TAG_LABELS } from '../data/labels';
 import { MOVES } from '../data/moves';
 import { MONSTERS } from '../data/monsters';
 import { interpolatePathimonName } from '../game/text';
+import { randomLearningPoint } from '../game/learning';
 import { createMonsterInstance } from '../state/factory';
 import { bossMoveEffectiveness, chooseBossMove, chooseEffectiveBossMove, createBossDefenseProfile } from './bossMatchup';
 import { advanceStagedMove, currentMoveData, resolveMoveOutcome } from './moveStages';
@@ -100,7 +101,8 @@ function defaultLearningDetail(state: RunState): string {
 
 function playerMoveLearningDetail(state: RunState, move: MoveData, result: DamageResult): string {
   const noteText = result.multiplier.notes.length > 0 ? ` ${result.multiplier.notes.join(', ')}.` : '';
-  return `${defaultLearningDetail(state)} ${move.name}은 ${move.learnText} 현재 상성 배율은 ${result.multiplier.total}배입니다.${noteText}`;
+  const learningPoint = randomLearningPoint(state.party[state.activeIndex]) || move.learnText;
+  return `${defaultLearningDetail(state)} ${move.name}은 ${learningPoint} 현재 상성 배율은 ${result.multiplier.total}배입니다.${noteText}`;
 }
 
 function withLearningFeedback(state: RunState, message: string, detail = defaultLearningDetail(state)): string {
@@ -132,8 +134,8 @@ function maintenanceVictoryLog(state: RunState): string {
 }
 
 function pathimonMemoDetail(monster: RuntimeMonster): string {
-  const memo = monster.profileMemo?.filter((line) => line.trim().length > 0) ?? [];
-  if (memo.length > 0) return memo.slice(0, 2).join(' ');
+  const learningPoint = randomLearningPoint(monster);
+  if (learningPoint) return learningPoint;
   return `${monster.scientificName}은 ${monster.category} 타입입니다.`;
 }
 

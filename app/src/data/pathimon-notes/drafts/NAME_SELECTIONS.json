@@ -945,23 +945,6 @@
                                           }
                        },
                        {
-                           "number":  59,
-                           "file":  "bacteria/Nocardia spp.md",
-                           "scientific":  "노카르디아속(Nocardia spp.)",
-                           "choiceNumber":  1,
-                           "choiceLetter":  "a",
-                           "selectedName":  "노카가지",
-                           "candidates":  {
-                                              "a":  "노카가지",
-                                              "b":  "산성노카",
-                                              "c":  "뇌농노카",
-                                              "d":  "산성가지",
-                                              "e":  "노카가닥",
-                                              "f":  "가지노카",
-                                              "g":  "노카노카"
-                                          }
-                       },
-                       {
                            "number":  60,
                            "file":  "cestode/Cysticercus cellulosae.md",
                            "scientific":  "유구낭미충(Cysticercus cellulosae)",

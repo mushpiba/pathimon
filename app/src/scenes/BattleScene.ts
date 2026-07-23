@@ -28,6 +28,7 @@ import {
   canUseBattleMove,
   capsuleIconPath,
   chooseBattleBgm,
+  clampProfileMemoScroll,
   commandViewLines,
   combatSpriteScale,
   cursorMarkerPoint,
@@ -89,6 +90,8 @@ export class BattleScene extends Phaser.Scene {
   private partyMenuCursor = 0;
   private statusMoveCursor = 0;
   private statusLearningOpen = false;
+  private statusProfileScroll = 0;
+  private statusProfileMaxScroll = 0;
   private currentBgmKey = '';
   private selectedBgmKey = '';
   private preserveBattleBgmOnShutdown = false;
@@ -117,6 +120,8 @@ export class BattleScene extends Phaser.Scene {
     this.partyMenuCursor = 0;
     this.statusMoveCursor = 0;
     this.statusLearningOpen = false;
+    this.statusProfileScroll = 0;
+    this.statusProfileMaxScroll = 0;
     this.currentBgmKey = '';
     this.selectedBgmKey = this.chooseBgmKey();
     this.preserveBattleBgmOnShutdown = false;
@@ -1058,6 +1063,7 @@ export class BattleScene extends Phaser.Scene {
     this.partyMenuOpen = false;
     this.partyMenuCursor = 0;
     this.statusTab = 'profile';
+    this.statusProfileScroll = 0;
   }
 
   private partyPurpose(): PartyMenuPurpose {
@@ -1193,6 +1199,7 @@ export class BattleScene extends Phaser.Scene {
       this.statusTab = 'profile';
       this.statusMoveCursor = 0;
       this.statusLearningOpen = false;
+      this.statusProfileScroll = 0;
       this.viewMode = 'status';
       this.partyMenuOpen = false;
       this.render();
@@ -1269,9 +1276,7 @@ export class BattleScene extends Phaser.Scene {
 
     if (this.statusTab === 'profile') {
       addLabel(this, 424, 244, '메모', 23).setColor('#20202c');
-      statusProfileMemoLines(monster).forEach((line, index) => {
-        addBoxLabel(this, 424, 286 + index * 34, line, { width: 520, height: 30, size: 18, minSize: 12, maxLines: 1, color: '#20202c' });
-      });
+      this.drawStatusProfileMemo(monster);
     } else {
       this.drawStatusMoves(monster);
     }
@@ -1293,6 +1298,77 @@ export class BattleScene extends Phaser.Scene {
       this.statusLearningOpen = false;
       this.render();
     });
+  }
+
+  private drawStatusProfileMemo(monster: RuntimeMonster): void {
+    const viewportX = 424;
+    const viewportY = 278;
+    const viewportWidth = 520;
+    const viewportHeight = 158;
+    const textWidth = 494;
+    const gap = 10;
+    const labels: Phaser.GameObjects.Text[] = [];
+    let contentHeight = 0;
+
+    for (const line of statusProfileMemoLines(monster)) {
+      const label = addBoxLabel(this, viewportX, 0, line, {
+        width: textWidth,
+        height: 480,
+        size: 16,
+        minSize: 14,
+        color: '#20202c',
+      });
+      labels.push(label);
+      contentHeight += label.height + gap;
+    }
+
+    contentHeight = Math.max(0, contentHeight - gap);
+    this.statusProfileMaxScroll = Math.max(0, contentHeight - viewportHeight);
+    this.statusProfileScroll = clampProfileMemoScroll(
+      this.statusProfileScroll,
+      contentHeight,
+      viewportHeight,
+    );
+
+    let contentY = 0;
+    for (const label of labels) {
+      const y = viewportY + contentY - this.statusProfileScroll;
+      const visibleTop = Math.max(viewportY, y);
+      const visibleBottom = Math.min(viewportY + viewportHeight, y + label.height);
+      label.setPosition(viewportX, y);
+
+      if (visibleBottom <= visibleTop) {
+        label.setVisible(false);
+      } else if (visibleTop > y || visibleBottom < y + label.height) {
+        label.setCrop(0, visibleTop - y, textWidth, visibleBottom - visibleTop);
+      }
+      contentY += label.height + gap;
+    }
+
+    const scrollZone = this.add.zone(viewportX, viewportY, viewportWidth, viewportHeight).setOrigin(0).setInteractive();
+    scrollZone.on('wheel', (_pointer: Phaser.Input.Pointer, _deltaX: number, deltaY: number) => {
+      this.scrollStatusProfile(deltaY > 0 ? 72 : -72);
+    });
+
+    if (this.statusProfileMaxScroll > 0) {
+      const trackX = viewportX + viewportWidth - 6;
+      const thumbHeight = Math.max(28, viewportHeight * (viewportHeight / contentHeight));
+      const thumbTravel = viewportHeight - thumbHeight;
+      const thumbY = viewportY + thumbTravel * (this.statusProfileScroll / this.statusProfileMaxScroll);
+      this.add.rectangle(trackX, viewportY, 4, viewportHeight, 0xc8ced0).setOrigin(0);
+      this.add.rectangle(trackX, thumbY, 4, thumbHeight, 0x555c66).setOrigin(0);
+    }
+  }
+
+  private scrollStatusProfile(delta: number): void {
+    const next = clampProfileMemoScroll(
+      this.statusProfileScroll + delta,
+      this.statusProfileMaxScroll + 158,
+      158,
+    );
+    if (next === this.statusProfileScroll) return;
+    this.statusProfileScroll = next;
+    this.render();
   }
 
   private drawStatusMoves(monster: RuntimeMonster): void {
@@ -1345,6 +1421,8 @@ export class BattleScene extends Phaser.Scene {
       if (this.statusTab === 'moves' && (direction === 'up' || direction === 'down')) {
         this.moveStatusMoveCursor(direction);
         this.render();
+      } else if (this.statusTab === 'profile' && (direction === 'up' || direction === 'down')) {
+        this.scrollStatusProfile(direction === 'down' ? 72 : -72);
       } else if (direction === 'left' || direction === 'right') {
         this.statusTab = this.statusTab === 'profile' ? 'moves' : 'profile';
         this.statusLearningOpen = false;

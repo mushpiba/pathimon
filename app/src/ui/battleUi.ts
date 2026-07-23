@@ -5,6 +5,7 @@ import { MOVES } from '../data/moves';
 import { effectiveMaxHp, STATUS_CONDITIONS, STATUS_CONDITION_IDS, statusConditionLabels, statusConditionStacks } from '../data/statusConditions';
 import { currentMoveData, currentMoveName } from '../battle/moveStages';
 import { interpolatePathimonName } from '../game/text';
+import { randomLearningPoint } from '../game/learning';
 import type { AbilityId, CapsuleId, EffectPrimitive, EncounterKind, MoveData, MoveId, MoveSlot, RunMode, RuntimeMonster, TagValue, VisualStyle } from '../types/game';
 
 export type BattleActionId = 'fight' | 'pass' | 'capsule' | 'dex' | 'party';
@@ -729,9 +730,14 @@ function moveEffectParts(move: MoveData): { conditions: string; effect: string }
   };
 }
 
-export function formatMoveDetails(moveId: MoveId, monster?: RuntimeMonster): string[] {
+export function formatMoveDetails(
+  moveId: MoveId,
+  monster?: RuntimeMonster,
+  random: () => number = Math.random,
+): string[] {
   const move = currentMoveData(MOVES[moveId], monster);
   const parts = moveEffectParts(move);
+  const learnText = randomLearningPoint(monster, random) || move.learnText;
   return [
     move.name,
     `종류: ${moveKindLabel(move)}`,
@@ -740,7 +746,7 @@ export function formatMoveDetails(moveId: MoveId, monster?: RuntimeMonster): str
     `효과: ${parts.effect}`,
     `상태이상: ${parts.conditions}`,
     `기술 설명: ${interpolateMoveText(move.description, monster)}`,
-    `학습: ${interpolateMoveText(move.learnText, monster)}`,
+    `학습: ${interpolateMoveText(learnText, monster)}`,
   ];
 }
 
@@ -755,9 +761,14 @@ export interface MoveDetailSections {
   title: string;
 }
 
-export function formatMoveDetailSections(moveId: MoveId, monster?: RuntimeMonster): MoveDetailSections {
+export function formatMoveDetailSections(
+  moveId: MoveId,
+  monster?: RuntimeMonster,
+  random: () => number = Math.random,
+): MoveDetailSections {
   const move = currentMoveData(MOVES[moveId], monster);
   const parts = moveEffectParts(move);
+  const learnText = randomLearningPoint(monster, random) || move.learnText;
   return {
     title: move.name,
     kind: `종류: ${moveKindLabel(move)}`,
@@ -766,12 +777,16 @@ export function formatMoveDetailSections(moveId: MoveId, monster?: RuntimeMonste
     effect: `효과: ${parts.effect}`,
     conditions: `상태이상: ${parts.conditions}`,
     description: `기술 설명: ${interpolateMoveText(move.description, monster)}`,
-    learnText: `학습: ${interpolateMoveText(move.learnText, monster)}`,
+    learnText: `학습: ${interpolateMoveText(learnText, monster)}`,
   };
 }
 
 export function statusProfileMemoLines(monster: RuntimeMonster): string[] {
   return monster.profileMemo?.filter((line) => line.trim().length > 0) ?? ['메모가 아직 정리되지 않았습니다.'];
+}
+
+export function clampProfileMemoScroll(offset: number, contentHeight: number, viewportHeight: number): number {
+  return Math.min(Math.max(0, contentHeight - viewportHeight), Math.max(0, offset));
 }
 
 export function statusConditionDetailLines(monster: RuntimeMonster): string[] {

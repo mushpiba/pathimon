@@ -4,10 +4,9 @@ import { selectBossMoveSet } from '../battle/bossMatchup';
 import { BOSSES } from '../data/bosses';
 import { TRAINERS } from '../data/trainers';
 
-// 플레이어 쪽 턴당 화력은 앵커 12종 실측 기준 약 650이다(공격 평균 66.4 × 공격기 위력 평균 58.7 / 보스 방어 6).
-// 보스 방어가 8이 되면서 플레이어 턴당 화력은 약 487로 내려갔다. 배수 26이면 보스 HP 5,980으로 약 12턴이다.
-// 트레이너는 그 1/4인 1,495로 약 3턴이 된다.
-const BOSS_HP_MULTIPLIER = 26;
+// v2 패시몬은 준비기의 랭크 상승과 누적 상태이상으로 화력이 크게 오른다.
+// 보스 HP는 기존 런타임 값의 10배로 늘리고, 트레이너는 같은 보스 HP의 1/4만 사용한다.
+const BOSS_HP_MULTIPLIER = 260;
 const TRAINER_BOSS_HP_RATIO = 1 / 4;
 
 interface CreateMonsterOptions {

@@ -250,9 +250,8 @@ describe('battle engine', () => {
     expect(result.damage).toBe(17);
   });
 
-  // 적 스탯 재조정 후 값이다. 보스 공격 68 / 방어 8 / HP 배수 26.
-  // 탄저록스 공격 95에 25% 버프가 붙고 2단계 위력 40이면 보스 HP 5,980의 8~10%를 깎는다.
-  it('calibrates boss hp so anthrax toxin stage 2 removes about eight to ten percent after prep', () => {
+  // v2 1차 밸런스에서 보스 HP를 기존의 10배로 올렸으므로 같은 공격의 비율도 1/10이 된다.
+  it('calibrates boss hp so anthrax toxin stage 2 removes about one percent after prep', () => {
     const anthraxData = MONSTERS.find((monster) => monster.id === 'anthrax');
     if (!anthraxData) throw new Error('anthrax missing');
 
@@ -265,8 +264,8 @@ describe('battle engine', () => {
     const lowestRollPct = calculateDamage(anthrax, boss, toxinStage2, 0.85).damage / boss.maxHp;
     const highestRollPct = calculateDamage(anthrax, boss, toxinStage2, 1).damage / boss.maxHp;
 
-    expect(lowestRollPct).toBeGreaterThanOrEqual(0.08);
-    expect(highestRollPct).toBeLessThanOrEqual(0.10);
+    expect(lowestRollPct).toBeGreaterThanOrEqual(0.008);
+    expect(highestRollPct).toBeLessThanOrEqual(0.01);
   });
 
   it('applies active attack and defense buffs to damage', () => {

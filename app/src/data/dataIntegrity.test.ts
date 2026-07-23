@@ -58,7 +58,8 @@ describe('Pathimon data', () => {
 
   it('uses playful pathimon names and bilingual scientific labels', () => {
     const names = MONSTERS.map((monster) => monster.name);
-    expect(names).toEqual(expect.arrayContaining(['탄저록스', '세레우톡스', '리스냉장', '노카가지']));
+    expect(names).toEqual(expect.arrayContaining(['탄저록스', '세레우톡스', '리스냉장']));
+    expect(names).not.toContain('노카가지');
     expect(new Set(names).size).toBe(names.length);
 
     for (const monster of MONSTERS) {
@@ -67,11 +68,11 @@ describe('Pathimon data', () => {
   });
 
   it('loads every selected first-wave pathimon note into the note roster', () => {
-    // 59 → 77 → 84 → 83 → 81. 41~50강 승격 17종 + `물혹돼지`(60~77번), 57·58강 신규 7종(78~84번)이 추가됐고,
+    // 59 → 77 → 84 → 83 → 81 → 80. 41~50강 승격 17종 + `물혹돼지`(60~77번), 57·58강 신규 7종(78~84번)이 추가됐고,
     // `유레아플라`(57번)는 강의 근거가 없어 `마이코막` 노트의 감별점으로 흡수하며 제외했다.
-    // `레트로잠`(31번, HIV)과 `가드네라`(58번)는 v2 전환에 필요한 강의 자산이 없어 승격을 취소했다.
-    // 전자는 `65_리트로바이러스` 미도착, 후자는 48강에 스치듯 1회뿐이다.
-    expect(NOTE_MONSTERS).toHaveLength(81);
+    // `레트로잠`(31번, HIV), `가드네라`(58번), `노카가지`(59번)는 승격을 취소했다.
+    // 레트로잠은 강의 미도착, 가드네라는 강의 근거 부족, 노카가지는 사용자 보류 결정에 따른다.
+    expect(NOTE_MONSTERS).toHaveLength(80);
     expect(NOTE_MONSTERS.map((monster) => monster.name).slice(0, 5)).toEqual([
       '탄저록스',
       '세레우톡스',
@@ -79,11 +80,11 @@ describe('Pathimon data', () => {
       '디프막스',
       '디피실룩',
     ]);
-    // `레트로잠`(31번) 승격 취소로 한 칸 당겨졌다. 노트 순서가 NAME_SELECTIONS.json의 selections 배열 순서라는 점을 잡아 두는 검사다.
-    expect(NOTE_MONSTERS[55]?.name).toBe('노카가지');
+    // 승격 취소 항목 다음에는 60번 물혹돼지가 온다. 노트 순서가 NAME_SELECTIONS.json의 selections 배열 순서라는 점을 잡아 두는 검사다.
+    expect(NOTE_MONSTERS[55]?.name).toBe('물혹돼지');
     // `pathimonNoteData.ts`의 createParasiteEvolutionMonsters가 기생충 노트를 무조건 유충/성충으로 쪼개면서
     // 이름에 `-유충`을 붙인다. 노트의 `진화: 패턴 B`(사람 안에서 성충이 되지 못함)와 어긋나는 지점이라 재검토 대상이다.
-    expect(NOTE_MONSTERS[73]?.name).toBe('기어가기-유충');
+    expect(NOTE_MONSTERS[72]?.name).toBe('기어가기-유충');
     expect(NOTE_MONSTERS[NOTE_MONSTERS.length - 1]?.name).toBe('선천빅');
   });
 
@@ -211,11 +212,11 @@ describe('Pathimon data', () => {
       'tb',
       'ascaris',
       'schistosoma',
-      'nocardia_spp',
     ]));
-    expect(NOTE_MONSTERS).toHaveLength(81);
+    expect(NOTE_MONSTERS).toHaveLength(80);
     expect(monsterIds).not.toContain('hiv');
     expect(monsterIds).not.toContain('gardnerella_vaginalis');
+    expect(monsterIds).not.toContain('nocardia_spp');
     expect(MONSTERS.length).toBeGreaterThan(NOTE_MONSTERS.length);
     expect(BOSSES.map((boss) => boss.id)).toContain('immune_hq');
     expect(BOSSES.length).toBeGreaterThanOrEqual(12);
@@ -302,10 +303,9 @@ describe('Pathimon data', () => {
   it('scales boss runtime hp to the anthrax-calibrated boss value', () => {
     const boss = createBossInstance(0, 10);
 
-    // 배수 60 → 26. 플레이어 턴당 화력 약 650(앵커 12종 실측) 기준 약 9턴이 되어
-    // 전투당 패시몬 2~3마리가 쓰러지는 사이에 끝난다.
-    expect(boss.maxHp).toBe(BOSSES[0].maxHp * 26);
-    expect(boss.hp).toBe(BOSSES[0].maxHp * 26);
+    expect(boss.maxHp).toBe(BOSSES[0].maxHp * 260);
+    expect(boss.hp).toBe(BOSSES[0].maxHp * 260);
+    expect(boss.attack).toBe(136);
   });
 
   it('starts boss encounters without pre-existing symptoms', () => {

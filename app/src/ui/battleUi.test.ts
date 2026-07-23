@@ -17,6 +17,7 @@ import {
   battleUnitPanelRows,
   canUseBattleMove,
   chooseBattleBgm,
+  clampProfileMemoScroll,
   commandViewLines,
   effectLabels,
   enemyIntentText,
@@ -301,6 +302,20 @@ describe('battle UI helpers', () => {
     });
   });
 
+  it('shows one random profile learning point instead of the move fallback text', () => {
+    const monster = createMonster({
+      name: '탄저록스',
+      moveset: ['spore_germination'],
+      profileMemo: [
+        'L1 [감별점] 첫 번째 학습포인트',
+        'L2 [기전] 두 번째 학습포인트',
+      ],
+    });
+
+    expect(formatMoveDetailSections('spore_germination', monster, () => 0.99).learnText)
+      .toBe('학습: L2 [기전] 두 번째 학습포인트');
+  });
+
   it('formats status profile memo lines from pathimon note data', () => {
     const monster = createMonster({
       profileMemo: [
@@ -317,6 +332,13 @@ describe('battle UI helpers', () => {
       '상처, 호흡기, 소화기 경로로 감염될 수 있다.',
       '아포와 독소, 협막 형성이 대표 병인이다.',
     ]);
+  });
+
+  it('clamps profile memo scrolling to the visible content range', () => {
+    expect(clampProfileMemoScroll(-40, 520, 150)).toBe(0);
+    expect(clampProfileMemoScroll(120, 520, 150)).toBe(120);
+    expect(clampProfileMemoScroll(999, 520, 150)).toBe(370);
+    expect(clampProfileMemoScroll(40, 120, 150)).toBe(0);
   });
 
   it('shows the current stage in staged move names and details', () => {
