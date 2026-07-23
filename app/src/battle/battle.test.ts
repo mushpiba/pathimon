@@ -724,6 +724,60 @@ describe('battle engine', () => {
     }
   });
 
+  it('labels symptom or tag countermeasures as effective in the combat log', () => {
+    const battle = createBattleState({
+      party: [createMonster({
+        hp: 500,
+        maxHp: 500,
+        countermeasures: { direct: [], symptomTags: ['바이러스'] },
+      })],
+      enemy: createMonster({
+        name: '면역챔피언',
+        category: '보스 사람',
+        moveset: ['m_interferon'],
+        moveSlots: ['m_interferon', null, null, null],
+        plannedMoveId: 'm_interferon',
+        isBoss: true,
+        isTrainer: true,
+        attack: 12,
+        hp: 999,
+        maxHp: 999,
+      }),
+    });
+
+    const result = resolvePlayerMove(battle, 'coagulase', 1, 0, 0);
+
+    expect(result.lastLog).toContain('효과가 있다.');
+    expect(result.lastLog).not.toContain('효과가 굉장했다.');
+  });
+
+  it('does not add an effectiveness message for unrelated countermeasures', () => {
+    const battle = createBattleState({
+      party: [createMonster({
+        hp: 500,
+        maxHp: 500,
+        countermeasures: { direct: [], symptomTags: [] },
+      })],
+      enemy: createMonster({
+        name: '면역챔피언',
+        category: '보스 사람',
+        moveset: ['m_interferon'],
+        moveSlots: ['m_interferon', null, null, null],
+        plannedMoveId: 'm_interferon',
+        isBoss: true,
+        isTrainer: true,
+        attack: 12,
+        hp: 999,
+        maxHp: 999,
+      }),
+    });
+
+    const result = resolvePlayerMove(battle, 'coagulase', 1, 0, 0);
+
+    expect(result.lastLog).not.toContain('효과가 있다.');
+    expect(result.lastLog).not.toContain('효과가 굉장했다.');
+  });
+
   it('does not seal boss moves after switching; damage is recalculated against the final active pathimon', () => {
     const battle = createBattleState({
       party: [

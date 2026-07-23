@@ -72,15 +72,17 @@ describe('boss attack matchup', () => {
     });
   });
 
-  it('chooses an effective boss move for the first half of the random range', () => {
+  it('splits move selection evenly between 4x, 2x, and 1x groups', () => {
     const profile = createBossDefenseProfile(createMonster({
       countermeasures: {
         direct: ['알벤다졸'],
-        symptomTags: [],
+        symptomTags: ['바이러스'],
       },
     } as Partial<RuntimeMonster>));
-    const moveId = chooseBossMove(['m_interferon', 'm_anthelmintic', 'm_antibody'], profile, [], () => 0.25);
+    const moveIds = ['m_anthelmintic', 'm_interferon', 'm_antibody'] as const;
 
-    expect(moveId).toBe('m_anthelmintic');
+    expect(chooseBossMove([...moveIds], profile, [], () => 0.1)).toBe('m_anthelmintic');
+    expect(chooseBossMove([...moveIds], profile, [], () => 0.4)).toBe('m_interferon');
+    expect(chooseBossMove([...moveIds], profile, [], () => 0.9)).toBe('m_antibody');
   });
 });

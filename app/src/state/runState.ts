@@ -230,6 +230,7 @@ export function enterBattle(state: RunState, enemyIndex?: number): RunState {
   if (nextState.encounterKind === 'trainer') {
     const trainerIndex = enemyIndex ?? Math.floor(Math.random() * TRAINERS.length);
     nextState.enemy = createTrainerInstance(trainerIndex);
+    planInitialHumanMove(nextState);
     nextState.phase = 'battle';
     nextState.lastLog = `${nextState.enemy.name}이 승부를 걸어왔다.`;
     return nextState;

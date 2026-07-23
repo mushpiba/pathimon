@@ -76,21 +76,27 @@ function chooseFrom<T>(items: T[], random: () => number): T | undefined {
   return items[randomIndex(items.length, random)];
 }
 
+function chooseByEffectivenessGroup(
+  moveIds: MoveId[],
+  profile: BossDefenseProfile,
+  kinds: BossEffectivenessKind[],
+  random: () => number,
+): MoveId | undefined {
+  const candidates = moveIds.filter((moveId) => MOVES[moveId]);
+  const groups = kinds
+    .map((kind) => candidates.filter((moveId) => bossMoveEffectiveness(MOVES[moveId], profile).kind === kind))
+    .filter((group) => group.length > 0);
+  const selectedGroup = chooseFrom(groups, random);
+  return selectedGroup ? chooseFrom(selectedGroup, random) : undefined;
+}
+
 export function chooseBossMove(
   moveIds: MoveId[],
   profile: BossDefenseProfile,
   _sealedMoveIds: MoveId[] = [],
   random: () => number = Math.random,
 ): MoveId | undefined {
-  const candidates = moveIds.filter((moveId) => MOVES[moveId]);
-  if (candidates.length === 0) return undefined;
-
-  const effectiveMoves = candidates.filter((moveId) => bossMoveEffectiveness(MOVES[moveId], profile).kind !== 'normal');
-  if (effectiveMoves.length > 0 && random() < 0.5) {
-    return chooseFrom(effectiveMoves, random);
-  }
-
-  return chooseFrom(candidates, random);
+  return chooseByEffectivenessGroup(moveIds, profile, ['super', 'effective', 'normal'], random);
 }
 
 export function chooseEffectiveBossMove(
@@ -98,8 +104,7 @@ export function chooseEffectiveBossMove(
   profile: BossDefenseProfile,
   random: () => number = Math.random,
 ): MoveId | undefined {
-  const effectiveMoves = moveIds.filter((moveId) => MOVES[moveId] && bossMoveEffectiveness(MOVES[moveId], profile).kind !== 'normal');
-  return chooseFrom(effectiveMoves, random);
+  return chooseByEffectivenessGroup(moveIds, profile, ['super', 'effective'], random);
 }
 
 export function selectBossMoveSet(

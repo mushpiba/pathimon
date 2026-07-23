@@ -265,6 +265,22 @@ describe('run state loop', () => {
     expect(result.enemy?.plannedMoveId).toBeTruthy();
   });
 
+  it('locks a trainer first-turn move before showing its telegraph', () => {
+    const state = createInitialRunState();
+    state.floor = 5;
+    state.party[0].maxHp = 5000;
+    state.party[0].hp = 5000;
+
+    const battle = enterBattle(state, 0);
+    const plannedMoveId = battle.enemy?.plannedMoveId;
+
+    expect(plannedMoveId).toBeTruthy();
+    expect(battle.enemy?.plannedMoveIds).toEqual([plannedMoveId]);
+
+    const result = resolvePlayerMove(battle, 'hyaluronidase', 1, 0, 0);
+    expect(result.lastLog).toContain(MOVES[plannedMoveId!].name);
+  });
+
   it('moves to shop and grants money after defeating a human enemy', () => {
     const state = createInitialRunState();
     state.floor = 5;
@@ -509,6 +525,8 @@ describe('run state loop', () => {
     const battle = enterBattle({ ...createInitialRunState(), floor: 5 });
     if (!battle.enemy) throw new Error('enemy missing');
     battle.enemy.moveset = ['hiv_cd4'];
+    battle.enemy.plannedMoveId = 'hiv_cd4';
+    battle.enemy.plannedMoveIds = ['hiv_cd4'];
     const startingHp = battle.party[0].hp;
 
     const result = resolvePlayerMove(battle, 'coagulase', 1);
@@ -626,6 +644,8 @@ describe('run state loop', () => {
       secondBattle.enemy.hp = 999;
       secondBattle.enemy.maxHp = 999;
       secondBattle.enemy.moveset = ['hiv_cd4'];
+      secondBattle.enemy.plannedMoveId = 'hiv_cd4';
+      secondBattle.enemy.plannedMoveIds = ['hiv_cd4'];
     }
 
     const result = resolvePlayerMove(secondBattle, 'coagulase', 10);
