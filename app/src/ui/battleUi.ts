@@ -275,8 +275,11 @@ export function chooseBattleBgm(input: { encounterKind?: EncounterKind; floor: n
     : encounterKind === 'trainer'
       ? assets.trainer
       : assets.wild;
-  const roll = encounterKind === 'wild' && input.seed !== undefined
-    ? seededRoll(input.seed, wildBgmGroupIndex(input.floor))
+  const rollSalt = encounterKind === 'wild'
+    ? wildBgmGroupIndex(input.floor)
+    : input.floor + (encounterKind === 'boss' ? 1000 : 500);
+  const roll = input.seed !== undefined
+    ? seededRoll(input.seed, rollSalt)
     : input.roll;
   const index = clampedPoolIndex(pool.length, roll);
   return pool[index];
@@ -777,8 +780,33 @@ export interface MoveDetailSections {
   effect: string;
   kind: string;
   learnText: string;
+  outcomeRows: string[];
   power: string;
   title: string;
+}
+
+function moveOutcomeRows(move: MoveData, monster?: RuntimeMonster): string[] {
+  if (!move.outcomes || move.outcomes.length < 4) return [];
+  return move.outcomes?.map((outcome) => {
+    const outcomeMove: MoveData = {
+      ...move,
+      description: outcome.description,
+      effectText: outcome.effectText,
+      effects: outcome.effects,
+      learnText: outcome.learnText,
+      outcomes: undefined,
+      power: outcome.power ?? move.power,
+      symptom: outcome.symptom,
+    };
+    const parts = moveEffectParts(outcomeMove);
+    const details = [
+      parts.effect === '없음' ? '' : parts.effect,
+      parts.conditions === '없음' ? '' : parts.conditions,
+    ].filter(Boolean);
+    const probability = Math.round(outcome.chance * 100);
+    const label = interpolateMoveText(outcome.symptom || '추가 효과', monster);
+    return `${probability}%  ${label} → ${details.join(' · ') || '추가 효과 없음'}`;
+  }) ?? [];
 }
 
 export function formatMoveDetailSections(
@@ -798,6 +826,7 @@ export function formatMoveDetailSections(
     conditions: `상태이상: ${parts.conditions}`,
     description: `기술 설명: ${interpolateMoveText(move.description, monster)}`,
     learnText: `학습: ${interpolateMoveText(learnText, monster)}`,
+    outcomeRows: moveOutcomeRows(move, monster),
   };
 }
 

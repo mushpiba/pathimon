@@ -302,7 +302,22 @@ describe('battle UI helpers', () => {
       conditions: '상태이상: 통증, 발열, 기침, 피로',
       description: '기술 설명: 탄저록스가 아포를 발아시켜 감염을 준비한다.',
       learnText: '학습: 탄저균은 아포 상태로 토양과 동물 제품에서 버티다가 숙주 안에서 발아해 감염을 시작한다.',
+      outcomeRows: [],
     });
+  });
+
+  it('formats four-way toxin outcomes as separate probability rows', () => {
+    const staph = createMonster({
+      name: '황금포도',
+      moveset: ['staph_move_3'],
+    });
+
+    expect(formatMoveDetailSections('staph_move_3', staph).outcomeRows).toEqual([
+      '25%  독소충격증후군 → 혈압 이상, 발열',
+      '25%  백혈구 용해 → 면역 이상, 괴사',
+      '25%  표피탈락증후군 → 부종, 통증',
+      '25%  포도알균 식중독 → 구토, 배설 이상',
+    ]);
   });
 
   it('shows one random profile learning point instead of the move fallback text', () => {
@@ -690,9 +705,9 @@ describe('battle UI helpers', () => {
     expect(chooseBattleBgm({ floor: 31, encounterKind: 'wild', roll: 0, seed: 1234 }))
       .toBe(chooseBattleBgm({ floor: 34, encounterKind: 'wild', roll: 0.99, seed: 1234 }));
     expect(chooseBattleBgm({ floor: 5, encounterKind: 'trainer', roll: 0.99, seed: 1234 }))
-      .toBe(assets.trainer[assets.trainer.length - 1]);
+      .toBe(chooseBattleBgm({ floor: 5, encounterKind: 'trainer', roll: 0, seed: 1234 }));
     expect(chooseBattleBgm({ floor: 80, encounterKind: 'boss', roll: 0.99, seed: 1234 }))
-      .toBe(assets.boss[assets.boss.length - 1]);
+      .toBe(chooseBattleBgm({ floor: 80, encounterKind: 'boss', roll: 0, seed: 1234 }));
     expect(chooseBattleBgm({ floor: 70, encounterKind: 'boss', roll: 0, seed: 1234 }))
       .toBe('audio/bgm/battle_galar_gym.mp3');
     expect(chooseBattleBgm({ floor: 90, encounterKind: 'boss', roll: 0, seed: 1234 }))

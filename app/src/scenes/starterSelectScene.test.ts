@@ -12,4 +12,10 @@ describe('StarterSelectScene audio', () => {
     expect(stopIndex).toBeGreaterThan(startRunIndex);
     expect(stopIndex).toBeGreaterThan(createIndex);
   });
+
+  it('moves keyboard focus to the start button after selecting the starter', () => {
+    expect(starterSelectSceneSource).toContain(
+      'this.startCursor = canStartWithStarterSelection(this.selectedIds);',
+    );
+  });
 });

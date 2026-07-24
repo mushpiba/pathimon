@@ -19,4 +19,12 @@ describe('ModeSelectScene copy', () => {
     expect(modeSelectSceneSource).toContain("command === 'confirm'");
     expect(modeSelectSceneSource).toContain('this.optionCursor');
   });
+
+  it('uses large run-mode cards and compact visual-style controls', () => {
+    expect(modeSelectSceneSource).toContain('private createModeButton');
+    expect(modeSelectSceneSource).toContain('private createStyleButton');
+    expect(modeSelectSceneSource).toContain('const STYLE_BUTTON_HEIGHT = 54;');
+    expect(modeSelectSceneSource).toContain("'01  진행 방식'");
+    expect(modeSelectSceneSource).toContain("'02  디자인'");
+  });
 });

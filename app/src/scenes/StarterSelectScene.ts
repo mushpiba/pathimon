@@ -227,6 +227,7 @@ export class StarterSelectScene extends Phaser.Scene {
     if (!selected) return;
 
     this.selectedIds = addStarterSelection(this.selectedIds, selected.id);
+    this.startCursor = canStartWithStarterSelection(this.selectedIds);
     this.render();
   }
 

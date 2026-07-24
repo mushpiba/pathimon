@@ -24,10 +24,12 @@ describe('BattleScene pathimon type borders', () => {
     expect(battleSceneSource).toContain('this.add.image(x, y, overlayPath).setOrigin(0).setDisplaySize(width, height).setAlpha(0.96);');
   });
 
-  it('preloads only the selected BGM instead of every battle track', () => {
+  it('streams battle BGM outside Phaser while keeping Phaser audio for SFX', () => {
     expect(battleSceneSource).toContain('this.selectedBgmKey = this.chooseBgmKey();');
-    expect(battleSceneSource).toContain('this.queueAudio(this.selectedBgmKey);');
-    expect(battleSceneSource).not.toContain('[...bgmAssets.normal, ...bgmAssets.boss].forEach((path) => this.queueAudio(path));');
+    expect(battleSceneSource).toContain('playHtmlBattleBgm');
+    expect(battleSceneSource).toContain('prefetchHtmlBattleBgm');
+    expect(battleSceneSource).not.toContain('this.queueAudio(this.selectedBgmKey);');
+    expect(battleSceneSource).toContain('Object.values(battleSfxAssetPaths()).forEach((path) => this.queueAudio(path));');
   });
 
   it('keeps wild-block BGM continuous and refreshes boss roster when returning home', () => {

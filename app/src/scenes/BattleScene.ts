@@ -1,5 +1,10 @@
 import Phaser from 'phaser';
 import {
+  playHtmlBattleBgm,
+  prefetchHtmlBattleBgm,
+  stopHtmlBattleBgm,
+} from '../audio/htmlBgm';
+import {
   cancelPendingCapture,
   resolveCapsuleAction,
   resolveCaptureRelease,
@@ -10,12 +15,11 @@ import {
 } from '../battle/turn';
 import { createBossRosterIds } from '../data/bosses';
 import { CAPSULE_LABELS, CAPSULE_ORDER } from '../data/capsules';
-import { advanceFromShop, createInitialRunState, enterBattle } from '../state/runState';
+import { advanceFromShop, createInitialRunState, encounterKindForFloor, enterBattle } from '../state/runState';
 import type { CapsuleId, HitEffectiveness, MoveId, RunState, RuntimeMonster } from '../types/game';
 import { COLORS, APP_WIDTH, APP_HEIGHT } from '../game/constants';
 import {
   battleActionOptions,
-  battleBgmAudioPaths,
   battleSfxAssetPaths,
   battleMoveUnavailableReason,
   battleFieldLayerLayouts,
@@ -97,7 +101,6 @@ export class BattleScene extends Phaser.Scene {
   private statusLearningOpen = false;
   private statusProfileScroll = 0;
   private statusProfileMaxScroll = 0;
-  private currentBgmKey = '';
   private selectedBgmKey = '';
   private preserveBattleBgmOnShutdown = false;
   private isAnimating = false;
@@ -129,7 +132,6 @@ export class BattleScene extends Phaser.Scene {
     this.statusLearningOpen = false;
     this.statusProfileScroll = 0;
     this.statusProfileMaxScroll = 0;
-    this.currentBgmKey = '';
     this.selectedBgmKey = this.chooseBgmKey();
     this.preserveBattleBgmOnShutdown = false;
     this.isAnimating = false;
@@ -191,7 +193,6 @@ export class BattleScene extends Phaser.Scene {
     pathimonTypeIconAssetPaths().forEach((path) => this.queueImage(path));
     this.queueImage(lockedMoveOverlayPath());
 
-    this.queueAudio(this.selectedBgmKey);
     Object.values(battleSfxAssetPaths()).forEach((path) => this.queueAudio(path));
 
     const monsters = [...this.state.party];
@@ -261,25 +262,21 @@ export class BattleScene extends Phaser.Scene {
 
   private playBattleBgm(): void {
     const bgmKey = this.selectedBgmKey || this.chooseBgmKey();
+    void playHtmlBattleBgm(bgmKey);
 
-    this.stopBattleBgm(bgmKey);
-    this.currentBgmKey = bgmKey;
-    const existing = this.sound.get(bgmKey);
-    if (existing?.isPlaying) {
-      return;
+    const nextFloor = this.state.floor + 1;
+    if (nextFloor <= 100) {
+      prefetchHtmlBattleBgm(chooseBattleBgm({
+        floor: nextFloor,
+        encounterKind: encounterKindForFloor(nextFloor),
+        roll: 0,
+        seed: this.state.bgmSeed,
+      }));
     }
-
-    const sound = existing ?? this.sound.add(bgmKey, { loop: true, volume: 0.35 });
-    sound.play();
   }
 
-  private stopBattleBgm(exceptKey = ''): void {
-    battleBgmAudioPaths().forEach((key) => {
-      if (key === exceptKey) return;
-      const sound = this.sound.get(key);
-      if (sound) sound.stop();
-    });
-    if (!exceptKey) this.currentBgmKey = '';
+  private stopBattleBgm(): void {
+    stopHtmlBattleBgm();
   }
 
   private render(): void {
@@ -740,6 +737,10 @@ export class BattleScene extends Phaser.Scene {
       .setAlpha(0.9);
     addBoxLabel(this, textX, panelY + 54, `${detail.power} · ${detail.accuracy}`, { width: textWidth, height: 17, size: 10, minSize: 8, maxLines: 1 })
       .setAlpha(0.9);
+    if (detail.outcomeRows.length > 0) {
+      this.drawMoveOutcomeRows(detail, textX, textWidth, panelY);
+      return;
+    }
     const effectLabel = addBoxLabel(this, textX, panelY + 74, detail.effect, {
       width: textWidth,
       height: 30,
@@ -776,6 +777,31 @@ export class BattleScene extends Phaser.Scene {
       })
         .setAlpha(0.9);
     }
+  }
+
+  private drawMoveOutcomeRows(
+    detail: ReturnType<typeof formatMoveDetailSections>,
+    textX: number,
+    textWidth: number,
+    panelY: number,
+  ): void {
+    addBoxLabel(this, textX, panelY + 74, detail.description, {
+      width: textWidth,
+      height: 28,
+      size: 9,
+      minSize: 8,
+      maxLines: 2,
+    }).setAlpha(0.92);
+    addLabel(this, textX, panelY + 104, '가능한 결과', 9).setColor('#72d6ff').setAlpha(0.92);
+    detail.outcomeRows.forEach((row, index) => {
+      addBoxLabel(this, textX, panelY + 119 + index * 14, row, {
+        width: textWidth,
+        height: 14,
+        size: 8,
+        minSize: 7,
+        maxLines: 1,
+      }).setAlpha(0.94);
+    });
   }
 
   private drawCapsuleView(player: RuntimeMonster, enemy: RuntimeMonster): void {
