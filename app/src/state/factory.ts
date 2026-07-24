@@ -1,6 +1,5 @@
 import type { AbilityId, BossData, MonsterData, RuntimeMonster, TrainerData } from '../types/game';
 import { buildMoveSlots } from '../battle/loadout';
-import { selectBossMoveSet } from '../battle/bossMatchup';
 import { BOSSES } from '../data/bosses';
 import { TRAINERS } from '../data/trainers';
 
@@ -54,6 +53,7 @@ export function createMonsterInstance(data: MonsterData, options: CreateMonsterO
     fainted: false,
     isBoss: false,
     symptoms: [],
+    symptomAttributions: [],
     signatureUnlocked: false,
     usedSignatureMoveIds: [],
   };
@@ -75,7 +75,8 @@ export function createBossInstance(index = 0, floor = 10): RuntimeMonster {
   const boss = getBoss(index);
   const abilities = selectBossAbilities(boss.abilityPool, floor, index);
   const maxHp = boss.maxHp * BOSS_HP_MULTIPLIER;
-  const moveset = selectBossMoveSet(boss.movePool);
+  // 적은 전체 기술 풀을 그대로 들고, 매 턴 chooseBossMove가 ×4/×2/×1 그룹에서 1/3씩 고른다(battle/bossMatchup.ts).
+  const moveset = [...boss.movePool];
 
   return {
     templateId: boss.id,
@@ -107,6 +108,7 @@ export function createBossInstance(index = 0, floor = 10): RuntimeMonster {
     isBoss: true,
     isTrainer: true,
     symptoms: [],
+    symptomAttributions: [],
     signatureUnlocked: true,
     usedSignatureMoveIds: [],
   };
@@ -136,8 +138,9 @@ export function createTrainerInstance(index = 0): RuntimeMonster {
     captureRate: 0,
     ability: 'none',
     abilities: [],
-    moveset: trainer.movePool.slice(0, 4),
-    moveSlots: trainer.movePool.slice(0, 4),
+    // 보스와 동일: 전체 풀을 들고 매 턴 그룹에서 1/3씩 뽑는다. 차이는 HP(1/4)와 방어특성 없음뿐.
+    moveset: [...trainer.movePool],
+    moveSlots: [...trainer.movePool],
     moveStages: {},
     plannedMoveIds: [],
     bossPhase2Activated: false,
@@ -147,6 +150,8 @@ export function createTrainerInstance(index = 0): RuntimeMonster {
     fainted: false,
     isBoss: false,
     isTrainer: true,
+    symptoms: [],
+    symptomAttributions: [],
     signatureUnlocked: true,
     usedSignatureMoveIds: [],
   };

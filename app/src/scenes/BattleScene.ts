@@ -32,6 +32,7 @@ import {
   commandViewLines,
   combatSpriteScale,
   cursorMarkerPoint,
+  defenseTraitDetailLines,
   defenseTraitSummary,
   firstUsableMove,
   formatBossAttackMatchupRows,
@@ -53,6 +54,7 @@ import {
   shouldPreserveBattleBgm,
   statusProfileMemoLines,
   statusConditionDetailLines,
+  symptomDetailLines,
 } from '../ui/battleUi';
 import type { BattleActionId, BattleUnitPanelRole, PartyMenuPurpose, PathimonTypeIcon } from '../ui/battleUi';
 import { destroySceneChildren } from '../ui/sceneCleanup';
@@ -75,8 +77,8 @@ const OVERLAY_FILL = 0x8d8198;
 const OVERLAY_STROKE = 0xd8cde6;
 const OVERLAY_TEXT = 0xce6b5e;
 const BATTLE_EFFECT_DEPTH = 760;
-const BATTLE_ACTION_HOLD_MS = 1000;
-const BATTLE_STATUS_HOLD_MS = 500;
+const BATTLE_ACTION_HOLD_MS = 2000;
+const BATTLE_STATUS_HOLD_MS = 1000;
 
 export class BattleScene extends Phaser.Scene {
   private state!: RunState;
@@ -441,6 +443,15 @@ export class BattleScene extends Phaser.Scene {
         textY += 22;
       } else if (row.kind === 'defense') {
         addBoxLabel(this, x + 18, textY, row.text, { width: textWidth, height: 20, size: 13, minSize: 10, maxLines: 1 });
+        if (monster.isBoss) {
+          this.bindDetailTooltip(
+            x + 18,
+            textY,
+            textWidth,
+            defenseTraitDetailLines(monster),
+            '방어특성',
+          );
+        }
         textY += 22;
       }
     });
@@ -453,17 +464,37 @@ export class BattleScene extends Phaser.Scene {
     const statusRow = rows.find((row) => row.kind === 'status');
     if (statusRow) {
       addBoxLabel(this, x + 18, hpY + 20, statusRow.text, { width: width - 36, height: 18, size: 12, minSize: 9, maxLines: 1 });
-      this.bindStatusTooltip(x + 18, hpY + 18, width - 36, monster);
+      this.bindDetailTooltip(
+        x + 18,
+        hpY + 18,
+        width - 36,
+        statusConditionDetailLines(monster),
+        '상태이상',
+      );
     }
     const symptomsRow = rows.find((row) => row.kind === 'symptoms');
-    if (symptomsRow) addBoxLabel(this, x + 18, hpY + 38, symptomsRow.text, { width: width - 36, height: 18, size: 12, minSize: 9, maxLines: 1 });
+    if (symptomsRow) {
+      addBoxLabel(this, x + 18, hpY + 38, symptomsRow.text, { width: width - 36, height: 18, size: 12, minSize: 9, maxLines: 1 });
+      this.bindDetailTooltip(
+        x + 18,
+        hpY + 36,
+        width - 36,
+        symptomDetailLines(monster),
+        '증상',
+      );
+    }
   }
 
-  private bindStatusTooltip(x: number, y: number, width: number, monster: RuntimeMonster): void {
-    const lines = statusConditionDetailLines(monster);
+  private bindDetailTooltip(
+    x: number,
+    y: number,
+    width: number,
+    lines: string[],
+    overflowLabel: string,
+  ): void {
     if (lines.length === 0) return;
 
-    const hitArea = this.add.rectangle(x, y, width, 24, 0xffffff, 0.001)
+    const hitArea = this.add.rectangle(x, y, width, 18, 0xffffff, 0.001)
       .setOrigin(0)
       .setDepth(790)
       .setInteractive({ useHandCursor: true });
@@ -471,7 +502,7 @@ export class BattleScene extends Phaser.Scene {
       this.clearStatusTooltip();
       this.statusTooltipTimer = this.time.delayedCall(520, () => {
         this.statusTooltipTimer = undefined;
-        this.showStatusTooltip(x, y, width, lines);
+        this.showStatusTooltip(x, y, width, lines, overflowLabel);
       });
     };
 
@@ -482,9 +513,15 @@ export class BattleScene extends Phaser.Scene {
     hitArea.on('pointerupoutside', () => this.clearStatusTooltip());
   }
 
-  private showStatusTooltip(x: number, y: number, width: number, lines: string[]): void {
+  private showStatusTooltip(
+    x: number,
+    y: number,
+    width: number,
+    lines: string[],
+    overflowLabel: string,
+  ): void {
     this.clearStatusTooltip();
-    const visibleLines = lines.length > 8 ? [...lines.slice(0, 7), `외 ${lines.length - 7}개 상태이상`] : lines;
+    const visibleLines = lines.length > 8 ? [...lines.slice(0, 7), `외 ${lines.length - 7}개 ${overflowLabel}`] : lines;
     const tooltipWidth = Math.min(420, Math.max(260, width + 52));
     const lineHeight = visibleLines.length > 5 ? 17 : 19;
     const tooltipHeight = 18 + visibleLines.length * lineHeight;

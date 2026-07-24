@@ -12,4 +12,10 @@ describe('StoryScene flow', () => {
     expect(storySceneSource).toContain("this.scene.start('DisclaimerScene')");
     expect(storySceneSource).not.toContain("this.scene.start('GameGuideScene')");
   });
+
+  it('supports Enter to advance and keyboard selection of the skip action', () => {
+    expect(storySceneSource).toContain("this.input.keyboard?.on('keydown', this.handleKeyboardDown)");
+    expect(storySceneSource).toContain("command === 'confirm'");
+    expect(storySceneSource).toContain("this.keyboardTarget === 'skip'");
+  });
 });

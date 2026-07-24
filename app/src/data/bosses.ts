@@ -19,7 +19,7 @@ const BOSS_MOVES: BossData['movePool'] = BOSS_ATTACK_MOVE_IDS;
 // v2 테스트 결과 공격력 136은 초반부터 과도해, 기술 위력은 유지하고 공격력만 절반으로 되돌린다.
 // 방어 8은 플레이어 화력을 방어 6 대비 25% 낮춰 보스 전투를 길게 만든다.
 export const BOSS_COMBAT_STATS = {
-  attack: 68,
+  attack: 30,
   defense: 8,
 } as const;
 

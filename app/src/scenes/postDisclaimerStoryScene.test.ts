@@ -10,5 +10,7 @@ describe('PostDisclaimerStoryScene flow', () => {
     expect(postDisclaimerStorySceneSource).toContain('APP_HEIGHT - 122');
     expect(postDisclaimerStorySceneSource).toContain("'... 일어나세요..!'");
     expect(postDisclaimerStorySceneSource).toContain("this.scene.start('GameGuideScene')");
+    expect(postDisclaimerStorySceneSource).toContain("this.input.keyboard?.on('keydown'");
+    expect(postDisclaimerStorySceneSource).toContain("command === 'confirm'");
   });
 });

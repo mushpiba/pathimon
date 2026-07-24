@@ -54,6 +54,7 @@ function cloneMonster(monster: RuntimeMonster): RuntimeMonster {
     effects: monster.effects.map((effect) => ({ ...effect })),
     statusConditions: monster.statusConditions ? { ...monster.statusConditions } : undefined,
     symptoms: monster.symptoms ? [...monster.symptoms] : undefined,
+    symptomAttributions: monster.symptomAttributions?.map((attribution) => ({ ...attribution })),
     usedSignatureMoveIds: monster.usedSignatureMoveIds ? [...monster.usedSignatureMoveIds] : undefined,
   };
 }
@@ -136,6 +137,7 @@ function clearBattleOnlyState(monster: RuntimeMonster): RuntimeMonster {
     effects: [],
     statusConditions: {},
     symptoms: [],
+    symptomAttributions: [],
     stunned: false,
     fainted: monster.hp <= 0,
     usedSignatureMoveIds: [],
@@ -233,12 +235,21 @@ function statusDamageLog(actor: RuntimeMonster, actorDamage: number, enemy: Runt
   return damagedNames.map((name) => `${name}은 상태이상에 의해 피해를 받고 있다.`).join('\n');
 }
 
-function appendSymptom(monster: RuntimeMonster, symptom?: string): void {
+function appendSymptom(monster: RuntimeMonster, symptom: string | undefined, sourceName: string): void {
   if (!symptom) {
     return;
   }
 
   monster.symptoms = [...(monster.symptoms ?? []), symptom];
+  const alreadyAttributed = monster.symptomAttributions?.some(
+    (attribution) => attribution.symptom === symptom && attribution.sourceName === sourceName,
+  );
+  if (!alreadyAttributed) {
+    monster.symptomAttributions = [
+      ...(monster.symptomAttributions ?? []),
+      { symptom, sourceName },
+    ];
+  }
 }
 
 function isSignatureMoveId(moveId: MoveId): boolean {
@@ -393,7 +404,7 @@ function resolveHumanMove(
 
   markDamage(actor, enemyResult.damage);
   applyEffects(enemy, actor, resolvedMove.effects);
-  appendSymptom(actor, resolvedMove.symptom);
+  appendSymptom(actor, resolvedMove.symptom, enemy.name);
   advanceStagedMove(enemy, enemyMove);
   applyAttackTriggeredStatusDamage(enemy);
 
@@ -474,7 +485,7 @@ function resolveEnemyTurn(
   const enemyResult = calculateDamage(enemy, actor, resolvedMove, variance, undefined, rollsCriticalHit(criticalRandom()));
   markDamage(actor, enemyResult.damage);
   applyEffects(enemy, actor, resolvedMove.effects);
-  appendSymptom(actor, resolvedMove.symptom);
+  appendSymptom(actor, resolvedMove.symptom, enemy.name);
   advanceStagedMove(enemy, enemyMove);
   applyAttackTriggeredStatusDamage(enemy);
   return {
@@ -607,7 +618,7 @@ export function resolvePlayerMove(
     : undefined;
   markDamage(enemy, result.damage);
   applyEffects(actor, enemy, resolvedMove.effects);
-  appendSymptom(enemy, resolvedMove.symptom);
+  appendSymptom(enemy, resolvedMove.symptom, actor.name);
   advanceStagedMove(actor, move);
   applyAttackTriggeredStatusDamage(actor);
   const learningDetail = playerMoveLearningDetail(nextState, resolvedMove, result);

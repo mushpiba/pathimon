@@ -520,6 +520,22 @@ describe('battle engine', () => {
     expect(result.party[0].effects).toContainEqual({ kind: 'invuln', turns: 2 });
   });
 
+  it('records the pathimon that inflicted each symptom without duplicate attribution', () => {
+    const battle = createBattleState({
+      party: [createMonster({ name: '콜레라비', moveset: ['cholera_toxin'] })],
+      enemy: createMonster({ hp: 999, maxHp: 999, moveset: ['coagulase'], symptoms: [] }),
+      encounterKind: 'trainer',
+    });
+
+    const first = resolvePlayerMove(battle, 'cholera_toxin', 1, 0, 0);
+    const second = resolvePlayerMove(first, 'cholera_toxin', 1, 0, 0);
+
+    expect(second.enemy?.symptoms).toEqual(['쌀뜨물 설사', '쌀뜨물 설사']);
+    expect(second.enemy?.symptomAttributions).toEqual([
+      { symptom: '쌀뜨물 설사', sourceName: '콜레라비' },
+    ]);
+  });
+
   it('clears battle-only pathimon state after winning a battle', () => {
     const battle = createBattleState({
       party: [

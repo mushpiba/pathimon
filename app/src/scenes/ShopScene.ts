@@ -17,15 +17,23 @@ import type { RunState, ShopItem } from '../types/game';
 import { APP_WIDTH, APP_HEIGHT, COLORS } from '../game/constants';
 import { destroySceneChildren } from '../ui/sceneCleanup';
 import { addBoxLabel, addLabel, drawPanel } from '../ui/draw';
+import { keyboardCommand } from '../ui/keyboard';
 
 interface ShopSceneData {
   state?: RunState;
+}
+
+interface ShopKeyboardButton {
+  disabled: boolean;
+  onClick: () => void;
 }
 
 export class ShopScene extends Phaser.Scene {
   private state!: RunState;
   private note = '';
   private selectedTargetItem?: ShopItem;
+  private keyboardButtons: ShopKeyboardButton[] = [];
+  private keyboardCursor = 0;
 
   constructor() {
     super('ShopScene');
@@ -52,12 +60,18 @@ export class ShopScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => destroySceneChildren(this));
+    this.keyboardCursor = 0;
+    this.input.keyboard?.on('keydown', this.handleKeyboardDown);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off('keydown', this.handleKeyboardDown);
+      destroySceneChildren(this);
+    });
     this.render();
   }
 
   private render(): void {
     destroySceneChildren(this);
+    this.keyboardButtons = [];
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, COLORS.ink).setOrigin(0);
 
     drawPanel(this, 48, 46, 928, 476);
@@ -166,6 +180,8 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private drawPartySelection(item: ShopItem): void {
+    this.keyboardButtons = [];
+    this.keyboardCursor = 0;
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, 0x000000, 0.58).setOrigin(0).setInteractive();
     drawPanel(this, 210, 94, 604, 430);
     addLabel(this, 246, 126, item.name, 25);
@@ -227,8 +243,11 @@ export class ShopScene extends Phaser.Scene {
     onClick: () => void,
     disabled = false,
   ): void {
+    const keyboardIndex = this.keyboardButtons.length;
+    this.keyboardButtons.push({ disabled, onClick });
+    const focused = keyboardIndex === this.keyboardCursor;
     const rect = this.add.rectangle(x, y, width, height, disabled ? COLORS.ink : COLORS.panelDark).setOrigin(0);
-    rect.setStrokeStyle(2, disabled ? COLORS.panel : COLORS.line);
+    rect.setStrokeStyle(focused ? 4 : 2, focused ? 0x72d6ff : disabled ? COLORS.panel : COLORS.line);
 
     if (!disabled) {
       rect.setInteractive({ useHandCursor: true });
@@ -250,4 +269,32 @@ export class ShopScene extends Phaser.Scene {
     })
       .setAlpha(disabled ? 0.55 : 1);
   }
+
+  private handleKeyboardDown = (event: KeyboardEvent): void => {
+    const command = keyboardCommand(event.key);
+    if (!command || this.keyboardButtons.length === 0) return;
+    event.preventDefault();
+
+    if (command === 'up' || command === 'left') {
+      this.keyboardCursor = (this.keyboardCursor - 1 + this.keyboardButtons.length) % this.keyboardButtons.length;
+      this.render();
+      return;
+    }
+    if (command === 'down' || command === 'right') {
+      this.keyboardCursor = (this.keyboardCursor + 1) % this.keyboardButtons.length;
+      this.render();
+      return;
+    }
+    if (command === 'cancel' && this.selectedTargetItem) {
+      this.selectedTargetItem = undefined;
+      this.note = '선택을 취소했습니다.';
+      this.keyboardCursor = 0;
+      this.render();
+      return;
+    }
+    if (command === 'confirm') {
+      const button = this.keyboardButtons[this.keyboardCursor];
+      if (button && !button.disabled) button.onClick();
+    }
+  };
 }

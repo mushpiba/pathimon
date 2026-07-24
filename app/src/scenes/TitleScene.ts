@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { createBossRosterIds } from '../data/bosses';
 import { APP_WIDTH, APP_HEIGHT, COLORS } from '../game/constants';
 import { addLabel } from '../ui/draw';
+import { keyboardCommand } from '../ui/keyboard';
 import { titleLogoStyle, titleScreenContent } from '../ui/titleUi';
 import type { TitleLogoChunk, TitleLogoDecoration, TitleLogoStyle, TitleScreenContent } from '../ui/titleUi';
 
@@ -59,7 +60,19 @@ export class TitleScene extends Phaser.Scene {
     startButton.on('pointerover', () => startButton.setFillStyle(0x72d6ff));
     startButton.on('pointerout', () => startButton.setFillStyle(COLORS.line));
     startButton.on('pointerdown', () => this.scene.start('StoryScene'));
+    this.input.keyboard?.on('keydown', this.handleKeyboardDown);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off('keydown', this.handleKeyboardDown);
+    });
   }
+
+  private handleKeyboardDown = (event: KeyboardEvent): void => {
+    const command = keyboardCommand(event.key);
+    if (command === 'confirm') {
+      event.preventDefault();
+      this.scene.start('StoryScene');
+    }
+  };
 
   private getContent(): TitleScreenContent {
     if (!this.content) {

@@ -22,6 +22,7 @@ export const ABILITIES: Record<AbilityId, AbilityData> = {
   epithelial_barrier: {
     id: 'epithelial_barrier',
     name: '상피장벽',
+    description: '확산·용해 기술 피해를 0.5배로 줄입니다.',
     resistTag: {
       pathway: {
         skin: 0.5,
@@ -32,6 +33,7 @@ export const ABILITIES: Record<AbilityId, AbilityData> = {
   mucociliary: {
     id: 'mucociliary',
     name: '점액섬모',
+    description: '확산·용해 기술 피해를 0.5배로 줄입니다.',
     resistTag: {
       pathway: {
         respiratory: 0.5,
@@ -41,6 +43,7 @@ export const ABILITIES: Record<AbilityId, AbilityData> = {
   gastric_acid: {
     id: 'gastric_acid',
     name: '위산',
+    description: '확산·용해·독소 기술 피해를 0.5배로 줄입니다.',
     resistTag: {
       pathway: {
         gut: 0.5,
@@ -50,16 +53,25 @@ export const ABILITIES: Record<AbilityId, AbilityData> = {
   microbiota_defense: {
     id: 'microbiota_defense',
     name: '정상균총',
+    description: '확산·용해 기술 피해를 0.5배로 줄입니다.',
     resistTag: {
       reservoir: {
         microbiota: 0.5,
       },
     },
   },
-  iron_limitation: { id: 'iron_limitation', name: '철제한' },
-  antitoxin: { id: 'antitoxin', name: '항독소' },
-  receptor_defect: { id: 'receptor_defect', name: '수용체결핍' },
-  immune_regulation: { id: 'immune_regulation', name: '면역조절' },
+  iron_limitation: { id: 'iron_limitation', name: '철제한', description: '용해 기술 피해를 0.5배로 줄입니다.' },
+  antitoxin: { id: 'antitoxin', name: '항독소', description: '독소 기술 피해를 무효화합니다.' },
+  receptor_defect: {
+    id: 'receptor_defect',
+    name: '수용체결핍',
+    description: '용해·독소·특수 기술 피해를 0.5배로 줄입니다.',
+  },
+  immune_regulation: {
+    id: 'immune_regulation',
+    name: '면역조절',
+    description: '면역매개 기술 피해를 0.5배로 줄입니다.',
+  },
   mask: {
     id: 'mask',
     name: '점액섬모',

@@ -20,6 +20,7 @@ import {
   chooseBattleBgm,
   clampProfileMemoScroll,
   commandViewLines,
+  defenseTraitDetailLines,
   effectLabels,
   enemyIntentText,
   battleDexSummary,
@@ -44,6 +45,7 @@ import {
   resolveMoveSelectionPress,
   statusConditionDetailLines,
   statusProfileMemoLines,
+  symptomDetailLines,
   symptomSummary,
   statusSummary,
   shouldPreserveBattleBgm,
@@ -487,6 +489,39 @@ describe('battle UI helpers', () => {
       '면역 이상(3): 방어 특성 무력화 없음 (4스택마다 1개)',
       '시력 이상(3): 명중률 37.5% 감소',
       '통증(2): 방어력 10% 감소',
+    ]);
+  });
+
+  it('builds boss defense trait descriptions for hover and long-press tooltips', () => {
+    const boss = createMonster({
+      ability: 'epithelial_barrier',
+      abilities: ['epithelial_barrier', 'antitoxin'],
+      isBoss: true,
+      isTrainer: true,
+    });
+
+    expect(defenseTraitDetailLines(boss)).toEqual([
+      '상피장벽: 확산·용해 기술 피해를 0.5배로 줄입니다.',
+      '항독소: 독소 기술 피해를 무효화합니다.',
+    ]);
+  });
+
+  it('shows each symptom source once in the boss symptom tooltip', () => {
+    const boss = createMonster({
+      isBoss: true,
+      isTrainer: true,
+      symptoms: ['기침', '기침', '발열'],
+      symptomAttributions: [
+        { symptom: '기침', sourceName: '탄저록스' },
+        { symptom: '기침', sourceName: '탄저록스' },
+        { symptom: '기침', sourceName: '띠포진' },
+        { symptom: '발열', sourceName: '세레우톡스' },
+      ],
+    });
+
+    expect(symptomDetailLines(boss)).toEqual([
+      '기침(2): 탄저록스, 띠포진이 부여',
+      '발열: 세레우톡스가 부여',
     ]);
   });
 

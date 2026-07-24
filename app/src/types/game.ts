@@ -181,6 +181,7 @@ export interface MoveStageData {
 export interface AbilityData {
   id: AbilityId;
   name: string;
+  description?: string;
   resistTag?: Partial<Record<TagAxis, Partial<Record<TagValue, number>>>>;
 }
 
@@ -300,8 +301,14 @@ export interface RuntimeMonster {
   isTrainer?: boolean;
   assetPath?: string;
   symptoms?: string[];
+  symptomAttributions?: SymptomAttribution[];
   signatureUnlocked?: boolean;
   usedSignatureMoveIds?: MoveId[];
+}
+
+export interface SymptomAttribution {
+  symptom: string;
+  sourceName: string;
 }
 
 export type RunMode = 'learning' | 'challenge';

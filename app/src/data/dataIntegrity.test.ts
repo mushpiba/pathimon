@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { ABILITIES } from './abilities';
 import { BOSSES } from './bosses';
+import { BOSS_ATTACK_MOVE_IDS } from './bossAttackMatchups';
 import { EFFECTIVENESS } from './effectiveness';
 import { MONSTERS, STARTER_ID, TOTAL_FLOORS } from './monsters';
 import { TRAINERS } from './trainers';
@@ -305,7 +306,7 @@ describe('Pathimon data', () => {
 
     expect(boss.maxHp).toBe(BOSSES[0].maxHp * 104);
     expect(boss.hp).toBe(BOSSES[0].maxHp * 104);
-    expect(boss.attack).toBe(68);
+    expect(boss.attack).toBe(30);
   });
 
   it('starts boss encounters without pre-existing symptoms', () => {
@@ -323,6 +324,19 @@ describe('Pathimon data', () => {
     expect(trainer.hp).toBe(Math.round(boss.maxHp / 4));
     expect(trainer.attack).toBe(boss.attack);
     expect(trainer.defense).toBe(boss.defense);
+  });
+
+  // 보스·트레이너는 전체 기술 풀을 그대로 들고, 매 턴 chooseBossMove가 ×4/×2/×1 그룹에서 1/3씩 고른다.
+  // 프리셋 4개 방식은 폐기했다 — 프리셋이 특정 대상의 ×4를 안 담으면 분포가 깨졌다.
+  it('gives bosses and trainers the entire attack pool, not a preset of four', () => {
+    const boss = createBossInstance(0, 10);
+    const trainer = createTrainerInstance(0);
+
+    expect(boss.moveset).toEqual(BOSS_ATTACK_MOVE_IDS);
+    expect(trainer.moveset).toEqual(BOSS_ATTACK_MOVE_IDS);
+    // 모든 트레이너가 보스와 동일한 풀을 공유한다(테마 코어 폐기).
+    for (const t of TRAINERS) expect(t.movePool).toEqual(BOSS_ATTACK_MOVE_IDS);
+    for (const b of BOSSES) expect(b.movePool).toEqual(BOSS_ATTACK_MOVE_IDS);
   });
 
   it('adds the v3 pathogen sheet fields to every representative pathogen', () => {

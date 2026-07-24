@@ -28,6 +28,7 @@ function cloneMonster(monster: RuntimeMonster): RuntimeMonster {
     effects: monster.effects.map((effect) => ({ ...effect })),
     statusConditions: monster.statusConditions ? { ...monster.statusConditions } : undefined,
     symptoms: monster.symptoms ? [...monster.symptoms] : undefined,
+    symptomAttributions: monster.symptomAttributions?.map((attribution) => ({ ...attribution })),
     usedSignatureMoveIds: monster.usedSignatureMoveIds ? [...monster.usedSignatureMoveIds] : undefined,
   };
 }
@@ -43,6 +44,7 @@ function healMonster(monster: RuntimeMonster): RuntimeMonster {
     effects: [],
     statusConditions: {},
     symptoms: [],
+    symptomAttributions: [],
     stunned: false,
     fainted: false,
     usedSignatureMoveIds: [],
@@ -81,6 +83,7 @@ function evolveMonster(monster: RuntimeMonster, evolvedData: MonsterData, mode: 
   evolved.effects = monster.effects.map((effect) => ({ ...effect }));
   evolved.statusConditions = monster.statusConditions ? { ...monster.statusConditions } : {};
   evolved.symptoms = monster.symptoms ? [...monster.symptoms] : [];
+  evolved.symptomAttributions = monster.symptomAttributions?.map((attribution) => ({ ...attribution })) ?? [];
   evolved.stunned = monster.stunned;
   evolved.fainted = monster.fainted || evolved.hp <= 0;
   evolved.signatureUnlocked = mode === 'learning';

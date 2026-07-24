@@ -2,9 +2,11 @@ import Phaser from 'phaser';
 import { playIntroBgm, queueIntroBgm } from '../audio/introBgm';
 import { APP_HEIGHT, APP_WIDTH } from '../game/constants';
 import { addLabel } from '../ui/draw';
+import { keyboardCommand } from '../ui/keyboard';
 
 export class PostDisclaimerStoryScene extends Phaser.Scene {
   private advancing = false;
+  private canAdvance = false;
 
   constructor() {
     super('PostDisclaimerStoryScene');
@@ -16,6 +18,7 @@ export class PostDisclaimerStoryScene extends Phaser.Scene {
 
   create(): void {
     this.advancing = false;
+    this.canAdvance = false;
     playIntroBgm(this);
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, 0x000000, 1).setOrigin(0);
 
@@ -31,9 +34,22 @@ export class PostDisclaimerStoryScene extends Phaser.Scene {
         duration: 260,
         ease: 'Sine.easeOut',
       });
+      this.canAdvance = true;
       this.input.once('pointerdown', this.advanceToGuide, this);
     });
+    this.input.keyboard?.on('keydown', this.handleKeyboardDown);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off('keydown', this.handleKeyboardDown);
+    });
   }
+
+  private handleKeyboardDown = (event: KeyboardEvent): void => {
+    const command = keyboardCommand(event.key);
+    if (command === 'confirm' && this.canAdvance) {
+      event.preventDefault();
+      this.advanceToGuide();
+    }
+  };
 
   private advanceToGuide(): void {
     if (this.advancing) {

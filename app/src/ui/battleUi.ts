@@ -903,7 +903,12 @@ export function defenseTraitSummary(monster: RuntimeMonster): string {
   return abilities.length > 0 ? abilities.map((ability) => ABILITIES[ability].name).join(' / ') : '없음';
 }
 
-function countedLabels(values: string[]): string[] {
+interface CountedLabel {
+  count: number;
+  label: string;
+}
+
+function countedLabelEntries(values: string[]): CountedLabel[] {
   const counts = new Map<string, number>();
   const orderedLabels: string[] = [];
 
@@ -917,9 +922,41 @@ function countedLabels(values: string[]): string[] {
     counts.set(label, (counts.get(label) ?? 0) + (Number.isFinite(count) ? count : 1));
   });
 
-  return orderedLabels.map((label) => {
-    const count = counts.get(label) ?? 1;
-    return count > 1 ? `${label}(${count})` : label;
+  return orderedLabels.map((label) => ({ label, count: counts.get(label) ?? 1 }));
+}
+
+function countedLabels(values: string[]): string[] {
+  return countedLabelEntries(values).map(({ label, count }) => (count > 1 ? `${label}(${count})` : label));
+}
+
+function subjectParticle(value: string): '가' | '이' {
+  const lastCodePoint = value.codePointAt(value.length - 1);
+  if (lastCodePoint === undefined || lastCodePoint < 0xac00 || lastCodePoint > 0xd7a3) return '가';
+  return (lastCodePoint - 0xac00) % 28 === 0 ? '가' : '이';
+}
+
+export function defenseTraitDetailLines(monster: RuntimeMonster): string[] {
+  const abilities = (monster.abilities?.length ? monster.abilities : [monster.ability])
+    .filter((ability) => ability !== 'none');
+  return abilities.map((ability) => {
+    const data = ABILITIES[ability];
+    return `${data.name}: ${data.description ?? '세부 효과가 아직 정리되지 않았습니다.'}`;
+  });
+}
+
+export function symptomDetailLines(monster: RuntimeMonster): string[] {
+  return countedLabelEntries(monster.symptoms ?? []).map(({ label, count }) => {
+    const sources = [...new Set(
+      (monster.symptomAttributions ?? [])
+        .filter((attribution) => attribution.symptom === label)
+        .map((attribution) => attribution.sourceName.trim())
+        .filter(Boolean),
+    )];
+    const countedLabel = count > 1 ? `${label}(${count})` : label;
+    const sourceText = sources.join(', ');
+    return sources.length > 0
+      ? `${countedLabel}: ${sourceText}${subjectParticle(sourceText)} 부여`
+      : `${countedLabel}: 부여자 기록 없음`;
   });
 }
 

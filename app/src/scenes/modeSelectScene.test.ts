@@ -13,4 +13,10 @@ describe('ModeSelectScene copy', () => {
     expect(modeSelectSceneSource).toContain('queueIntroBgm(this)');
     expect(modeSelectSceneSource).toContain('playIntroBgm(this)');
   });
+
+  it('supports arrow navigation and Enter selection', () => {
+    expect(modeSelectSceneSource).toContain("this.input.keyboard?.on('keydown', this.handleKeyboardDown)");
+    expect(modeSelectSceneSource).toContain("command === 'confirm'");
+    expect(modeSelectSceneSource).toContain('this.optionCursor');
+  });
 });

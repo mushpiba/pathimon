@@ -1,32 +1,15 @@
 import type { TrainerData } from '../types/game';
+import { BOSS_ATTACK_MOVE_IDS } from './bossAttackMatchups';
 import { TRAINER_CHARACTER_ASSETS, assetIdFromPath, characterAssetPathForId } from './characterAssets';
 
 const HOST_LABEL = '일반 사람 (Human Host)';
-const PHAGO_CORE: TrainerData['movePool'] = ['m_phago', 'm_opsonin', 'm_antibody', 'm_th2'];
-const VIRAL_CORE: TrainerData['movePool'] = ['m_interferon', 'm_ctl', 'm_th1', 'm_antibody'];
-const COMPLEMENT_CORE: TrainerData['movePool'] = ['m_complement', 'm_phago', 'm_opsonin', 'm_th2'];
-const ELITE_CORE: TrainerData['movePool'] = ['m_antibody', 'm_complement', 'm_th1', 'm_interferon'];
-const INNATE_CORE: TrainerData['movePool'] = ['m_oxidative_burst', 'm_phago', 'm_complement', 'm_th1'];
-const DRUG_CORE: TrainerData['movePool'] = ['m_cell_wall_inhibitor', 'm_protein_synthesis_inhibitor', 'm_targeted_antibacterial', 'm_antitoxin_therapy', 'm_antiviral_replication', 'm_rehydration', 'm_surgery_drainage'];
-const PARASITE_CORE: TrainerData['movePool'] = ['m_th2', 'm_anthelmintic', 'm_rehydration', 'm_surgery_drainage'];
-const FUNGAL_CORE: TrainerData['movePool'] = ['m_antifungal_membrane', 'm_antiprotozoal', 'm_th1', 'm_oxidative_burst'];
 
-// 보스와 동일하게 맞춘다. 차이는 HP뿐이다(state/factory.ts의 TRAINER_BOSS_HP_RATIO).
+// 트레이너는 보스와 **완전히 같은 기술 풀**(BOSS_ATTACK_MOVE_IDS)을 쓴다. 차이는 HP와 방어특성(트레이너는 없음)뿐이다(state/factory.ts).
+// 과거의 테마별 코어(PHAGO_CORE 등)는 폐기했다 — 적은 매 턴 전체 풀에서 ×4/×2/×1을 1/3씩 뽑는다(battle/bossMatchup.ts chooseBossMove).
 export const TRAINER_COMBAT_STATS = {
-  attack: 68,
+  attack: 30,
   defense: 8,
 } as const;
-
-const TRAINER_MOVE_POOLS: TrainerData['movePool'][] = [
-  PHAGO_CORE,
-  VIRAL_CORE,
-  COMPLEMENT_CORE,
-  ELITE_CORE,
-  INNATE_CORE,
-  DRUG_CORE,
-  PARASITE_CORE,
-  FUNGAL_CORE,
-];
 
 function trainerAssetPath(id: string, index = 0): string {
   return characterAssetPathForId(TRAINER_CHARACTER_ASSETS, id)
@@ -53,7 +36,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 72,
     attack: 11,
     defense: 4,
-    movePool: PHAGO_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'doctor_f',
@@ -65,7 +48,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 74,
     attack: 11,
     defense: 4,
-    movePool: ELITE_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'scientist_f',
@@ -77,7 +60,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 68,
     attack: 10,
     defense: 4,
-    movePool: VIRAL_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'scientist_m',
@@ -89,7 +72,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 70,
     attack: 10,
     defense: 4,
-    movePool: VIRAL_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'ace_trainer_m',
@@ -101,7 +84,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 76,
     attack: 12,
     defense: 5,
-    movePool: COMPLEMENT_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'ace_trainer_f',
@@ -113,7 +96,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 76,
     attack: 12,
     defense: 5,
-    movePool: ELITE_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'veteran_f',
@@ -125,7 +108,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 82,
     attack: 12,
     defense: 5,
-    movePool: ELITE_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'veteran_m',
@@ -137,7 +120,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 84,
     attack: 12,
     defense: 5,
-    movePool: COMPLEMENT_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'ranger_f',
@@ -149,7 +132,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 73,
     attack: 11,
     defense: 4,
-    movePool: PHAGO_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'ranger_m',
@@ -161,7 +144,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 75,
     attack: 11,
     defense: 4,
-    movePool: COMPLEMENT_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'psychic_f',
@@ -173,7 +156,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 69,
     attack: 12,
     defense: 3,
-    movePool: VIRAL_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'psychic_m',
@@ -185,7 +168,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 69,
     attack: 12,
     defense: 3,
-    movePool: ELITE_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'clerk_f',
@@ -197,7 +180,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 66,
     attack: 9,
     defense: 4,
-    movePool: PHAGO_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'clerk_m',
@@ -209,7 +192,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 67,
     attack: 9,
     defense: 4,
-    movePool: COMPLEMENT_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'hiker',
@@ -221,7 +204,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 86,
     attack: 11,
     defense: 6,
-    movePool: PHAGO_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'backpacker_m',
@@ -233,7 +216,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 71,
     attack: 10,
     defense: 5,
-    movePool: VIRAL_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'officer',
@@ -245,7 +228,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 78,
     attack: 11,
     defense: 5,
-    movePool: PHAGO_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'janitor',
@@ -257,7 +240,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 74,
     attack: 11,
     defense: 5,
-    movePool: INNATE_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'worker_m',
@@ -269,7 +252,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 82,
     attack: 11,
     defense: 6,
-    movePool: DRUG_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'worker_f',
@@ -281,7 +264,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 80,
     attack: 11,
     defense: 6,
-    movePool: FUNGAL_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'black_belt_m',
@@ -293,7 +276,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 83,
     attack: 12,
     defense: 5,
-    movePool: INNATE_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'black_belt_f',
@@ -305,7 +288,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 81,
     attack: 12,
     defense: 5,
-    movePool: PARASITE_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'biker',
@@ -317,7 +300,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 77,
     attack: 11,
     defense: 4,
-    movePool: DRUG_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'hex_maniac',
@@ -329,7 +312,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 72,
     attack: 12,
     defense: 4,
-    movePool: ELITE_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
   {
     id: 'depot_agent',
@@ -341,7 +324,7 @@ const RAW_TRAINERS: TrainerData[] = [
     maxHp: 79,
     attack: 11,
     defense: 5,
-    movePool: COMPLEMENT_CORE,
+    movePool: BOSS_ATTACK_MOVE_IDS,
   },
 ];
 
@@ -364,7 +347,7 @@ const EXTRA_TRAINERS: TrainerData[] = TRAINER_CHARACTER_ASSETS
     maxHp: 70 + (index % 5) * 3,
     attack: TRAINER_COMBAT_STATS.attack,
     defense: TRAINER_COMBAT_STATS.defense,
-    movePool: TRAINER_MOVE_POOLS[index % TRAINER_MOVE_POOLS.length],
+    movePool: BOSS_ATTACK_MOVE_IDS,
   }));
 
 export const TRAINERS: TrainerData[] = [...RAW_TRAINERS_WITH_ASSETS, ...EXTRA_TRAINERS].map((trainer) => ({

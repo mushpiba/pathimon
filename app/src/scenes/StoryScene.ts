@@ -2,12 +2,14 @@ import Phaser from 'phaser';
 import { APP_HEIGHT, APP_WIDTH, COLORS } from '../game/constants';
 import { addLabel, drawPanel } from '../ui/draw';
 import { destroySceneChildren } from '../ui/sceneCleanup';
+import { keyboardCommand } from '../ui/keyboard';
 import { storyPages } from '../ui/storyUi';
 
 type BgmPreloadSceneHandle = Phaser.Scene & { stopPathimonScreensaver?: () => void };
 
 export class StoryScene extends Phaser.Scene {
   private pageIndex = 0;
+  private keyboardTarget: 'advance' | 'skip' = 'advance';
 
   constructor() {
     super('StoryScene');
@@ -27,6 +29,11 @@ export class StoryScene extends Phaser.Scene {
     if (!this.registry.get('battleBgmPreloadStarted')) {
       this.scene.launch('BgmPreloadScene');
     }
+    this.keyboardTarget = 'advance';
+    this.input.keyboard?.on('keydown', this.handleKeyboardDown);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off('keydown', this.handleKeyboardDown);
+    });
     this.render();
   }
 
@@ -70,7 +77,7 @@ export class StoryScene extends Phaser.Scene {
 
   private createSkipButton(): void {
     const rect = this.add.rectangle(876, 24, 108, 38, COLORS.panelDark).setOrigin(0);
-    rect.setStrokeStyle(2, COLORS.line);
+    rect.setStrokeStyle(this.keyboardTarget === 'skip' ? 4 : 2, this.keyboardTarget === 'skip' ? 0x72d6ff : COLORS.line);
     rect.setInteractive({ useHandCursor: true });
     rect.on('pointerover', () => rect.setFillStyle(0x4a405d));
     rect.on('pointerout', () => rect.setFillStyle(COLORS.panelDark));
@@ -84,6 +91,34 @@ export class StoryScene extends Phaser.Scene {
       this.advancePage();
     }
   }
+
+  private handleKeyboardDown = (event: KeyboardEvent): void => {
+    const command = keyboardCommand(event.key);
+    if (!command) return;
+    event.preventDefault();
+
+    if (command === 'up' || command === 'left') {
+      this.keyboardTarget = 'skip';
+      this.render();
+      return;
+    }
+    if (command === 'down' || command === 'right') {
+      this.keyboardTarget = 'advance';
+      this.render();
+      return;
+    }
+    if (command === 'cancel') {
+      this.finishStory();
+      return;
+    }
+    if (command === 'confirm') {
+      if (this.keyboardTarget === 'skip') {
+        this.finishStory();
+      } else {
+        this.advancePage();
+      }
+    }
+  };
 
   private finishStory(): void {
     this.registry.set('introStoryComplete', true);

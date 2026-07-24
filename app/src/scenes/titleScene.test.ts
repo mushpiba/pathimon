@@ -15,4 +15,9 @@ describe('TitleScene rendering', () => {
     expect(titleSceneSource).toContain("this.scene.start('StoryScene')");
     expect(titleSceneSource).not.toContain("this.scene.start('DisclaimerScene')");
   });
+
+  it('starts the story with Enter as well as pointer input', () => {
+    expect(titleSceneSource).toContain("this.input.keyboard?.on('keydown'");
+    expect(titleSceneSource).toContain("command === 'confirm'");
+  });
 });

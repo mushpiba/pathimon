@@ -11,12 +11,15 @@ import {
   type ModeSelectOption,
 } from '../ui/modeSelectUi';
 import { destroySceneChildren } from '../ui/sceneCleanup';
+import { keyboardCommand } from '../ui/keyboard';
 
 const SELECTED_FILL = 0x4a405d;
 const ACTIVE_LINE = 0x72d6ff;
 
 export class ModeSelectScene extends Phaser.Scene {
   private choice: ModeSelectChoice = {};
+  private optionCursor = 0;
+  private starting = false;
 
   constructor() {
     super('ModeSelectScene');
@@ -28,7 +31,13 @@ export class ModeSelectScene extends Phaser.Scene {
 
   create(): void {
     this.choice = {};
+    this.optionCursor = 0;
+    this.starting = false;
     playIntroBgm(this);
+    this.input.keyboard?.on('keydown', this.handleKeyboardDown);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off('keydown', this.handleKeyboardDown);
+    });
     this.render();
   }
 
@@ -45,7 +54,7 @@ export class ModeSelectScene extends Phaser.Scene {
     modeSelectButtonOptions().forEach((option, index) => {
       const column = index % 2;
       const row = Math.floor(index / 2);
-      this.createSelectButton(152 + column * 400, 232 + row * 154, 320, 112, option);
+      this.createSelectButton(152 + column * 400, 232 + row * 154, 320, 112, option, index);
     });
 
     if (shouldStartRun(this.choice)) {
@@ -53,14 +62,25 @@ export class ModeSelectScene extends Phaser.Scene {
     }
   }
 
-  private createSelectButton(x: number, y: number, width: number, height: number, option: ModeSelectOption): void {
+  private createSelectButton(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    option: ModeSelectOption,
+    index: number,
+  ): void {
     const selected = this.isSelected(option);
     const rect = this.add.rectangle(x, y, width, height, selected ? SELECTED_FILL : COLORS.panelDark).setOrigin(0);
-    rect.setStrokeStyle(2, selected ? ACTIVE_LINE : COLORS.line);
+    const focused = index === this.optionCursor;
+    rect.setStrokeStyle(focused ? 4 : 2, selected || focused ? ACTIVE_LINE : COLORS.line);
     rect.setInteractive({ useHandCursor: true });
     rect.on('pointerover', () => rect.setFillStyle(SELECTED_FILL));
     rect.on('pointerout', () => rect.setFillStyle(selected ? SELECTED_FILL : COLORS.panelDark));
-    rect.on('pointerdown', () => this.handleOptionPress(option));
+    rect.on('pointerdown', () => {
+      this.optionCursor = index;
+      this.handleOptionPress(option);
+    });
 
     addLabel(this, x + 24, y + 18, option.label, 22).setWordWrapWidth(width - 48);
     option.lines.forEach((line, index) =>
@@ -71,15 +91,39 @@ export class ModeSelectScene extends Phaser.Scene {
   }
 
   private handleOptionPress(option: ModeSelectOption): void {
+    if (this.starting) return;
     this.choice = resolveModeSelectChoice(this.choice, option);
     this.render();
 
     if (shouldStartRun(this.choice)) {
+      this.starting = true;
       const mode: RunMode = this.choice.mode;
       const visualStyle: VisualStyle = this.choice.visualStyle;
       this.time.delayedCall(120, () => this.scene.start('StarterSelectScene', { mode, visualStyle }));
     }
   }
+
+  private handleKeyboardDown = (event: KeyboardEvent): void => {
+    if (this.starting) return;
+    const command = keyboardCommand(event.key);
+    if (!command) return;
+    event.preventDefault();
+
+    if (command === 'left' || command === 'right') {
+      this.optionCursor = this.optionCursor % 2 === 0 ? this.optionCursor + 1 : this.optionCursor - 1;
+      this.render();
+      return;
+    }
+    if (command === 'up' || command === 'down') {
+      this.optionCursor = (this.optionCursor + 2) % 4;
+      this.render();
+      return;
+    }
+    if (command === 'confirm') {
+      const option = modeSelectButtonOptions()[this.optionCursor];
+      if (option) this.handleOptionPress(option);
+    }
+  };
 
   private isSelected(option: ModeSelectOption): boolean {
     return option.kind === 'mode'

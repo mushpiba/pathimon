@@ -4,6 +4,7 @@ import { APP_HEIGHT, APP_WIDTH, COLORS } from '../game/constants';
 import { addBoxLabel, addLabel, drawPanel } from '../ui/draw';
 import { gameGuideContent, gameGuideLineLayout } from '../ui/gameGuideUi';
 import { destroySceneChildren } from '../ui/sceneCleanup';
+import { keyboardCommand } from '../ui/keyboard';
 
 export class GameGuideScene extends Phaser.Scene {
   constructor() {
@@ -16,8 +17,20 @@ export class GameGuideScene extends Phaser.Scene {
 
   create(): void {
     playIntroBgm(this);
+    this.input.keyboard?.on('keydown', this.handleKeyboardDown);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off('keydown', this.handleKeyboardDown);
+    });
     this.render();
   }
+
+  private handleKeyboardDown = (event: KeyboardEvent): void => {
+    const command = keyboardCommand(event.key);
+    if (command === 'confirm') {
+      event.preventDefault();
+      this.scene.start('ModeSelectScene');
+    }
+  };
 
   private render(): void {
     destroySceneChildren(this);

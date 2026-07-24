@@ -15,8 +15,8 @@ describe('scene cleanup lifecycle wiring', () => {
   });
 
   it('stages combat and status messages before returning to preparation', () => {
-    expect(battleSceneSource).toContain('const BATTLE_ACTION_HOLD_MS = 1000;');
-    expect(battleSceneSource).toContain('const BATTLE_STATUS_HOLD_MS = 500;');
+    expect(battleSceneSource).toContain('const BATTLE_ACTION_HOLD_MS = 2000;');
+    expect(battleSceneSource).toContain('const BATTLE_STATUS_HOLD_MS = 1000;');
     expect(battleSceneSource).toContain("type BattleMessageStage = 'preparation' | 'combat' | 'status';");
     expect(battleSceneSource).toMatch(/showCombatMessage\(\)[\s\S]*?delayedCall\(BATTLE_ACTION_HOLD_MS/);
     expect(battleSceneSource).toMatch(/showStatusMessage\(\)[\s\S]*?playStatusDamageCue/);
@@ -42,5 +42,11 @@ describe('scene cleanup lifecycle wiring', () => {
   it('shows the increasing maintenance refresh cost on the shop button', () => {
     expect(shopSceneSource).toContain('maintenanceRefreshCost');
     expect(shopSceneSource).toContain('새로고침 ₩');
+  });
+
+  it('supports arrow navigation and Enter confirmation in the shop', () => {
+    expect(shopSceneSource).toContain("this.input.keyboard?.on('keydown', this.handleKeyboardDown)");
+    expect(shopSceneSource).toContain("command === 'confirm'");
+    expect(shopSceneSource).toContain('this.keyboardButtons[this.keyboardCursor]');
   });
 });

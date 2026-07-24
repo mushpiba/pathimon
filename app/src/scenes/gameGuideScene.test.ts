@@ -6,4 +6,9 @@ describe('GameGuideScene audio', () => {
     expect(gameGuideSceneSource).toContain('queueIntroBgm(this)');
     expect(gameGuideSceneSource).toContain('playIntroBgm(this)');
   });
+
+  it('continues to mode selection with Enter', () => {
+    expect(gameGuideSceneSource).toContain("this.input.keyboard?.on('keydown'");
+    expect(gameGuideSceneSource).toContain("command === 'confirm'");
+  });
 });

@@ -1,4 +1,3 @@
-import { BOSS_ATTACK_MOVE_IDS } from '../data/bossAttackMatchups';
 import { MOVES } from '../data/moves';
 import type { CountermeasureProfile, MoveData, MoveId, RuntimeMonster } from '../types/game';
 
@@ -105,21 +104,4 @@ export function chooseEffectiveBossMove(
   random: () => number = Math.random,
 ): MoveId | undefined {
   return chooseByEffectivenessGroup(moveIds, profile, ['super', 'effective'], random);
-}
-
-export function selectBossMoveSet(
-  movePool: MoveId[] = BOSS_ATTACK_MOVE_IDS,
-  random: () => number = Math.random,
-  count = 4,
-): MoveId[] {
-  const remaining = movePool.filter((moveId) => MOVES[moveId]);
-  const selected: MoveId[] = [];
-
-  while (selected.length < count && remaining.length > 0) {
-    const index = randomIndex(remaining.length, random);
-    const [moveId] = remaining.splice(index, 1);
-    if (moveId) selected.push(moveId);
-  }
-
-  return selected;
 }
