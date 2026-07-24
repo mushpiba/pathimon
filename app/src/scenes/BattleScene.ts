@@ -880,7 +880,8 @@ export class BattleScene extends Phaser.Scene {
     } else if (enemy.isBoss) {
       addLabel(this, 238, 414, '보스 공격', 14).setAlpha(0.86);
       addLabel(this, 424, 414, '대상태그', 14).setAlpha(0.86);
-      this.drawBossMatchupRows(formatBossAttackMatchupRows(enemy), 238, 438, 586);
+      // 내 활성 패시몬 기준 효과 높은 순으로 정렬해 위협적인 처치(약)가 위로 오게 한다.
+      this.drawBossMatchupRows(formatBossAttackMatchupRows(enemy, this.state.party[this.state.activeIndex]), 238, 438, 586);
     }
 
     this.drawMenuButton(852, 488, 120, 34, '뒤로', () => {
@@ -898,7 +899,8 @@ export class BattleScene extends Phaser.Scene {
 
     rows.slice(0, 4).forEach((row, index) => {
       const rowY = y + index * 27;
-      addBoxLabel(this, x, rowY, `${row.attackName} · ${row.attackType}`, {
+      const multMark = row.multiplier && row.multiplier > 1 ? ` ×${row.multiplier}` : '';
+      addBoxLabel(this, x, rowY, `${row.attackName}${multMark} · ${row.attackType}`, {
         width: 170,
         height: 18,
         size: 12,

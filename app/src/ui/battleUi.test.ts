@@ -704,6 +704,19 @@ describe('battle UI helpers', () => {
     expect(rows[1].attackName).not.toContain('(백신)');
   });
 
+  it('sorts boss attacks by effectiveness vs the defender so effective drugs surface', () => {
+    const boss = createMonster({ isBoss: true, isTrainer: true, moveset: ['m_phago', 'm_antibody', 'm_cell_wall_inhibitor'] });
+    const defender = createMonster({ countermeasures: { direct: ['페니실린'], symptomTags: [] } });
+
+    const rows = formatBossAttackMatchupRows(boss, defender);
+
+    // 페니실린이 걸리는 세포벽억제제(×4)가 맨 위로.
+    expect(rows[0].attackName).toContain('세포벽');
+    expect(rows[0].multiplier).toBe(4);
+    // defender 없으면 정렬·배율 없음(하위 호환).
+    expect(formatBossAttackMatchupRows(boss)[0].multiplier).toBeUndefined();
+  });
+
   it('lets a prep move be used once per battle like a signature', () => {
     const fresh = createMonster({ moveset: ['spore_germination'] });
     expect(canUseBattleMove(fresh, 'spore_germination')).toBe(true);

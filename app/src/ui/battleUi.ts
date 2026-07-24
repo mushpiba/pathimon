@@ -11,6 +11,7 @@ import {
   statusConditionStacks,
 } from '../data/statusConditions';
 import { currentMoveData, currentMoveName } from '../battle/moveStages';
+import { bossMoveEffectiveness, createBossDefenseProfile } from '../battle/bossMatchup';
 import { interpolatePathimonName } from '../game/text';
 import { randomLearningPoint } from '../game/learning';
 import type { AbilityId, CapsuleId, EffectPrimitive, EncounterKind, MoveData, MoveId, MoveSlot, RunMode, RuntimeMonster, TagValue, VisualStyle } from '../types/game';
@@ -482,6 +483,7 @@ export interface BossAttackMatchupRow {
   attackName: string;
   attackType: string;
   targetTags: string;
+  multiplier?: number;
 }
 
 function labelEffectivenessTarget(target: AbilityId | TagValue): string {
@@ -562,16 +564,26 @@ function bossAttackDisplayName(move: MoveData, enemy: RuntimeMonster): string {
   return VACCINE_MOVE_IDS.has(move.id) ? `${name} (백신)` : name;
 }
 
-export function formatBossAttackMatchupRows(enemy: RuntimeMonster): BossAttackMatchupRow[] {
+// 적은 전체 기술 풀(면역+약물)을 들고 있어 순서대로 자르면 앞쪽 면역기술만 보인다.
+// defender(내 활성 패시몬)를 주면 그 패시몬에 대한 배율(×4/×2/×1)로 정렬해, 실제로 위협적인 처치(약)가 위로 온다.
+export function formatBossAttackMatchupRows(enemy: RuntimeMonster, defender?: RuntimeMonster): BossAttackMatchupRow[] {
   const moveIds = battleMoveSlots(enemy).filter((moveId): moveId is MoveId => Boolean(moveId));
-  return moveIds
+  const profile = defender ? createBossDefenseProfile(defender) : undefined;
+
+  const rows = moveIds
     .map((moveId) => MOVES[moveId])
     .filter((move): move is MoveData => Boolean(move))
     .map((move) => ({
       attackName: bossAttackDisplayName(move, enemy),
       attackType: ATTACK_TYPE_LABELS[move.type],
       targetTags: move.targetTags?.length ? move.targetTags.join(', ') : '없음',
+      multiplier: profile ? bossMoveEffectiveness(move, profile).multiplier : undefined,
     }));
+
+  if (profile) {
+    rows.sort((a, b) => (b.multiplier ?? 0) - (a.multiplier ?? 0));
+  }
+  return rows;
 }
 
 function hasFinalConsonant(text: string): boolean {
