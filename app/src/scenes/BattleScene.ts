@@ -703,14 +703,40 @@ export class BattleScene extends Phaser.Scene {
       .setAlpha(0.9);
     addBoxLabel(this, textX, panelY + 54, `${detail.power} · ${detail.accuracy}`, { width: textWidth, height: 17, size: 10, minSize: 8, maxLines: 1 })
       .setAlpha(0.9);
-    addBoxLabel(this, textX, panelY + 74, detail.effect, { width: textWidth, height: 30, size: 10, minSize: 8, maxLines: 2 })
+    const effectLabel = addBoxLabel(this, textX, panelY + 74, detail.effect, {
+      width: textWidth,
+      height: 30,
+      size: 10,
+      minSize: 8,
+      maxLines: 2,
+    })
       .setAlpha(0.92);
-    addBoxLabel(this, textX, panelY + 105, detail.conditions, { width: textWidth, height: 18, size: 10, minSize: 8, maxLines: 1 })
+    const conditionY = panelY + 74 + Math.min(30, effectLabel.height) + 2;
+    const conditionLabel = addBoxLabel(this, textX, conditionY, detail.conditions, {
+      width: textWidth,
+      height: 18,
+      size: 10,
+      minSize: 8,
+      maxLines: 1,
+    })
       .setAlpha(0.92);
-    addBoxLabel(this, textX, panelY + 126, detail.description, { width: textWidth, height: showLearnText ? 28 : 42, size: 10, minSize: 8, maxLines: showLearnText ? 2 : 3 })
+    const descriptionY = conditionY + conditionLabel.height + 10;
+    addBoxLabel(this, textX, descriptionY, detail.description, {
+      width: textWidth,
+      height: showLearnText ? 28 : panelY + panelHeight - descriptionY - 8,
+      size: 10,
+      minSize: 8,
+      maxLines: showLearnText ? 2 : 3,
+    })
       .setAlpha(0.96);
     if (showLearnText) {
-      addBoxLabel(this, textX, panelY + 154, detail.learnText, { width: textWidth, height: 20, size: 9, minSize: 8, maxLines: 1 })
+      addBoxLabel(this, textX, descriptionY + 28, detail.learnText, {
+        width: textWidth,
+        height: panelY + panelHeight - descriptionY - 30,
+        size: 9,
+        minSize: 8,
+        maxLines: 1,
+      })
         .setAlpha(0.9);
     }
   }

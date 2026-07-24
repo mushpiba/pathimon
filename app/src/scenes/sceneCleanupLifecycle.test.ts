@@ -24,6 +24,17 @@ describe('scene cleanup lifecycle wiring', () => {
     expect(battleSceneSource).toMatch(/pointerdown[\s\S]{0,120}advanceBattleMessage/);
   });
 
+  it('places status immediately after effects and leaves a gap before the move description', () => {
+    expect(battleSceneSource).toMatch(
+      /const effectLabel = addBoxLabel[\s\S]*?detail\.effect[\s\S]*?const conditionY = panelY \+ 74 \+ Math\.min\(30, effectLabel\.height\) \+ 2;/,
+    );
+    expect(battleSceneSource).toMatch(
+      /const conditionLabel = addBoxLabel[\s\S]*?detail\.conditions[\s\S]*?const descriptionY = conditionY \+ conditionLabel\.height \+ 10;/,
+    );
+    expect(battleSceneSource.indexOf('detail.effect')).toBeLessThan(battleSceneSource.indexOf('detail.conditions'));
+    expect(battleSceneSource.indexOf('detail.conditions')).toBeLessThan(battleSceneSource.indexOf('detail.description'));
+  });
+
   it('keeps ShopScene cleanup on redraw and shutdown', () => {
     assertSceneCleanupLifecycle(shopSceneSource);
   });
