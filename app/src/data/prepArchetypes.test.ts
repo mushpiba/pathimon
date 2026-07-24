@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MonsterData, TagValue } from '../types/game';
-import { assignPrepArchetype, PREP_ARCHETYPE_EFFECTS } from './prepArchetypes';
+import { assignPrepArchetype, PREP_ARCHETYPE_EFFECTS, PREP_ARCHETYPE_EFFECT_TEXT } from './prepArchetypes';
 import { NOTE_MONSTERS } from './pathimonNoteData';
 import { MOVES } from './moves';
 
@@ -70,5 +70,13 @@ describe('prep archetype assignment', () => {
     if (ascaris?.prep) {
       expect(MOVES[ascaris.prep].effects?.some((e) => e.kind === 'dot')).toBe(true);
     }
+  });
+
+  it('exposes the archetype merit as prep effectText (kept alongside the note flavor name)', () => {
+    const anthraxPrep = MOVES[NOTE_MONSTERS.find((m) => m.id === 'anthrax')!.prep!];
+    expect(anthraxPrep.effectText).toBe(PREP_ARCHETYPE_EFFECT_TEXT.toxin_forge);
+    expect(anthraxPrep.outcomes?.every((o) => o.effectText === PREP_ARCHETYPE_EFFECT_TEXT.toxin_forge)).toBe(true);
+    // 이름·서술(감염경로)은 그대로.
+    expect(anthraxPrep.name).toBe('아포 발아');
   });
 });

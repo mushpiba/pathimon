@@ -57,7 +57,19 @@ export const PREP_ARCHETYPE_EFFECTS: Record<PrepArchetypeId, EffectPrimitive[]> 
   ],
 };
 
-export const PARASITE_CATEGORIES = ['연충', '선충', '흡충', '조충', '기생충'];
+// 준비기 메리트를 이동 정보창에 노출하는 요약 문구(effectText). 이름/서술(감염경로)은 그대로 두고 이것만 얹는다.
+export const PREP_ARCHETYPE_EFFECT_TEXT: Record<PrepArchetypeId, string> = {
+  toxin_forge: '다음 공격의 상태이상 2배 + 공격력 상승 (전투당 1회)',
+  dormant_burst: '1턴 무적 후 다음 공격 강화 (전투당 1회)',
+  latent_recovery: '체력 최대 회복 + 상대 명중 저하 (전투당 1회)',
+  barrier: '방어력 상승 + 2턴간 받는 피해 감소 (전투당 1회)',
+  proliferation: '공격력 크게 상승 (전투당 1회)',
+  large_resist: '방어력 상승 + 상대 지속 피해 (전투당 1회)',
+  invasive: '공격력·방어력 상승 (전투당 1회)',
+  basic: '공격력 상승 (전투당 1회)',
+};
+
+const PARASITE_CATEGORIES = ['연충', '선충', '흡충', '조충', '기생충'];
 const INVASIVE_LOCATIONS = new Set([
   'intracellular',
   'intracellular_cytosol',

@@ -1,6 +1,6 @@
 import firstWaveSelections from './pathimon-notes/drafts/NAME_SELECTIONS.json';
 import { buildPathimonFromNote } from './pathimonNoteParser';
-import { assignPrepArchetype, PREP_ARCHETYPE_EFFECTS, TOXIN_NOTE_MOVE_TYPES } from './prepArchetypes';
+import { assignPrepArchetype, PREP_ARCHETYPE_EFFECTS, PREP_ARCHETYPE_EFFECT_TEXT, TOXIN_NOTE_MOVE_TYPES } from './prepArchetypes';
 import type { MonsterData, MoveData, MoveId } from '../types/game';
 import type { PathimonNoteBuildOptions } from './pathimonNoteParser';
 
@@ -142,12 +142,15 @@ function injectPrepArchetype(entry: BuiltNoteEntry): void {
   if (!prepMove || prepMove.kind !== 'prep') return;
 
   const isToxinProducer = TOXIN_MOVE_TYPE_PATTERN.test(entry.noteText);
-  const effects = PREP_ARCHETYPE_EFFECTS[assignPrepArchetype(built.monster, { isToxinProducer })];
+  const archetype = assignPrepArchetype(built.monster, { isToxinProducer });
+  const effects = PREP_ARCHETYPE_EFFECTS[archetype];
+  const effectText = PREP_ARCHETYPE_EFFECT_TEXT[archetype];
   const clone = () => effects.map((effect) => ({ ...effect }));
 
   prepMove.effects = clone();
-  if (prepMove.outcomes) prepMove.outcomes = prepMove.outcomes.map((outcome) => ({ ...outcome, effects: clone() }));
-  if (prepMove.stageCycle) prepMove.stageCycle = prepMove.stageCycle.map((stage) => ({ ...stage, effects: clone() }));
+  prepMove.effectText = effectText;
+  if (prepMove.outcomes) prepMove.outcomes = prepMove.outcomes.map((outcome) => ({ ...outcome, effects: clone(), effectText }));
+  if (prepMove.stageCycle) prepMove.stageCycle = prepMove.stageCycle.map((stage) => ({ ...stage, effects: clone(), effectText }));
 }
 
 BUILT_NOTE_ENTRIES.forEach(injectPrepArchetype);
