@@ -305,7 +305,7 @@ describe('Pathimon data', () => {
 
     expect(boss.maxHp).toBe(BOSSES[0].maxHp * 104);
     expect(boss.hp).toBe(BOSSES[0].maxHp * 104);
-    expect(boss.attack).toBe(136);
+    expect(boss.attack).toBe(68);
   });
 
   it('starts boss encounters without pre-existing symptoms', () => {

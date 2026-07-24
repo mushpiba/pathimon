@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CAPSULE_ORDER } from '../data/capsules';
+import { statusConditionEffectText } from '../data/statusConditions';
 import type { RuntimeMonster } from '../types/game';
 import {
   battleActionOptions,
@@ -470,13 +471,30 @@ describe('battle UI helpers', () => {
       statusConditions: {
         fever: 2,
         dehydration: 1,
+        fatigue: 2,
+        excretory_dysfunction: 3,
+        immune_abnormal: 3,
+        blindness: 3,
+        pain: 2,
       },
     });
 
     expect(statusConditionDetailLines(monster)).toEqual([
-      '발열(2): 매 턴 최대 체력 2% 피해',
+      '발열(2): 매 턴 최대 체력 4% 피해',
       '탈수: 체력 회복량 12.5% 감소',
+      '피로(2): 공격력 10% 감소',
+      '배설 이상(3): 매 턴 최대 체력 3% 피해, 턴 종료 시 60% 확률로 탈수 1스택 추가',
+      '면역 이상(3): 방어 특성 무력화 없음 (4스택마다 1개)',
+      '시력 이상(3): 명중률 37.5% 감소',
+      '통증(2): 방어력 10% 감소',
     ]);
+  });
+
+  it('matches status tooltip limits to the combat formulas', () => {
+    expect(statusConditionEffectText('fever', 60)).toBe('매 턴 최대 체력 120% 피해');
+    expect(statusConditionEffectText('fatigue', 30)).toBe('공격력 90% 감소');
+    expect(statusConditionEffectText('pain', 30)).toBe('방어력 90% 감소');
+    expect(statusConditionEffectText('blindness', 30)).toBe('명중률 100% 감소');
   });
 
   it('adds stacked canonical status conditions to the unit panel status text', () => {

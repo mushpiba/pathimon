@@ -53,6 +53,65 @@ export const STATUS_CONDITIONS: Record<StatusConditionId, StatusConditionData> =
   jaundice: { id: 'jaundice', label: '황달', effect: '체력 회복량 7.5% 감소' },
 };
 
+function formatPercent(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, '');
+}
+
+function cappedPercent(value: number, maximum = 100): string {
+  return formatPercent(Math.min(maximum, value));
+}
+
+export function statusConditionEffectText(id: StatusConditionId, stacks = 1): string {
+  const count = Math.max(1, stacks);
+
+  switch (id) {
+    case 'fever':
+      return `매 턴 최대 체력 ${formatPercent(count * 2)}% 피해`;
+    case 'dehydration':
+      return `체력 회복량 ${cappedPercent(count * 12.5)}% 감소`;
+    case 'fatigue':
+      return `공격력 ${cappedPercent(count * 5, 90)}% 감소`;
+    case 'vomiting':
+      return `행동 실패 확률 ${cappedPercent(count * 4)}% 증가`;
+    case 'excretory_dysfunction':
+      return `매 턴 최대 체력 ${formatPercent(count)}% 피해, 턴 종료 시 ${cappedPercent(count * 20)}% 확률로 탈수 1스택 추가`;
+    case 'cough':
+      return `공격할 때마다 현재 체력 ${cappedPercent(count * 2)}% 피해`;
+    case 'blood_pressure':
+      return `방어력 ${cappedPercent(count * 7.5, 90)}% 감소, 상태이상으로 받는 피해 ${formatPercent(count * 5)}% 증가`;
+    case 'dyspnea':
+      return `받는 직접 피해 ${formatPercent(count * 5)}% 증가, 즉사 확률 ${cappedPercent(count * 0.5)}% 증가`;
+    case 'edema':
+      return `모든 상태이상의 확률 ${formatPercent(count)}%p 증가`;
+    case 'neurologic':
+      return `혼란 확률 ${cappedPercent(count * 5)}%p 증가`;
+    case 'paralysis':
+      return `행동 불가 확률 ${cappedPercent(count * 5)}% 증가`;
+    case 'bleeding':
+      return `매 턴 현재 체력 ${cappedPercent(count * 2)}% 피해`;
+    case 'anemia':
+      return `매 턴 최대 체력 ${cappedPercent(count)}% 피해`;
+    case 'immune_abnormal': {
+      const disabledCount = Math.floor(count / 4);
+      return disabledCount > 0
+        ? `방어 특성 ${disabledCount}개 무력화`
+        : '방어 특성 무력화 없음 (4스택마다 1개)';
+    }
+    case 'necrosis':
+      return `최대 체력 상한 ${formatPercent(Math.min(99, count * 2.5))}% 감소`;
+    case 'blindness':
+      return `명중률 ${cappedPercent(count * 12.5)}% 감소`;
+    case 'hearing_abnormal':
+      return `명중률 ${cappedPercent(count * 7.5)}% 감소`;
+    case 'pain':
+      return `방어력 ${cappedPercent(count * 5, 90)}% 감소`;
+    case 'itching':
+      return `행동 실패 확률 ${cappedPercent(count * 2.5)}% 증가`;
+    case 'jaundice':
+      return `체력 회복량 ${cappedPercent(count * 7.5)}% 감소`;
+  }
+}
+
 function clampChance(chance: number): number {
   return Math.max(0, Math.min(1, chance));
 }

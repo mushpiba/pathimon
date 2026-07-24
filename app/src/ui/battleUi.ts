@@ -2,7 +2,14 @@ import { ABILITIES } from '../data/abilities';
 import { EFFECTIVENESS } from '../data/effectiveness';
 import { ATTACK_TYPE_LABELS, TAG_LABELS } from '../data/labels';
 import { MOVES } from '../data/moves';
-import { effectiveMaxHp, STATUS_CONDITIONS, STATUS_CONDITION_IDS, statusConditionLabels, statusConditionStacks } from '../data/statusConditions';
+import {
+  effectiveMaxHp,
+  STATUS_CONDITIONS,
+  STATUS_CONDITION_IDS,
+  statusConditionEffectText,
+  statusConditionLabels,
+  statusConditionStacks,
+} from '../data/statusConditions';
 import { currentMoveData, currentMoveName } from '../battle/moveStages';
 import { interpolatePathimonName } from '../game/text';
 import { randomLearningPoint } from '../game/learning';
@@ -810,7 +817,7 @@ export function statusConditionDetailLines(monster: RuntimeMonster): string[] {
 
       const condition = STATUS_CONDITIONS[id];
       const label = stacks > 1 ? `${condition.label}(${stacks})` : condition.label;
-      return `${label}: ${condition.effect}`;
+      return `${label}: ${statusConditionEffectText(id, stacks)}`;
     })
     .filter((line): line is string => Boolean(line));
 }
