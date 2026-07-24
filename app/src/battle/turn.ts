@@ -113,6 +113,23 @@ function withLearningFeedback(state: RunState, message: string, detail = default
   return `${message} 학습 피드백: ${detail}`;
 }
 
+function battleLearnText(state: RunState, move: MoveData): string {
+  return randomLearningPoint(state.party[state.activeIndex]) || move.learnText;
+}
+
+function formatBattleActionLog(
+  state: RunState,
+  actorLog: string,
+  enemyLog: string,
+  learningText?: string,
+): string {
+  const lines = [actorLog.trim(), enemyLog.trim()].filter((line) => line.length > 0);
+  if (state.mode === 'learning' && learningText?.trim()) {
+    lines.push(`학습 피드백: ${learningText.trim()}`);
+  }
+  return lines.join('\n\n');
+}
+
 function clearBattleOnlyState(monster: RuntimeMonster): RuntimeMonster {
   return {
     ...monster,
@@ -213,7 +230,7 @@ function statusDamageLog(actor: RuntimeMonster, actorDamage: number, enemy: Runt
     return '';
   }
 
-  return ` ${damagedNames.map((name) => `${name}은 상태이상에 의해 피해를 받고 있다.`).join(' ')}`;
+  return damagedNames.map((name) => `${name}은 상태이상에 의해 피해를 받고 있다.`).join('\n');
 }
 
 function appendSymptom(monster: RuntimeMonster, symptom?: string): void {
@@ -354,13 +371,13 @@ function resolveHumanMove(
 
   const stagedMove = currentMoveData(enemyMove, enemy);
   if (failsToAct(enemy)) {
-    return { log: `${enemy.name}은 ${actionFailureLabel(enemy)}으로 움직이지 못했다.` };
+    return { log: `${enemy.name}의 ${stagedMove.name}!\n${enemy.name}은 ${actionFailureLabel(enemy)}으로 움직이지 못했다.` };
   }
 
   if (missesFromSensoryAbnormality(enemy)) {
     advanceStagedMove(enemy, enemyMove);
     applyAttackTriggeredStatusDamage(enemy);
-    return { log: `${enemy.name}의 공격이 ${sensoryMissLabel(enemy)}으로 빗나갔다.` };
+    return { log: `${enemy.name}의 ${stagedMove.name}!\n${enemy.name}의 공격이 ${sensoryMissLabel(enemy)}으로 빗나갔다.` };
   }
 
   const resolvedMove = resolveMoveOutcome(stagedMove, Math.random());
@@ -388,7 +405,7 @@ function resolveHumanMove(
 
   return {
     hitEffectiveness: resolvedMove.power > 0 ? hitEffectivenessFromMultiplier(effectiveness.multiplier) : undefined,
-    log: `${enemy.name}의 ${resolvedMove.name}! ${formatMoveDescription(resolvedMove, enemy)}${label}${criticalHitText(enemyResult)}`,
+    log: `${enemy.name}의 ${resolvedMove.name}!\n${formatMoveDescription(resolvedMove, enemy)}${label}${criticalHitText(enemyResult)}`,
   };
 }
 
@@ -417,7 +434,7 @@ function resolveHumanTurn(
     hitEffectiveness = result.hitEffectiveness ?? hitEffectiveness;
   }
 
-  return { hitEffectiveness, log: logs.join(' ') };
+  return { hitEffectiveness, log: logs.join('\n\n') };
 }
 function resolveEnemyTurn(
   actor: RuntimeMonster,
@@ -444,13 +461,13 @@ function resolveEnemyTurn(
 
   const stagedMove = currentMoveData(enemyMove, enemy);
   if (failsToAct(enemy)) {
-    return { log: `${enemy.name}은 ${actionFailureLabel(enemy)}으로 움직이지 못했다.` };
+    return { log: `${enemy.name}의 ${stagedMove.name}!\n${enemy.name}은 ${actionFailureLabel(enemy)}으로 움직이지 못했다.` };
   }
 
   if (missesFromSensoryAbnormality(enemy)) {
     advanceStagedMove(enemy, enemyMove);
     applyAttackTriggeredStatusDamage(enemy);
-    return { log: `${enemy.name}의 공격이 ${sensoryMissLabel(enemy)}으로 빗나갔다.` };
+    return { log: `${enemy.name}의 ${stagedMove.name}!\n${enemy.name}의 공격이 ${sensoryMissLabel(enemy)}으로 빗나갔다.` };
   }
 
   const resolvedMove = resolveMoveOutcome(stagedMove, Math.random());
@@ -464,7 +481,7 @@ function resolveEnemyTurn(
     hitEffectiveness: resolvedMove.power > 0
       ? hitEffectivenessFromMultiplier(enemyResult.multiplier.total, enemyResult.blockedByInvulnerability)
       : undefined,
-    log: `${formatMoveDescription(resolvedMove, enemy)}${criticalHitText(enemyResult)}`,
+    log: `${enemy.name}의 ${resolvedMove.name}!\n${formatMoveDescription(resolvedMove, enemy)}${criticalHitText(enemyResult)}`,
   };
 }
 
@@ -475,9 +492,21 @@ function finishBattleRound(
   actorLog: string,
   enemyTurn: EnemyTurnResult,
   learningDetail?: string,
+  learningText?: string,
 ): RunState {
   const actorEffectDamage = tickEffects(actor);
   const enemyEffectDamage = tickEffects(enemy);
+  const effectLog = statusDamageLog(actor, actorEffectDamage, enemy, enemyEffectDamage);
+  state.battleActionLog = formatBattleActionLog(state, actorLog, enemyTurn.log, learningText);
+  state.battleStatusLog = effectLog || undefined;
+  state.battleStatusDamage = effectLog
+    ? { player: actorEffectDamage, enemy: enemyEffectDamage }
+    : undefined;
+  state.lastLog = withLearningFeedback(
+    state,
+    [actorLog, enemyTurn.log, effectLog].filter((line) => line.trim().length > 0).join('\n\n'),
+    learningDetail,
+  );
   state.lastEnemyHitEffectiveness = enemyTurn.hitEffectiveness;
 
   if (enemy.hp <= 0) {
@@ -488,7 +517,6 @@ function finishBattleRound(
     return setCollapsedState(state, actor);
   }
 
-  const effectLog = statusDamageLog(actor, actorEffectDamage, enemy, enemyEffectDamage);
   if (enemy.isBoss && enemy.hp > 0 && enemy.hp <= enemy.maxHp / 2) {
     enemy.bossPhase2Activated = true;
   }
@@ -497,7 +525,6 @@ function finishBattleRound(
   }
   state.phase = 'battle';
   state.battleResultLog = undefined;
-  state.lastLog = withLearningFeedback(state, `${actorLog} ${enemyTurn.log}${effectLog}`, learningDetail);
   return state;
 }
 
@@ -511,6 +538,9 @@ export function resolvePlayerMove(
 ): RunState {
   const nextState = cloneState(state);
   nextState.battleResultLog = undefined;
+  nextState.battleActionLog = undefined;
+  nextState.battleStatusLog = undefined;
+  nextState.battleStatusDamage = undefined;
   nextState.lastEnemyHitEffectiveness = undefined;
   nextState.lastPlayerHitEffectiveness = undefined;
   const actor = nextState.party[nextState.activeIndex];
@@ -549,9 +579,10 @@ export function resolvePlayerMove(
       nextState,
       actor,
       enemy,
-      `${actor.name}은 ${actionFailureLabel(actor)}으로 움직이지 못했다.`,
+      `${actor.name}의 ${stagedMove.name}!\n${actor.name}은 ${actionFailureLabel(actor)}으로 움직이지 못했다.`,
       enemyLog,
       defaultLearningDetail(nextState),
+      battleLearnText(nextState, stagedMove),
     );
   }
 
@@ -563,9 +594,10 @@ export function resolvePlayerMove(
       nextState,
       actor,
       enemy,
-      `${actor.name}의 공격이 ${sensoryMissLabel(actor)}으로 빗나갔다.`,
+      `${actor.name}의 ${stagedMove.name}!\n${actor.name}의 공격이 ${sensoryMissLabel(actor)}으로 빗나갔다.`,
       enemyLog,
       defaultLearningDetail(nextState),
+      battleLearnText(nextState, stagedMove),
     );
   }
 
@@ -579,14 +611,16 @@ export function resolvePlayerMove(
   advanceStagedMove(actor, move);
   applyAttackTriggeredStatusDamage(actor);
   const learningDetail = playerMoveLearningDetail(nextState, resolvedMove, result);
+  const actorLog = `${actor.name}의 ${resolvedMove.name}!\n${formatMoveDescription(resolvedMove, actor)}${criticalHitText(result)}`;
+  const learningText = battleLearnText(nextState, resolvedMove);
 
   if (enemy.hp <= 0) {
+    nextState.battleActionLog = formatBattleActionLog(nextState, actorLog, '', learningText);
     return setWinState(nextState, defeatedOpponentMessage(enemy), learningDetail);
   }
 
   const enemyLog = resolveEnemyTurn(actor, enemy, variance, nextState.party, nextState.activeIndex, criticalRandom);
-  const actorLog = `${formatMoveDescription(resolvedMove, actor)}${criticalHitText(result)}`;
-  return finishBattleRound(nextState, actor, enemy, actorLog, enemyLog, learningDetail);
+  return finishBattleRound(nextState, actor, enemy, actorLog, enemyLog, learningDetail, learningText);
 }
 
 export function resolvePassEncounter(state: RunState): RunState {
@@ -634,6 +668,9 @@ export function resolveSwitchMonster(
   criticalRandom: CriticalRandomSource = noCriticalRandom,
 ): RunState {
   const nextState = cloneState(state);
+  nextState.battleActionLog = undefined;
+  nextState.battleStatusLog = undefined;
+  nextState.battleStatusDamage = undefined;
   const target = nextState.party[targetIndex];
   const enemy = nextState.enemy;
 

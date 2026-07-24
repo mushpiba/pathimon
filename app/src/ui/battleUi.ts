@@ -612,15 +612,11 @@ export function commandViewLines(
   encounterKind: EncounterKind,
   notice: string,
   helperText: string,
-  showEnemyIntent = true,
 ): string[] {
   const lines = [`${player.name}은 무엇을 할까?`];
-  if (notice) {
-    lines.push(notice);
-  } else if (encounterKind === 'wild') {
-    lines.push(helperText);
-  }
-  if (showEnemyIntent && encounterKind !== 'wild') {
+  if (encounterKind === 'wild') {
+    lines.push(notice || helperText);
+  } else {
     lines.push(enemyIntentText(enemy));
   }
   return lines.filter((line) => line.length > 0);

@@ -14,10 +14,14 @@ describe('scene cleanup lifecycle wiring', () => {
     assertSceneCleanupLifecycle(battleSceneSource);
   });
 
-  it('holds a completed battle round for one second or until the player taps', () => {
-    expect(battleSceneSource).toContain('const BATTLE_NOTICE_HOLD_MS = 1000;');
-    expect(battleSceneSource).toMatch(/startBattleNoticeHold\(\)[\s\S]*?delayedCall\(BATTLE_NOTICE_HOLD_MS/);
-    expect(battleSceneSource).toMatch(/pointerdown[\s\S]{0,120}dismissBattleNotice/);
+  it('stages combat and status messages before returning to preparation', () => {
+    expect(battleSceneSource).toContain('const BATTLE_ACTION_HOLD_MS = 1000;');
+    expect(battleSceneSource).toContain('const BATTLE_STATUS_HOLD_MS = 500;');
+    expect(battleSceneSource).toContain("type BattleMessageStage = 'preparation' | 'combat' | 'status';");
+    expect(battleSceneSource).toMatch(/showCombatMessage\(\)[\s\S]*?delayedCall\(BATTLE_ACTION_HOLD_MS/);
+    expect(battleSceneSource).toMatch(/showStatusMessage\(\)[\s\S]*?playStatusDamageCue/);
+    expect(battleSceneSource).toMatch(/showStatusMessage\(\)[\s\S]*?delayedCall\(BATTLE_STATUS_HOLD_MS/);
+    expect(battleSceneSource).toMatch(/pointerdown[\s\S]{0,120}advanceBattleMessage/);
   });
 
   it('keeps ShopScene cleanup on redraw and shutdown', () => {

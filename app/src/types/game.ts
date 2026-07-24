@@ -354,6 +354,12 @@ export interface RunState {
   phase: BattlePhase;
   lastLog: string;
   battleResultLog?: string;
+  battleActionLog?: string;
+  battleStatusLog?: string;
+  battleStatusDamage?: {
+    player: number;
+    enemy: number;
+  };
   lastEnemyHitEffectiveness?: HitEffectiveness;
   lastPlayerHitEffectiveness?: HitEffectiveness;
   shopInventory?: ShopItem[];

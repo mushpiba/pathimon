@@ -390,18 +390,17 @@ describe('battle UI helpers', () => {
     expect(enemyIntentText(enemy)).toBe('면역챔피언은 구충제 투약과 인터페론 활성화를 준비하고 있다.');
   });
 
-  it('orders human battle command copy as prompt, entry log, then planned move', () => {
+  it('shows only the prompt and planned move on the human battle preparation screen', () => {
     const player = createMonster({ name: '플루리온' });
     const enemy = createMonster({ name: '검체 연구원', isTrainer: true, moveset: ['m_interferon'] });
 
     expect(commandViewLines(player, enemy, 'trainer', '검체 연구원이 승부를 걸어왔다.', '도움말')).toEqual([
       '플루리온은 무엇을 할까?',
-      '검체 연구원이 승부를 걸어왔다.',
       '검체 연구원은 인터페론 활성화를 하려고 한다.',
     ]);
   });
 
-  it('shows the completed round result without the next enemy intent while it is pending', () => {
+  it('does not mix the previous round result into the next preparation screen', () => {
     const player = createMonster({ name: '디피실룩' });
     const enemy = createMonster({ name: '현장 대응 요원 4', isTrainer: true, moveset: ['m_complement'] });
 
@@ -411,18 +410,7 @@ describe('battle UI helpers', () => {
       'trainer',
       '현장 대응 요원 4의 공격이 시력 이상으로 빗나갔다.',
       '도움말',
-      false,
     )).toEqual([
-      '디피실룩은 무엇을 할까?',
-      '현장 대응 요원 4의 공격이 시력 이상으로 빗나갔다.',
-    ]);
-  });
-
-  it('shows only the next enemy intent after the completed round result is dismissed', () => {
-    const player = createMonster({ name: '디피실룩' });
-    const enemy = createMonster({ name: '현장 대응 요원 4', isTrainer: true, moveset: ['m_complement'] });
-
-    expect(commandViewLines(player, enemy, 'trainer', '', '도움말')).toEqual([
       '디피실룩은 무엇을 할까?',
       '현장 대응 요원 4는 보체 MAC 형성을 하려고 한다.',
     ]);

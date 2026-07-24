@@ -63,6 +63,7 @@ interface BattleSceneData {
 }
 
 type BattleViewMode = 'command' | 'moves' | 'dex' | 'party' | 'status' | 'capsules';
+type BattleMessageStage = 'preparation' | 'combat' | 'status';
 type DexTab = 'moves' | 'effectiveness';
 type StatusTab = 'profile' | 'moves';
 type Direction = 'up' | 'down' | 'left' | 'right';
@@ -74,7 +75,8 @@ const OVERLAY_FILL = 0x8d8198;
 const OVERLAY_STROKE = 0xd8cde6;
 const OVERLAY_TEXT = 0xce6b5e;
 const BATTLE_EFFECT_DEPTH = 760;
-const BATTLE_NOTICE_HOLD_MS = 1000;
+const BATTLE_ACTION_HOLD_MS = 1000;
+const BATTLE_STATUS_HOLD_MS = 500;
 
 export class BattleScene extends Phaser.Scene {
   private state!: RunState;
@@ -101,8 +103,8 @@ export class BattleScene extends Phaser.Scene {
   private playerCombatSprite?: Phaser.GameObjects.Image | Phaser.GameObjects.Text;
   private statusTooltip?: Phaser.GameObjects.Container;
   private statusTooltipTimer?: Phaser.Time.TimerEvent;
-  private battleNoticePending = false;
-  private battleNoticeTimer?: Phaser.Time.TimerEvent;
+  private battleMessageStage: BattleMessageStage = 'preparation';
+  private battleMessageTimer?: Phaser.Time.TimerEvent;
 
   constructor() {
     super('BattleScene');
@@ -131,8 +133,8 @@ export class BattleScene extends Phaser.Scene {
     this.isAnimating = false;
     this.enemyCombatSprite = undefined;
     this.playerCombatSprite = undefined;
-    this.battleNoticePending = false;
-    this.battleNoticeTimer = undefined;
+    this.battleMessageStage = 'preparation';
+    this.battleMessageTimer = undefined;
   }
 
   preload(): void {
@@ -142,7 +144,7 @@ export class BattleScene extends Phaser.Scene {
   create(): void {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.clearStatusTooltip();
-      this.clearBattleNoticeTimer();
+      this.clearBattleMessageTimer();
       destroySceneChildren(this);
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -282,8 +284,15 @@ export class BattleScene extends Phaser.Scene {
     this.clearStatusTooltip();
     destroySceneChildren(this);
 
-    const player = this.state.party[this.state.activeIndex];
-    const enemy = this.state.enemy;
+    const statePlayer = this.state.party[this.state.activeIndex];
+    const stateEnemy = this.state.enemy;
+    const statusDamage = this.state.battleStatusDamage;
+    const player = statePlayer && this.battleMessageStage === 'combat' && statusDamage?.player
+      ? { ...statePlayer, hp: statePlayer.hp + statusDamage.player, fainted: false }
+      : statePlayer;
+    const enemy = stateEnemy && this.battleMessageStage === 'combat' && statusDamage?.enemy
+      ? { ...stateEnemy, hp: stateEnemy.hp + statusDamage.enemy, fainted: false }
+      : stateEnemy;
 
     this.add.rectangle(0, 0, APP_WIDTH, APP_HEIGHT, COLORS.ink).setOrigin(0);
 
@@ -294,13 +303,16 @@ export class BattleScene extends Phaser.Scene {
 
     this.syncSelectedMove(player);
 
-    if (this.viewMode === 'status') {
+    if (this.battleMessageStage === 'preparation' && this.viewMode === 'status') {
       this.drawStatusView();
       this.drawMobileOverlay();
       return;
     }
 
-    if (this.viewMode === 'party' || this.state.phase === 'forcedSwitch' || this.state.phase === 'releaseCapture') {
+    if (
+      this.battleMessageStage === 'preparation'
+      && (this.viewMode === 'party' || this.state.phase === 'forcedSwitch' || this.state.phase === 'releaseCapture')
+    ) {
       this.drawPartyView();
       this.drawMobileOverlay();
       return;
@@ -314,7 +326,9 @@ export class BattleScene extends Phaser.Scene {
     this.drawUnitPanel(unitLayout.player, player, 'player');
     this.drawBottomWindow(player, enemy);
     this.drawFloorBadge();
-    this.drawMobileOverlay();
+    if (this.battleMessageStage === 'preparation') {
+      this.drawMobileOverlay();
+    }
   }
 
   private syncSelectedMove(player: RuntimeMonster): void {
@@ -542,7 +556,9 @@ export class BattleScene extends Phaser.Scene {
   private drawBottomWindow(player: RuntimeMonster, enemy: RuntimeMonster): void {
     drawPanel(this, 0, BATTLE_AREA_BOTTOM, APP_WIDTH, APP_HEIGHT - BATTLE_AREA_BOTTOM);
 
-    if (this.state.phase === 'forcedSwitch') {
+    if (this.battleMessageStage !== 'preparation') {
+      this.drawBattleMessageView();
+    } else if (this.state.phase === 'forcedSwitch') {
       this.drawPartyView();
     } else if (this.state.phase === 'releaseCapture') {
       this.drawPartyView();
@@ -573,19 +589,7 @@ export class BattleScene extends Phaser.Scene {
       this.state.encounterKind,
       this.notice,
       helperText,
-      !this.battleNoticePending,
     ).forEach((line, index) => {
-      if (this.battleNoticePending && index === 1) {
-        addBoxLabel(this, 36, 450, line, {
-          width: APP_WIDTH - 72,
-          height: 104,
-          size: 17,
-          minSize: 11,
-          maxLines: 5,
-        }).setAlpha(0.9);
-        return;
-      }
-
       const fontSize = index === 0 ? 24 : index === 1 ? 17 : 15;
       addBoxLabel(this, index === 0 ? 34 : 36, 410 + index * 40, line, {
         width: 560,
@@ -595,14 +599,6 @@ export class BattleScene extends Phaser.Scene {
         maxLines: index === 0 ? 1 : 2,
       }).setAlpha(index === 0 ? 1 : 0.88);
     });
-
-    if (this.battleNoticePending) {
-      this.add.zone(APP_WIDTH / 2, APP_HEIGHT / 2, APP_WIDTH, APP_HEIGHT)
-        .setDepth(980)
-        .setInteractive({ useHandCursor: true })
-        .once('pointerdown', () => this.dismissBattleNotice());
-      return;
-    }
 
     battleActionOptions(this.state.encounterKind).forEach((option, index) => {
       const column = index % 2;
@@ -615,6 +611,26 @@ export class BattleScene extends Phaser.Scene {
         this.handleCommandAction(option.id);
       }, this.commandCursor === index, Boolean(option.disabled));
     });
+  }
+
+  private drawBattleMessageView(): void {
+    const statusStage = this.battleMessageStage === 'status';
+    const message = statusStage
+      ? this.state.battleStatusLog ?? ''
+      : this.state.battleActionLog ?? '';
+
+    addBoxLabel(this, 34, statusStage ? 420 : 400, message, {
+      width: APP_WIDTH - 68,
+      height: statusStage ? 92 : 164,
+      size: statusStage ? 21 : 17,
+      minSize: statusStage ? 15 : 12,
+      maxLines: statusStage ? 4 : 8,
+    }).setAlpha(0.94);
+
+    this.add.zone(APP_WIDTH / 2, APP_HEIGHT / 2, APP_WIDTH, APP_HEIGHT)
+      .setDepth(980)
+      .setInteractive({ useHandCursor: true })
+      .once('pointerdown', () => this.advanceBattleMessage());
   }
 
   private handleCommandAction(actionId: BattleActionId): void {
@@ -838,47 +854,88 @@ export class BattleScene extends Phaser.Scene {
     this.state = resolvePlayerMove(this.state, moveId, undefined, undefined, undefined, Math.random);
     this.notice = this.state.battleResultLog ?? this.state.lastLog;
     this.viewMode = 'command';
-    this.playBattleResolutionCue(previousState, this.state, () => this.startBattleNoticeHold());
+    this.playBattleResolutionCue(previousState, this.state, () => this.showCombatMessage());
   }
 
-  private startBattleNoticeHold(): void {
-    if (this.state.phase !== 'battle' || !this.notice.trim()) {
+  private showCombatMessage(): void {
+    if (!this.state.battleActionLog?.trim()) {
       this.afterBattleAction();
       return;
     }
 
-    this.clearBattleNoticeTimer();
-    this.battleNoticePending = true;
+    this.clearBattleMessageTimer();
+    this.battleMessageStage = 'combat';
     this.render();
-    this.battleNoticeTimer = this.time.delayedCall(BATTLE_NOTICE_HOLD_MS, () => {
-      this.battleNoticeTimer = undefined;
-      this.dismissBattleNotice();
+    this.battleMessageTimer = this.time.delayedCall(BATTLE_ACTION_HOLD_MS, () => {
+      this.battleMessageTimer = undefined;
+      this.advanceBattleMessage();
     });
   }
 
-  private dismissBattleNotice(): void {
-    if (!this.battleNoticePending) return;
+  private showStatusMessage(): void {
+    if (!this.state.battleStatusLog?.trim()) {
+      this.finishBattleMessages();
+      return;
+    }
 
-    this.clearBattleNoticeTimer();
-    this.battleNoticePending = false;
-    this.notice = '';
+    this.clearBattleMessageTimer();
+    this.battleMessageStage = 'status';
     this.render();
+    this.playStatusDamageCue();
+    this.battleMessageTimer = this.time.delayedCall(BATTLE_STATUS_HOLD_MS, () => {
+      this.battleMessageTimer = undefined;
+      this.advanceBattleMessage();
+    });
   }
 
-  private clearBattleNoticeTimer(): void {
-    this.battleNoticeTimer?.remove(false);
-    this.battleNoticeTimer = undefined;
+  private advanceBattleMessage(): void {
+    if (this.battleMessageStage === 'combat') {
+      this.showStatusMessage();
+      return;
+    }
+
+    if (this.battleMessageStage === 'status') {
+      this.finishBattleMessages();
+    }
+  }
+
+  private finishBattleMessages(): void {
+    this.clearBattleMessageTimer();
+    this.battleMessageStage = 'preparation';
+    this.state.battleActionLog = undefined;
+    this.state.battleStatusLog = undefined;
+    this.state.battleStatusDamage = undefined;
+
+    if (this.state.phase === 'battle') {
+      this.notice = '';
+      this.render();
+      return;
+    }
+
+    this.afterBattleAction();
+  }
+
+  private clearBattleMessageTimer(): void {
+    this.battleMessageTimer?.remove(false);
+    this.battleMessageTimer = undefined;
   }
 
   private playBattleResolutionCue(previousState: RunState, nextState: RunState, onComplete: () => void): void {
     const previousEnemy = previousState.enemy;
     const nextEnemy = nextState.enemy;
-    const previousPlayer = previousState.party[previousState.activeIndex];
-    const nextPlayer = nextState.party[previousState.activeIndex];
-    const enemyTookDamage = Boolean(previousEnemy && nextEnemy && nextEnemy.hp < previousEnemy.hp);
-    const playerTookDamage = Boolean(previousPlayer && nextPlayer && nextPlayer.hp < previousPlayer.hp);
-    const enemyDefeated = Boolean(previousEnemy && nextEnemy && previousEnemy.hp > 0 && nextEnemy.hp <= 0);
-    const playerDefeated = Boolean(previousPlayer && nextPlayer && previousPlayer.hp > 0 && nextPlayer.hp <= 0);
+    const previousPlayer = previousState.party[nextState.activeIndex];
+    const nextPlayer = nextState.party[nextState.activeIndex];
+    const statusDamage = nextState.battleStatusDamage ?? { player: 0, enemy: 0 };
+    const enemyDirectDamage = previousEnemy && nextEnemy
+      ? Math.max(0, previousEnemy.hp - nextEnemy.hp - statusDamage.enemy)
+      : 0;
+    const playerDirectDamage = previousPlayer && nextPlayer
+      ? Math.max(0, previousPlayer.hp - nextPlayer.hp - statusDamage.player)
+      : 0;
+    const enemyTookDamage = enemyDirectDamage > 0;
+    const playerTookDamage = playerDirectDamage > 0;
+    const enemyDefeated = Boolean(previousEnemy && enemyDirectDamage >= previousEnemy.hp);
+    const playerDefeated = Boolean(previousPlayer && playerDirectDamage >= previousPlayer.hp);
     const playerHitKind = nextState.lastPlayerHitEffectiveness;
     const enemyHitKind = nextState.lastEnemyHitEffectiveness;
 
@@ -915,6 +972,43 @@ export class BattleScene extends Phaser.Scene {
       this.isAnimating = false;
       onComplete();
     });
+  }
+
+  private playStatusDamageCue(): void {
+    const damage = this.state.battleStatusDamage;
+    if (!damage) return;
+
+    if (damage.enemy > 0) {
+      this.playStatusHitEffect('enemy', Boolean(this.state.enemy && this.state.enemy.hp <= 0));
+    }
+    if (damage.player > 0) {
+      const player = this.state.party[this.state.activeIndex];
+      const play = () => this.playStatusHitEffect('player', Boolean(player && player.hp <= 0));
+      if (damage.enemy > 0) {
+        this.time.delayedCall(120, play);
+      } else {
+        play();
+      }
+    }
+  }
+
+  private playStatusHitEffect(target: 'enemy' | 'player', defeated: boolean): void {
+    const spriteLayout = battleSpriteLayouts();
+    const layout = target === 'enemy' ? spriteLayout.enemy : spriteLayout.player;
+    const hitX = layout.x;
+    const hitY = layout.y - (target === 'enemy' ? 84 : 116);
+    const sfx = battleSfxAssetPaths();
+
+    this.playSfx(sfx.hit, 0.34);
+    this.drawStatusImpact(hitX, hitY);
+    this.shakeCombatSprite(target, 7);
+
+    if (defeated) {
+      this.time.delayedCall(100, () => {
+        this.playSfx(sfx.faint, 0.44);
+        this.playDefeatFade(target, hitX, hitY);
+      });
+    }
   }
 
   private playHitEffect(target: 'enemy' | 'player', kind: HitEffectiveness, defeated: boolean): void {
@@ -999,6 +1093,37 @@ export class BattleScene extends Phaser.Scene {
         onComplete: () => slash.destroy(),
       });
     });
+  }
+
+  private drawStatusImpact(x: number, y: number): void {
+    [0, 1, 2].forEach((index) => {
+      const ring = this.add.circle(x, y, 10 + index * 8, 0xb84f9c, 0.28)
+        .setDepth(BATTLE_EFFECT_DEPTH + index)
+        .setStrokeStyle(2, index % 2 === 0 ? 0xff8ad8 : 0x8b7cff, 0.76);
+      this.tweens.add({
+        targets: ring,
+        alpha: 0,
+        scale: 2.4 + index * 0.35,
+        duration: 260 + index * 40,
+        ease: 'Quad.easeOut',
+        onComplete: () => ring.destroy(),
+      });
+    });
+
+    for (let index = 0; index < 6; index += 1) {
+      const angle = (Math.PI * 2 * index) / 6;
+      const particle = this.add.circle(x, y, 3, index % 2 === 0 ? 0xff9edc : 0xa8a0ff, 0.88)
+        .setDepth(BATTLE_EFFECT_DEPTH + 4);
+      this.tweens.add({
+        targets: particle,
+        x: x + Math.cos(angle) * 44,
+        y: y + Math.sin(angle) * 34,
+        alpha: 0,
+        duration: 320,
+        ease: 'Cubic.easeOut',
+        onComplete: () => particle.destroy(),
+      });
+    }
   }
 
   private shakeCombatSprite(target: 'enemy' | 'player', distance: number): void {
@@ -1586,8 +1711,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleConfirmInput(): void {
-    if (this.battleNoticePending) {
-      this.dismissBattleNotice();
+    if (this.battleMessageStage !== 'preparation') {
+      this.advanceBattleMessage();
       return;
     }
 
@@ -1639,8 +1764,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleCancelInput(): void {
-    if (this.battleNoticePending) {
-      this.dismissBattleNotice();
+    if (this.battleMessageStage !== 'preparation') {
+      this.advanceBattleMessage();
       return;
     }
 

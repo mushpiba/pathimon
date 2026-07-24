@@ -618,7 +618,7 @@ describe('battle engine', () => {
     expect(tickEffects(shocked, () => 0)).toBe(6);
   });
 
-  it('reports turn-end status damage in the battle log', () => {
+  it('separates combat messages from turn-end status damage', () => {
     const battle = createBattleState({
       party: [createMonster({ moveset: ['coagulase'], hp: 100, maxHp: 100 })],
       enemy: createMonster({
@@ -636,8 +636,30 @@ describe('battle engine', () => {
 
     const result = resolvePlayerMove(battle, 'coagulase', 1);
 
+    expect(result.battleActionLog).toContain('화농성연쇄상구균의 코아굴라제!');
+    expect(result.battleActionLog).toContain('면역챔피언의');
+    expect(result.battleActionLog).not.toContain('상태이상에 의해 피해를 받고 있다');
+    expect(result.battleStatusLog).toBe('면역챔피언은 상태이상에 의해 피해를 받고 있다.');
+    expect(result.battleStatusDamage).toEqual({ player: 0, enemy: expect.any(Number) });
+    expect(result.battleStatusDamage?.enemy).toBeGreaterThan(0);
     expect(result.lastLog).toContain('면역챔피언은 상태이상에 의해 피해를 받고 있다');
     expect(result.enemy?.hp).toBeLessThan(999);
+  });
+
+  it('puts learning feedback in the combat message only in learning mode', () => {
+    const learningBattle = createBattleState({
+      mode: 'learning',
+      party: [createMonster({ moveset: ['coagulase'], profileMemo: ['L1 [감별점] 시험용 학습 문구'] })],
+    });
+    const challengeBattle = createBattleState({
+      party: [createMonster({ moveset: ['coagulase'], profileMemo: ['L1 [감별점] 시험용 학습 문구'] })],
+    });
+
+    const learningResult = resolvePlayerMove(learningBattle, 'coagulase', 1);
+    const challengeResult = resolvePlayerMove(challengeBattle, 'coagulase', 1);
+
+    expect(learningResult.battleActionLog).toContain('\n학습 피드백: L1 [감별점] 시험용 학습 문구');
+    expect(challengeResult.battleActionLog).not.toContain('학습 피드백:');
   });
 
   it('uses visual (12.5%) and hearing (7.5%) abnormality as accuracy penalties', () => {
