@@ -82,7 +82,6 @@ const OVERLAY_FILL = 0x8d8198;
 const OVERLAY_STROKE = 0xd8cde6;
 const OVERLAY_TEXT = 0xce6b5e;
 const BATTLE_EFFECT_DEPTH = 760;
-const BATTLE_ACTION_HOLD_MS = 2000;
 const BATTLE_STATUS_HOLD_MS = 1000;
 
 export class BattleScene extends Phaser.Scene {
@@ -1017,10 +1016,6 @@ export class BattleScene extends Phaser.Scene {
     this.clearBattleMessageTimer();
     this.battleMessageStage = 'combat';
     this.render();
-    this.battleMessageTimer = this.time.delayedCall(BATTLE_ACTION_HOLD_MS, () => {
-      this.battleMessageTimer = undefined;
-      this.advanceBattleMessage();
-    });
   }
 
   private showStatusMessage(): void {

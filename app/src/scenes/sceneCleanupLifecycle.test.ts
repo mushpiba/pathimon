@@ -15,10 +15,12 @@ describe('scene cleanup lifecycle wiring', () => {
   });
 
   it('stages combat and status messages before returning to preparation', () => {
-    expect(battleSceneSource).toContain('const BATTLE_ACTION_HOLD_MS = 2000;');
+    const combatStage = battleSceneSource.match(/private showCombatMessage\(\): void \{[\s\S]*?(?=\n  private showStatusMessage)/)?.[0] ?? '';
+
+    expect(battleSceneSource).not.toContain('BATTLE_ACTION_HOLD_MS');
     expect(battleSceneSource).toContain('const BATTLE_STATUS_HOLD_MS = 1000;');
     expect(battleSceneSource).toContain("type BattleMessageStage = 'preparation' | 'combat' | 'status';");
-    expect(battleSceneSource).toMatch(/showCombatMessage\(\)[\s\S]*?delayedCall\(BATTLE_ACTION_HOLD_MS/);
+    expect(combatStage).not.toContain('delayedCall');
     expect(battleSceneSource).toMatch(/showStatusMessage\(\)[\s\S]*?playStatusDamageCue/);
     expect(battleSceneSource).toMatch(/showStatusMessage\(\)[\s\S]*?delayedCall\(BATTLE_STATUS_HOLD_MS/);
     expect(battleSceneSource).toMatch(/pointerdown[\s\S]{0,120}advanceBattleMessage/);
