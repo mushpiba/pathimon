@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RuntimeMonster } from '../types/game';
-import { randomLearningPoint } from './learning';
+import { contextualLearningPoint, leftoverLearningPoints, randomLearningPoint } from './learning';
 
 function monsterWithLearningPoints(points?: string[]): RuntimeMonster {
   return {
@@ -46,5 +46,32 @@ describe('learning points', () => {
 
     expect(randomLearningPoint(monster, () => 0.5)).toBe('L1 [감별점] 유효한 포인트');
     expect(randomLearningPoint(emptyMonster, () => 0.5)).toBe('');
+  });
+
+  it('shows a point mapped to the used move, and falls back to random when unmapped', () => {
+    const monster = monsterWithLearningPoints([
+      'L1 [감별점] 포인트 A',
+      'L2 [기전] 포인트 B',
+      'L3 [치료] 포인트 C',
+      'L4 [역학] 포인트 D',
+    ]);
+    monster.movePointMap = { atk: [1, 2] }; // atk → L2·L3
+
+    expect(contextualLearningPoint(monster, 'atk', () => 0)).toBe('L2 [기전] 포인트 B');
+    expect(contextualLearningPoint(monster, 'atk', () => 0.99)).toBe('L3 [치료] 포인트 C');
+    // 매핑 없는 기술은 무작위 폴백(전체 풀).
+    expect(contextualLearningPoint(monster, 'unmapped', () => 0)).toBe('L1 [감별점] 포인트 A');
+  });
+
+  it('collects unmapped points as learning-mode leftovers', () => {
+    const monster = monsterWithLearningPoints([
+      'L1 [감별점] 포인트 A',
+      'L2 [기전] 포인트 B',
+      'L3 [치료] 포인트 C',
+      'L4 [역학] 포인트 D',
+    ]);
+    monster.movePointMap = { atk: [1, 2] };
+
+    expect(leftoverLearningPoints(monster)).toEqual(['L1 [감별점] 포인트 A', 'L4 [역학] 포인트 D']);
   });
 });

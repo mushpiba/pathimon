@@ -43,6 +43,7 @@ export function createMonsterInstance(data: MonsterData, options: CreateMonsterO
     plannedMoveIds: [],
     bossPhase2Activated: false,
     profileMemo: data.profileMemo ? [...data.profileMemo] : undefined,
+    movePointMap: data.movePointMap,
     countermeasures: data.countermeasures ? {
       direct: [...data.countermeasures.direct],
       symptomTags: [...data.countermeasures.symptomTags],

@@ -15,7 +15,7 @@ import { TAG_LABELS } from '../data/labels';
 import { MOVES } from '../data/moves';
 import { MONSTERS } from '../data/monsters';
 import { interpolatePathimonName } from '../game/text';
-import { randomLearningPoint } from '../game/learning';
+import { contextualLearningPoint, randomLearningPoint } from '../game/learning';
 import { createMonsterInstance } from '../state/factory';
 import { bossMoveEffectiveness, chooseBossMove, chooseEffectiveBossMove, createBossDefenseProfile } from './bossMatchup';
 import { advanceStagedMove, currentMoveData, resolveMoveOutcome } from './moveStages';
@@ -102,7 +102,7 @@ function defaultLearningDetail(state: RunState): string {
 
 function playerMoveLearningDetail(state: RunState, move: MoveData, result: DamageResult): string {
   const noteText = result.multiplier.notes.length > 0 ? ` ${result.multiplier.notes.join(', ')}.` : '';
-  const learningPoint = randomLearningPoint(state.party[state.activeIndex]) || move.learnText;
+  const learningPoint = contextualLearningPoint(state.party[state.activeIndex], move.id) || move.learnText;
   return `${defaultLearningDetail(state)} ${move.name}은 ${learningPoint} 현재 상성 배율은 ${result.multiplier.total}배입니다.${noteText}`;
 }
 
@@ -115,7 +115,7 @@ function withLearningFeedback(state: RunState, message: string, detail = default
 }
 
 function battleLearnText(state: RunState, move: MoveData): string {
-  return randomLearningPoint(state.party[state.activeIndex]) || move.learnText;
+  return contextualLearningPoint(state.party[state.activeIndex], move.id) || move.learnText;
 }
 
 function formatBattleActionLog(
@@ -152,10 +152,14 @@ function maintenanceVictoryLog(state: RunState): string {
   return '사람 전투에서 승리했습니다. 정비 구역에 도착했습니다.';
 }
 
-function pathimonMemoDetail(monster: RuntimeMonster): string {
-  const learningPoint = randomLearningPoint(monster);
-  if (learningPoint) return learningPoint;
-  return `${monster.scientificName}은 ${monster.category} 타입입니다.`;
+function pathimonMemoDetail(monster: RuntimeMonster, extraForLearning = false): string {
+  const first = randomLearningPoint(monster) || `${monster.scientificName}은 ${monster.category} 타입입니다.`;
+  if (!extraForLearning) return first;
+
+  // 학습모드: 포획·통과 시 서로 다른 두 번째 학습포인트를 하나 더 보여준다.
+  const others = (monster.profileMemo ?? []).filter((line) => line.trim().length > 0 && line !== first);
+  const second = others.length > 0 ? randomLearningPoint({ profileMemo: others }) : '';
+  return second ? `${first}\n${second}` : first;
 }
 
 function floorClearLog(state: RunState, message: string, detail?: string): string {
@@ -658,7 +662,7 @@ export function resolvePassEncounter(state: RunState): RunState {
   nextState.lastLog = floorClearLog(
     nextState,
     `${enemy.name}와 거리를 두고 지나갔다.`,
-    pathimonMemoDetail(enemy),
+    pathimonMemoDetail(enemy, nextState.mode === 'learning'),
   );
   return nextState;
 }
@@ -770,7 +774,7 @@ export function resolveCapsuleAction(state: RunState, rollOrCapsule: number | Ca
     }
 
     nextState.party.push(captured);
-    return setWinState(nextState, `${enemy.name}을 포획했습니다.`, undefined, pathimonMemoDetail(enemy));
+    return setWinState(nextState, `${enemy.name}을 포획했습니다.`, undefined, pathimonMemoDetail(enemy, nextState.mode === 'learning'));
   }
 
   nextState.phase = 'battle';

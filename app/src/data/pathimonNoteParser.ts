@@ -471,6 +471,53 @@ function parseNoteMemo(lines: string[]): string[] {
   return learningPoints.length > 0 ? learningPoints : parseMemoLines(sectionLines(lines, '메모'));
 }
 
+// 작업메모의 `기술↔학습포인트 대응: 탄저 독소 → L4·L5·L6 / 협막 형성 → L7·L9`를 기술명 → L번호로 파싱.
+function parseMovePointMapping(lines: string[]): Record<string, number[]> {
+  const line = lines.find((raw) => raw.replace(/^\s*-?\s*/, '').startsWith('기술↔학습포인트 대응:'));
+  if (!line) return {};
+  const body = line.slice(line.indexOf('대응:') + '대응:'.length).trim();
+  const map: Record<string, number[]> = {};
+  for (const part of body.split('/')) {
+    const [name, refs] = part.split('→').map((token) => token.trim());
+    if (!name || !refs) continue;
+    const lNums = [...refs.matchAll(/L(\d+)/g)].map((match) => Number(match[1]));
+    if (lNums.length > 0) map[normalizeTerm(name)] = lNums;
+  }
+  return map;
+}
+
+// profileMemo(`L4 [기전] …`)에서 L번호 → 배열 인덱스.
+function memoIndexByL(memo: string[]): Map<number, number> {
+  const index = new Map<number, number>();
+  memo.forEach((line, position) => {
+    const match = line.match(/^L(\d+)\b/);
+    if (match) index.set(Number(match[1]), position);
+  });
+  return index;
+}
+
+function buildMovePointMap(
+  noteText: string,
+  memo: string[],
+  moveEntries: ReadonlyArray<readonly [MoveId, MoveData]>,
+): Record<MoveId, number[]> {
+  const rawMapping = parseMovePointMapping(normalizeLines(noteText));
+  const nameToMoveId = new Map(moveEntries.map(([moveId, move]) => [normalizeTerm(move.name), moveId]));
+  const lToIndex = memoIndexByL(memo);
+  const map: Record<MoveId, number[]> = {};
+
+  for (const [moveName, lNums] of Object.entries(rawMapping)) {
+    const moveId = nameToMoveId.get(moveName);
+    if (!moveId) continue;
+    const indices = lNums
+      .map((n) => lToIndex.get(n))
+      .filter((position): position is number => position !== undefined);
+    if (indices.length > 0) map[moveId] = indices;
+  }
+
+  return map;
+}
+
 function normalizeTerm(term: string): string {
   return term.trim().replace(/\s+/g, ' ');
 }
@@ -983,6 +1030,7 @@ export function buildPathimonFromNote(noteText: string, options: PathimonNoteBui
       abilities,
       learnset: moveEntries.map(([moveId]) => moveId),
       profileMemo: note.memo,
+      movePointMap: buildMovePointMap(noteText, note.memo, moveEntries),
       countermeasures: note.countermeasures,
       prep,
       signature,

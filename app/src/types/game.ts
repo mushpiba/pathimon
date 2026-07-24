@@ -223,6 +223,8 @@ export interface MonsterData {
   abilities?: AbilityId[];
   learnset: MoveId[];
   profileMemo?: string[];
+  // 기술 사용 시 맥락 학습을 위해, 기술 → profileMemo 인덱스 매핑(노트 `기술↔학습포인트 대응`).
+  movePointMap?: Record<MoveId, number[]>;
   countermeasures?: CountermeasureProfile;
   prep?: MoveId;
   signature?: MoveId;
@@ -295,6 +297,8 @@ export interface RuntimeMonster {
   plannedMoveIds?: MoveId[];
   bossPhase2Activated?: boolean;
   profileMemo?: string[];
+  // 기술 사용 시 맥락 학습을 위해, 기술 → profileMemo 인덱스 매핑(노트 `기술↔학습포인트 대응`).
+  movePointMap?: Record<MoveId, number[]>;
   countermeasures?: CountermeasureProfile;
   effects: ActiveEffect[];
   statusConditions?: StatusConditionStacks;

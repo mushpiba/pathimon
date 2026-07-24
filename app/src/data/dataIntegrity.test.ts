@@ -131,6 +131,19 @@ describe('Pathimon data', () => {
     expect(anthrax?.countermeasures?.symptomTags).toEqual(expect.arrayContaining(['피부탄저', '흡입탄저', '발열', '기침', '피로']));
   });
 
+  it('maps moves to their related learning points from 기술↔학습포인트 대응', () => {
+    const anthrax = NOTE_MONSTERS.find((monster) => monster.id === 'anthrax');
+    const memo = anthrax?.profileMemo ?? [];
+    // 탄저 독소 → L4·L5·L6
+    const toxinPoints = (anthrax?.movePointMap?.anthrax_toxin ?? []).map((index) => memo[index]);
+    expect(toxinPoints).toHaveLength(3);
+    expect(toxinPoints.every((line) => /^L[456] /.test(line ?? ''))).toBe(true);
+
+    // 대부분의 노트가 매핑을 갖는다(81/82).
+    const withMap = NOTE_MONSTERS.filter((monster) => monster.movePointMap && Object.keys(monster.movePointMap).length > 0);
+    expect(withMap.length).toBeGreaterThan(NOTE_MONSTERS.length * 0.8);
+  });
+
   // ×4 커버리지 가드 — 적 기술 풀에서 각 패시몬에 ×4/×2가 실제로 뜨는지 검사한다.
   // 참고: docs/pathimon-treatment-coverage-audit-2026-07-24.md. 새 노트가 계열만 제대로 쓰면 이 검사를 자동 통과한다.
   describe('treatment coverage', () => {
