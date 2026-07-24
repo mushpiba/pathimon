@@ -56,6 +56,7 @@ describe('pathimon note parser countermeasures', () => {
     expect(built.monster.countermeasures).toEqual({
       direct: ['알벤다졸', '수술'],
       symptomTags: ['탈수', '장관기생', '설사·복통', '설사', '복통'],
+      directDrugClasses: {}, // v1 노트(직접: 필드)는 계열이 없어 비어 있다
     });
   });
 

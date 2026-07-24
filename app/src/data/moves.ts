@@ -1,5 +1,6 @@
 import type { MoveData, MoveId } from '../types/game';
 import { NOTE_MOVES } from './pathimonNoteData';
+import { DRUG_MOVES } from './drugMoves';
 
 const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
   alpha_toxin: {
@@ -479,86 +480,8 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     learnText: '포식세포의 ROS 공격은 카탈라아제나 포자, 바이오필름에 막힐 수 있다.',
     targetTags: ['산화폭발', '활성산소', '선천면역'],
   },
-  m_cell_wall_inhibitor: {
-    id: 'm_cell_wall_inhibitor',
-    name: '세포벽 억제제 투약',
-    type: 'cell_wall_drug',
-    power: 18,
-    accuracy: 0.9,
-    description: '세포벽 합성을 방해해 병원체를 무너뜨린다.',
-    learnText: '베타락탐 계열처럼 세균 세포벽을 노리는 치료 대응이다.',
-    targetTags: ['세포벽 억제제', '베타락탐', '페니실린', '암피실린', '나프실린', '세파졸린', '세프트리악손', '세포탁심', '세프타지딤', '세팔로스포린', '세폭시틴', '세포테탄', '반코마이신', '카바페넴', '메로페넴', '피페라실린-타조박탐', '그람양성', '그람음성', '세균'],
-  },
-  m_protein_synthesis_inhibitor: {
-    id: 'm_protein_synthesis_inhibitor',
-    name: '단백합성 억제제 투약',
-    type: 'protein_synthesis_drug',
-    power: 16,
-    accuracy: 0.88,
-    description: '단백질 생산을 끊어 증식을 둔화시킨다.',
-    learnText: '세균 리보솜을 표적으로 삼는 항균제 대응이다.',
-    targetTags: ['단백합성 억제제', '독시사이클린', '테트라사이클린', '마크로라이드', '아지스로마이신', '에리스로마이신', '에리트로마이신', '클린다마이신', '아미노글리코사이드', '겐타마이신', '젠타마이신', '토브라마이신', '파로모마이신', '스트렙토마이신', '아미카신', '리네졸리드', '세균'],
-  },
-  m_targeted_antibacterial: {
-    id: 'm_targeted_antibacterial',
-    name: '표적 항균제 투약',
-    type: 'targeted_antibacterial',
-    power: 17,
-    accuracy: 0.88,
-    description: '균의 특성과 내성 양상에 맞춘 항균 치료로 압박한다.',
-    learnText: '세균 치료는 그람염색만이 아니라 감염 부위, 독소, 내성, 세포내 위치까지 함께 본다.',
-    targetTags: ['표적 항균요법', '항균제', '플루오로퀴놀론', '시프로플록사신', '레보플록사신', '메트로니다졸', '티니다졸', '트리메토프림-설파메톡사졸', 'TMP-SMX', '피닥소마이신', '분변미생물 이식', '니트로푸란토인', '리팍시민', '리팜핀', '이소니아지드', '피라진아미드', '에탐부톨', '항결핵제', '세프타지딤-아비박탐', '메로페넴-바보박탐', '세피데로콜', '폴리믹신', '이미페넴'],
-  },
-  m_antifungal_membrane: {
-    id: 'm_antifungal_membrane',
-    name: '항진균제 투약',
-    type: 'antifungal_membrane',
-    power: 17,
-    accuracy: 0.88,
-    description: '진균막과 균사 구조를 노려 공격한다.',
-    learnText: '진균의 막과 세포벽 성분은 항진균제의 핵심 표적이다.',
-    targetTags: ['항진균제', '암포테리신B', '아졸', '진균', '진균막'],
-  },
-  m_anthelmintic: {
-    id: 'm_anthelmintic',
-    name: '구충제 투약',
-    type: 'anthelmintic',
-    power: 18,
-    accuracy: 0.86,
-    description: '큰 기생충의 운동성을 마비시켜 몰아붙인다.',
-    learnText: '구충제는 연충의 신경근 기능을 표적으로 삼을 수 있다.',
-    targetTags: ['구충제', '알벤다졸', '메벤다졸', '티아벤다졸', '이버멕틴', '프라지콴텔', '트리클라벤다졸', '디에틸카바마진', 'DEC', '피란텔', '피란텔 파모산염', '니클로사마이드', '비티오놀', '옥삼니퀸', '선충', '흡충', '조충', '기생충', '장관기생'],
-  },
-  m_antitoxin_therapy: {
-    id: 'm_antitoxin_therapy',
-    name: '항독소 투여',
-    type: 'antitoxin_therapy',
-    power: 15,
-    accuracy: 0.92,
-    description: '독소를 중화해 병원체의 주 공격축을 꺾는다.',
-    learnText: '독소 매개 질환에서는 병원체 자체보다 독소 중화가 중요한 대응이 된다.',
-    targetTags: ['항독소', '독소', '탄저 항독소', '보툴리눔 항독소', '디프테리아 항독소', '파상풍 면역글로불린', 'TIG', 'DAT', '수두대상포진 IgG', '보툴리눔', '파상풍', '디프테리아'],
-  },
-  m_antiviral_replication: {
-    id: 'm_antiviral_replication',
-    name: '항바이러스제 투약',
-    type: 'antiviral_replication',
-    power: 16,
-    accuracy: 0.9,
-    description: '바이러스 복제 과정을 차단한다.',
-    learnText: '항바이러스제는 숙주 세포 안에서 복제하는 바이러스의 생활사를 노린다.',
-    targetTags: ['항바이러스제', '항레트로바이러스제', 'ART', '복제차단', '뉴클레오시드', '아시클로버', '발라시클로버', '비다라빈', '간시클로버', '포스카넷', '레트로바이러스'],
-  },
-  m_antiprotozoal: {
-    id: 'm_antiprotozoal',
-    name: '항원충제 투약',
-    type: 'protein_synthesis_drug',
-    power: 17,
-    accuracy: 0.88,
-    description: '원충의 증식과 대사 축을 노려 압박한다.',
-    learnText: '원충 감염에서는 병원체와 생활사에 맞는 항원충제 선택이 중요하다.',
-    targetTags: ['항원충제', '메트로니다졸', '클로로퀸', '아르테미시닌', '원충', '원생동물', '말라리아', '아메바'],
-  },
+  // 약물 계열 기술(세포벽억제·단백합성억제·표적항균·항진균·구충·항독소·항바이러스·항원충)은
+  // data/drugMoves.ts에서 노트 대처법의 약물별로 자동 생성한다(아시클로버 투여 등). 여기선 제거.
   m_rehydration: {
     id: 'm_rehydration',
     name: '수액요법',
@@ -646,4 +569,5 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
 export const MOVES = {
   ...BASE_MOVES,
   ...NOTE_MOVES,
+  ...DRUG_MOVES,
 } as Record<MoveId, MoveData>;

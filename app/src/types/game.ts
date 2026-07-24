@@ -109,6 +109,8 @@ export type MoveId = string;
 export interface CountermeasureProfile {
   direct: string[];
   symptomTags: string[];
+  // 직접 처치약 이름 → 처치 계열(세포벽억제 등). 약물별 적 기술 자동 생성에 쓴다(data/drugMoves.ts).
+  directDrugClasses?: Record<string, string>;
 }
 
 export type StatusConditionId =

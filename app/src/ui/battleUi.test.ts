@@ -404,11 +404,11 @@ describe('battle UI helpers', () => {
       name: '면역챔피언',
       isBoss: true,
       isTrainer: true,
-      moveset: ['m_anthelmintic', 'm_interferon'],
-      plannedMoveIds: ['m_anthelmintic', 'm_interferon'],
+      moveset: ['m_rx_알벤다졸', 'm_interferon'],
+      plannedMoveIds: ['m_rx_알벤다졸', 'm_interferon'],
     });
 
-    expect(enemyIntentText(enemy)).toBe('면역챔피언은 구충제 투약과 인터페론 활성화를 준비하고 있다.');
+    expect(enemyIntentText(enemy)).toBe('면역챔피언은 알벤다졸 투여와 인터페론 활성화를 준비하고 있다.');
   });
 
   it('shows only the prompt and planned move on the human battle preparation screen', () => {
@@ -657,7 +657,7 @@ describe('battle UI helpers', () => {
     expect(summary.typeLine).toBe('타입: 흡충');
     expect(summary.statLine).toBe('HP 31/80 · 공격 14 · 방어 8');
     expect(summary.moveRows).toEqual(expect.arrayContaining([
-      expect.objectContaining({ name: '구충제 투약', multiplier: 4, matchReason: '프라지콴텔' }),
+      expect.objectContaining({ name: '프라지콴텔 투여', multiplier: 4, matchReason: '프라지콴텔' }),
       expect.objectContaining({ name: '진통제', multiplier: 2, matchReason: '복통' }),
     ]));
     expect(summary.moveRows.map((row) => row.name)).not.toContain('코아굴라제');
@@ -683,7 +683,7 @@ describe('battle UI helpers', () => {
     const boss = createMonster({
       isBoss: true,
       isTrainer: true,
-      moveset: ['m_phago', 'm_opsonin', 'm_cell_wall_inhibitor', 'm_antiviral_replication'],
+      moveset: ['m_phago', 'm_opsonin', 'm_rx_페니실린', 'm_rx_아시클로버'],
     });
 
     const rows = formatBossAttackMatchupRows(boss);
@@ -695,9 +695,9 @@ describe('battle UI helpers', () => {
       targetTags: '대식세포 포식, 포식, 선천면역',
     });
     expect(rows[2]).toMatchObject({
-      attackName: '세포벽 억제제 투약',
+      attackName: '페니실린 투여',
       attackType: '세포벽억제',
-      targetTags: expect.stringContaining('베타락탐'),
+      targetTags: expect.stringContaining('페니실린'),
     });
   });
 
@@ -715,13 +715,13 @@ describe('battle UI helpers', () => {
   });
 
   it('sorts boss attacks by effectiveness vs the defender so effective drugs surface', () => {
-    const boss = createMonster({ isBoss: true, isTrainer: true, moveset: ['m_phago', 'm_antibody', 'm_cell_wall_inhibitor'] });
+    const boss = createMonster({ isBoss: true, isTrainer: true, moveset: ['m_phago', 'm_antibody', 'm_rx_페니실린'] });
     const defender = createMonster({ countermeasures: { direct: ['페니실린'], symptomTags: [] } });
 
     const rows = formatBossAttackMatchupRows(boss, defender);
 
     // 페니실린이 걸리는 세포벽억제제(×4)가 맨 위로.
-    expect(rows[0].attackName).toContain('세포벽');
+    expect(rows[0].attackName).toContain('페니실린');
     expect(rows[0].multiplier).toBe(4);
     // defender 없으면 정렬·배율 없음(하위 호환).
     expect(formatBossAttackMatchupRows(boss)[0].multiplier).toBeUndefined();
@@ -730,7 +730,7 @@ describe('battle UI helpers', () => {
   it('filters a human opponent move list to treatments effective against the active pathimon', () => {
     const trainer = createMonster({
       isTrainer: true,
-      moveset: ['m_phago', 'm_cell_wall_inhibitor', 'm_rehydration'],
+      moveset: ['m_phago', 'm_rx_페니실린', 'm_rehydration'],
     });
     const defender = createMonster({
       countermeasures: {
@@ -742,7 +742,7 @@ describe('battle UI helpers', () => {
     const summary = battleDexSummary(trainer, defender);
 
     expect(summary.moveRows.map((row) => [row.name, row.multiplier])).toEqual([
-      ['세포벽 억제제 투약', 4],
+      ['페니실린 투여', 4],
       ['수액요법', 2],
     ]);
     expect(summary.moveRows.map((row) => row.matchReason)).toEqual(['페니실린', '탈수']);
@@ -752,8 +752,8 @@ describe('battle UI helpers', () => {
     const trainer = createMonster({
       name: '감염 순찰대원',
       isTrainer: true,
-      moveset: ['m_cell_wall_inhibitor', 'm_rehydration'],
-      plannedMoveIds: ['m_cell_wall_inhibitor', 'm_rehydration'],
+      moveset: ['m_rx_페니실린', 'm_rehydration'],
+      plannedMoveIds: ['m_rx_페니실린', 'm_rehydration'],
     });
     const bacterium = createMonster({
       name: '세균몬',
@@ -768,7 +768,7 @@ describe('battle UI helpers', () => {
 
     expect(groups).toEqual([
       expect.objectContaining({
-        attackName: '세포벽 억제제 투약',
+        attackName: '페니실린 투여',
         party: [
           { monsterName: '세균몬', multiplier: 4 },
           { monsterName: '탈수몬', multiplier: 1 },
@@ -794,7 +794,7 @@ describe('battle UI helpers', () => {
 
     const rows = formatWildTreatmentRows(wild);
 
-    expect(rows.some((row) => row.attackName === '구충제 투약' && row.multiplier === 4)).toBe(true);
+    expect(rows.some((row) => row.attackName === '프라지콴텔 투여' && row.multiplier === 4)).toBe(true);
     expect(rows.some((row) => row.attackName === '진통제' && row.multiplier === 2)).toBe(true);
     expect(rows.every((row) => (row.multiplier ?? 1) > 1)).toBe(true);
   });

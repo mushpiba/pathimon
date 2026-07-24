@@ -51,7 +51,7 @@ describe('boss attack matchup', () => {
         symptomTags: ['탈수', '장관기생'],
       },
     } as Partial<RuntimeMonster>));
-    const directMove = { ...MOVES.m_anthelmintic, targetTags: ['알벤다졸', '선충'] };
+    const directMove = { ...MOVES.m_rx_알벤다졸, targetTags: ['알벤다졸', '선충'] };
     const symptomMove = { ...MOVES.m_th2, targetTags: ['탈수', '구토'] };
     const unrelatedMove = { ...MOVES.m_interferon, targetTags: ['바이러스'] };
 
@@ -80,9 +80,9 @@ describe('boss attack matchup', () => {
         symptomTags: ['발열'],
       },
     } as Partial<RuntimeMonster>));
-    const moveIds = ['m_anthelmintic', 'm_antipyretic', 'm_antibody'] as const;
+    const moveIds = ['m_rx_알벤다졸', 'm_antipyretic', 'm_antibody'] as const;
 
-    expect(chooseBossMove([...moveIds], profile, [], () => 0.1)).toBe('m_anthelmintic');
+    expect(chooseBossMove([...moveIds], profile, [], () => 0.1)).toBe('m_rx_알벤다졸');
     expect(chooseBossMove([...moveIds], profile, [], () => 0.4)).toBe('m_antipyretic');
     expect(chooseBossMove([...moveIds], profile, [], () => 0.9)).toBe('m_antibody');
   });

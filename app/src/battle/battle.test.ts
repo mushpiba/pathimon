@@ -740,8 +740,8 @@ describe('battle engine', () => {
       enemy: createMonster({
         name: '면역챔피언',
         category: '보스 사람',
-        moveset: ['m_interferon', 'm_anthelmintic'],
-        moveSlots: ['m_interferon', 'm_anthelmintic', null, null],
+        moveset: ['m_interferon', 'm_rx_알벤다졸'],
+        moveSlots: ['m_interferon', 'm_rx_알벤다졸', null, null],
         isBoss: true,
         isTrainer: true,
         attack: 12,
@@ -754,7 +754,7 @@ describe('battle engine', () => {
     try {
       const result = resolvePlayerMove(battle, 'coagulase', 1, 0, 0);
 
-      expect(result.lastLog).toContain('구충제 투약');
+      expect(result.lastLog).toContain('알벤다졸 투여');
       expect(result.lastLog).toContain('효과가 굉장했다');
       expect(result.party[0].hp).toBeLessThan(500);
     } finally {
@@ -859,9 +859,9 @@ describe('battle engine', () => {
       enemy: createMonster({
         name: '면역챔피언',
         category: '보스 사람',
-        moveset: ['m_anthelmintic'],
-        moveSlots: ['m_anthelmintic', null, null, null],
-        plannedMoveId: 'm_anthelmintic',
+        moveset: ['m_rx_알벤다졸'],
+        moveSlots: ['m_rx_알벤다졸', null, null, null],
+        plannedMoveId: 'm_rx_알벤다졸',
         isBoss: true,
         isTrainer: true,
         attack: 12,
@@ -897,9 +897,9 @@ describe('battle engine', () => {
       enemy: createMonster({
         name: '면역챔피언',
         category: '보스 사람',
-        moveset: ['m_anthelmintic', 'm_interferon'],
-        moveSlots: ['m_anthelmintic', 'm_interferon', null, null],
-        plannedMoveIds: ['m_anthelmintic', 'm_interferon'],
+        moveset: ['m_rx_알벤다졸', 'm_interferon'],
+        moveSlots: ['m_rx_알벤다졸', 'm_interferon', null, null],
+        plannedMoveIds: ['m_rx_알벤다졸', 'm_interferon'],
         bossPhase2Activated: true,
         isBoss: true,
         isTrainer: true,
@@ -911,7 +911,7 @@ describe('battle engine', () => {
 
     const result = resolvePlayerMove(battle, 'coagulase', 1);
 
-    expect(result.lastLog).toContain('구충제 투약');
+    expect(result.lastLog).toContain('알벤다졸 투여');
     expect(result.lastLog).toContain('인터페론 활성화');
     expect(result.party[0].hp).toBeLessThan(500);
     expect(result.enemy?.plannedMoveIds).toHaveLength(2);

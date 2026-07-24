@@ -588,12 +588,14 @@ function stripRegimenSuffix(drug: string): string {
 
 interface ParsedV2Countermeasures {
   direct: string[];
+  drugClasses: Record<string, string>;
   physical: boolean;
   sawV2: boolean;
 }
 
 function parseV2Countermeasures(lines: string[]): ParsedV2Countermeasures {
   const direct: string[] = [];
+  const drugClasses: Record<string, string> = {};
   let physical = false;
   let sawV2 = false;
 
@@ -622,10 +624,13 @@ function parseV2Countermeasures(lines: string[]): ParsedV2Countermeasures {
     const drugs = splitCountermeasureList(cells[0] ?? '')
       .map(stripRegimenSuffix)
       .filter((drug) => drug && drug !== '—' && drug !== '없음');
+    for (const drug of drugs) {
+      if (cls) drugClasses[drug] = cls; // 약물 → 처치 계열 (약물별 기술 자동 생성용)
+    }
     direct.push(...drugs);
   }
 
-  return { direct: uniqueTerms(direct), physical, sawV2 };
+  return { direct: uniqueTerms(direct), drugClasses, physical, sawV2 };
 }
 
 function parseCountermeasures(lines: string[], moves: NoteMove[]): CountermeasureProfile {
@@ -638,6 +643,7 @@ function parseCountermeasures(lines: string[], moves: NoteMove[]): Countermeasur
   return {
     direct,
     symptomTags: uniqueTerms([...manualSymptomTags, ...moveSymptoms, ...physicalTag]),
+    directDrugClasses: v2.drugClasses,
   };
 }
 
