@@ -39,7 +39,8 @@ import {
   defenseTraitDetailLines,
   defenseTraitSummary,
   firstUsableMove,
-  formatBossAttackMatchupRows,
+  formatAnnouncedTreatmentMatchups,
+  formatWildTreatmentRows,
   formatMoveDetailSections,
   formatMoveDetails,
   formatMoveName,
@@ -832,8 +833,8 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  private drawDexView(_player: RuntimeMonster, enemy: RuntimeMonster): void {
-    const dex = battleDexSummary(enemy);
+  private drawDexView(player: RuntimeMonster, enemy: RuntimeMonster): void {
+    const dex = battleDexSummary(enemy, player);
 
     addLabel(this, 34, 404, '도감', 21);
     addBoxLabel(this, 34, 432, dex.opponentName, { width: 170, height: 20, size: 14, minSize: 10, maxLines: 1 })
@@ -853,9 +854,19 @@ export class BattleScene extends Phaser.Scene {
 
     drawPanel(this, 220, 394, 628, 168).setAlpha(0.98);
     if (this.dexTab === 'moves') {
+      if (dex.moveRows.length === 0) {
+        addBoxLabel(this, 238, 428, '현재 선출에게 효과적인 적 처치가 없습니다.', {
+          width: 586,
+          height: 24,
+          size: 14,
+          minSize: 11,
+          maxLines: 1,
+        }).setAlpha(0.78);
+      }
       dex.moveRows.forEach((row, index) => {
         const y = 404 + index * 40;
-        addBoxLabel(this, 238, y, row.name, {
+        const multiplierLabel = row.multiplier === 4 ? '직접 ×4' : row.multiplier === 2 ? '간접 ×2' : '';
+        addBoxLabel(this, 238, y, `${row.name}${multiplierLabel ? ` · ${multiplierLabel}` : ''}`, {
           width: 190,
           height: 18,
           size: 15,
@@ -869,7 +880,10 @@ export class BattleScene extends Phaser.Scene {
           minSize: 9,
           maxLines: 1,
         }).setAlpha(0.88);
-        addBoxLabel(this, 258, y + 20, row.description, {
+        const description = row.matchReason
+          ? `일치: ${row.matchReason} · ${row.description}`
+          : row.description;
+        addBoxLabel(this, 258, y + 20, description, {
           width: 566,
           height: 16,
           size: 11,
@@ -877,11 +891,10 @@ export class BattleScene extends Phaser.Scene {
           maxLines: 1,
         }).setAlpha(0.88);
       });
-    } else if (enemy.isBoss) {
-      addLabel(this, 238, 414, '보스 공격', 14).setAlpha(0.86);
-      addLabel(this, 424, 414, '대상태그', 14).setAlpha(0.86);
-      // 내 활성 패시몬 기준 효과 높은 순으로 정렬해 위협적인 처치(약)가 위로 오게 한다.
-      this.drawBossMatchupRows(formatBossAttackMatchupRows(enemy, this.state.party[this.state.activeIndex]), 238, 438, 586);
+    } else if (enemy.isTrainer) {
+      this.drawAnnouncedTreatmentMatchups(enemy);
+    } else {
+      this.drawWildTreatmentMatchups(enemy);
     }
 
     this.drawMenuButton(852, 488, 120, 34, '뒤로', () => {
@@ -890,32 +903,79 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  private drawBossMatchupRows(rows: ReturnType<typeof formatBossAttackMatchupRows>, x: number, y: number, width: number): void {
-    if (rows.length === 0) {
-      addBoxLabel(this, x, y, '보스 공격 정보 없음', { width, height: 18, size: 13, minSize: 10, maxLines: 1 })
-        .setAlpha(0.76);
+  private drawAnnouncedTreatmentMatchups(enemy: RuntimeMonster): void {
+    const groups = formatAnnouncedTreatmentMatchups(enemy, this.state.party);
+    addLabel(this, 238, 404, '예고된 처치와 파티 상성', 14).setAlpha(0.86);
+
+    if (groups.length === 0) {
+      addBoxLabel(this, 238, 434, '아직 예고된 처치가 없습니다.', {
+        width: 586,
+        height: 20,
+        size: 13,
+        minSize: 10,
+        maxLines: 1,
+      }).setAlpha(0.76);
       return;
     }
 
-    rows.slice(0, 4).forEach((row, index) => {
-      const rowY = y + index * 27;
-      const multMark = row.multiplier && row.multiplier > 1 ? ` ×${row.multiplier}` : '';
-      addBoxLabel(this, x, rowY, `${row.attackName}${multMark} · ${row.attackType}`, {
-        width: 170,
+    groups.slice(0, 2).forEach((group, index) => {
+      const y = 428 + index * 62;
+      addBoxLabel(this, 238, y, group.attackName, {
+        width: 190,
         height: 18,
-        size: 12,
-        minSize: 9,
+        size: 14,
+        minSize: 11,
         maxLines: 1,
       });
-      addBoxLabel(this, x + 186, rowY, row.targetTags, {
-        width: width - 186,
-        height: 18,
-        size: 11,
-        minSize: 8,
-        maxLines: 1,
-      }).setAlpha(0.9);
+      const matchupText = group.party
+        .map(({ monsterName, multiplier }) => `${monsterName} ×${multiplier}`)
+        .join(' · ');
+      addBoxLabel(this, 430, y, matchupText, {
+        width: 394,
+        height: 42,
+        size: 12,
+        minSize: 9,
+        maxLines: 2,
+      }).setLineSpacing(3);
     });
   }
+
+  private drawWildTreatmentMatchups(enemy: RuntimeMonster): void {
+    const rows = formatWildTreatmentRows(enemy);
+    const direct = rows.filter((row) => row.multiplier === 4);
+    const indirect = rows.filter((row) => row.multiplier === 2);
+
+    addLabel(this, 238, 404, '이 패시몬에 효과적인 처치', 14).setAlpha(0.86);
+    this.drawTreatmentGroup('직접 처치 ×4', direct, 428);
+    this.drawTreatmentGroup('간접 처치 ×2', indirect, 486);
+  }
+
+  private drawTreatmentGroup(
+    label: string,
+    rows: ReturnType<typeof formatWildTreatmentRows>,
+    y: number,
+  ): void {
+    addBoxLabel(this, 238, y, label, {
+      width: 120,
+      height: 18,
+      size: 12,
+      minSize: 10,
+      maxLines: 1,
+    }).setAlpha(0.9);
+    const text = rows.length > 0
+      ? rows
+        .map((row) => row.matchedTags ? `${row.attackName} (${row.matchedTags})` : row.attackName)
+        .join(' · ')
+      : '해당 없음';
+    addBoxLabel(this, 366, y, text, {
+      width: 458,
+      height: 42,
+      size: 12,
+      minSize: 9,
+      maxLines: 2,
+    }).setLineSpacing(3).setAlpha(rows.length > 0 ? 1 : 0.62);
+  }
+
   private handleMovePress(moveId: MoveId): void {
     if (this.isAnimating) {
       return;

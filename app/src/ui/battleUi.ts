@@ -2,6 +2,7 @@ import { ABILITIES } from '../data/abilities';
 import { EFFECTIVENESS } from '../data/effectiveness';
 import { ATTACK_TYPE_LABELS, TAG_LABELS } from '../data/labels';
 import { MOVES } from '../data/moves';
+import { BOSS_ATTACK_MOVE_IDS } from '../data/bossAttackMatchups';
 import {
   effectiveMaxHp,
   STATUS_CONDITIONS,
@@ -456,6 +457,8 @@ export interface PokedexMoveRow {
   accuracy: string;
   description: string;
   learnText: string;
+  matchReason?: string;
+  multiplier?: 1 | 2 | 4;
   name: string;
   power: string;
   type: string;
@@ -482,8 +485,20 @@ export interface BattleDexSummary {
 export interface BossAttackMatchupRow {
   attackName: string;
   attackType: string;
+  matchedTags: string;
+  moveId: MoveId;
   targetTags: string;
   multiplier?: number;
+}
+
+export interface AnnouncedTreatmentPartyMatchup {
+  monsterName: string;
+  multiplier: 1 | 2 | 4;
+}
+
+export interface AnnouncedTreatmentMatchup {
+  attackName: string;
+  party: AnnouncedTreatmentPartyMatchup[];
 }
 
 function labelEffectivenessTarget(target: AbilityId | TagValue): string {
@@ -497,7 +512,12 @@ function labelMultiplier(multiplier: number): string {
   return '보통 x1';
 }
 
-function formatMoveRow(moveId: MoveId, monster?: RuntimeMonster): PokedexMoveRow {
+function formatMoveRow(
+  moveId: MoveId,
+  monster?: RuntimeMonster,
+  multiplier?: 1 | 2 | 4,
+  matchReason?: string,
+): PokedexMoveRow {
   const move = currentMoveData(MOVES[moveId], monster);
   return {
     name: move.name,
@@ -506,6 +526,8 @@ function formatMoveRow(moveId: MoveId, monster?: RuntimeMonster): PokedexMoveRow
     accuracy: `${Math.round(move.accuracy * 100)}%`,
     description: interpolateMoveText(move.description, monster),
     learnText: interpolateMoveText(move.learnText, monster),
+    matchReason,
+    multiplier,
   };
 }
 
@@ -573,17 +595,52 @@ export function formatBossAttackMatchupRows(enemy: RuntimeMonster, defender?: Ru
   const rows = moveIds
     .map((moveId) => MOVES[moveId])
     .filter((move): move is MoveData => Boolean(move))
-    .map((move) => ({
-      attackName: bossAttackDisplayName(move, enemy),
-      attackType: ATTACK_TYPE_LABELS[move.type],
-      targetTags: move.targetTags?.length ? move.targetTags.join(', ') : '없음',
-      multiplier: profile ? bossMoveEffectiveness(move, profile).multiplier : undefined,
-    }));
+    .map((move) => {
+      const effectiveness = profile ? bossMoveEffectiveness(move, profile) : undefined;
+      return {
+        attackName: bossAttackDisplayName(move, enemy),
+        attackType: ATTACK_TYPE_LABELS[move.type],
+        matchedTags: effectiveness?.matchedTags.join(', ') ?? '',
+        moveId: move.id,
+        targetTags: move.targetTags?.length ? move.targetTags.join(', ') : '없음',
+        multiplier: effectiveness?.multiplier,
+      };
+    });
 
   if (profile) {
     rows.sort((a, b) => (b.multiplier ?? 0) - (a.multiplier ?? 0));
   }
   return rows;
+}
+
+export function formatWildTreatmentRows(wild: RuntimeMonster): BossAttackMatchupRow[] {
+  const treatmentSource: RuntimeMonster = {
+    ...wild,
+    moveset: BOSS_ATTACK_MOVE_IDS,
+    moveSlots: BOSS_ATTACK_MOVE_IDS,
+  };
+  return formatBossAttackMatchupRows(treatmentSource, wild)
+    .filter((row) => (row.multiplier ?? 1) > 1);
+}
+
+export function formatAnnouncedTreatmentMatchups(
+  enemy: RuntimeMonster,
+  party: RuntimeMonster[],
+): AnnouncedTreatmentMatchup[] {
+  const plannedIds = enemy.plannedMoveIds?.length
+    ? enemy.plannedMoveIds
+    : [enemy.plannedMoveId].filter((moveId): moveId is MoveId => Boolean(moveId));
+
+  return plannedIds
+    .map((moveId) => MOVES[moveId])
+    .filter((move): move is MoveData => Boolean(move))
+    .map((move) => ({
+      attackName: bossAttackDisplayName(move, enemy),
+      party: party.map((monster) => ({
+        monsterName: monster.name,
+        multiplier: bossMoveEffectiveness(move, createBossDefenseProfile(monster)).multiplier,
+      })),
+    }));
 }
 
 function hasFinalConsonant(text: string): boolean {
@@ -875,10 +932,19 @@ export function battleMoveSlots(monster: RuntimeMonster): MoveSlot[] {
   return monster.moveSlots ?? monster.moveset.slice(0, 4);
 }
 
-export function battleDexSummary(enemy: RuntimeMonster): BattleDexSummary {
-  const moveIds = battleMoveSlots(enemy).filter((moveId): moveId is MoveId => Boolean(moveId));
+export function battleDexSummary(enemy: RuntimeMonster, defender?: RuntimeMonster): BattleDexSummary {
+  const treatmentRows = enemy.isTrainer
+    ? (defender ? formatBossAttackMatchupRows(enemy, defender).filter((row) => (row.multiplier ?? 1) > 1) : [])
+    : formatWildTreatmentRows(enemy);
   return {
-    moveRows: formatPokedexMoveRows(moveIds, enemy),
+    moveRows: treatmentRows
+      .slice(0, 4)
+      .map((row) => formatMoveRow(
+        row.moveId,
+        enemy,
+        row.multiplier as 1 | 2 | 4,
+        row.matchedTags,
+      )),
     opponentName: enemy.name,
     statLine: `HP ${enemy.hp}/${enemy.maxHp} · 공격 ${enemy.attack} · 방어 ${enemy.defense}`,
     typeLine: `타입: ${enemy.category}`,

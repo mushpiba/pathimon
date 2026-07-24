@@ -56,6 +56,7 @@ export function gameGuideContent(): GameGuideContent {
         title: '상태와 증상',
         lines: [
           '상태이상과 증상은 누적되며, 상태이상은 실제로 전투에 영향을 끼치고, 증상은 텍스트만 표기됩니다.',
+          '',
           '상태이상을 누적시켜 전투를 승리로 이끌어보세요!',
         ],
       },

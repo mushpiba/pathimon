@@ -17,7 +17,7 @@ const SELECTED_FILL = 0x4a405d;
 const ACTIVE_LINE = 0x72d6ff;
 const MODE_BUTTON_WIDTH = 350;
 const MODE_BUTTON_HEIGHT = 116;
-const STYLE_BUTTON_WIDTH = 250;
+const STYLE_BUTTON_WIDTH = MODE_BUTTON_WIDTH;
 const STYLE_BUTTON_HEIGHT = 54;
 
 export class ModeSelectScene extends Phaser.Scene {
@@ -55,14 +55,14 @@ export class ModeSelectScene extends Phaser.Scene {
     this.add.rectangle(142, 154, 740, 2, COLORS.line, 0.55).setOrigin(0);
 
     addLabel(this, 142, 174, '01  진행 방식', 15).setColor('#72d6ff').setAlpha(0.92);
-    addLabel(this, 142, 350, '02  디자인', 15).setColor('#72d6ff').setAlpha(0.92);
+    addLabel(this, 142, 366, '02  디자인', 15).setColor('#72d6ff').setAlpha(0.92);
 
     const options = modeSelectButtonOptions();
     options.slice(0, 2).forEach((option, index) => {
       this.createModeButton(142 + index * 390, 202, option, index);
     });
     options.slice(2).forEach((option, index) => {
-      this.createStyleButton(230 + index * 314, 382, option, index + 2);
+      this.createStyleButton(142 + index * 390, 402, option, index + 2);
     });
 
     if (shouldStartRun(this.choice)) {

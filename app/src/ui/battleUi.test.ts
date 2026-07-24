@@ -24,8 +24,10 @@ import {
   effectLabels,
   enemyIntentText,
   battleDexSummary,
+  formatAnnouncedTreatmentMatchups,
   formatBossAttackMatchupRows,
   formatBattleMatchupSections,
+  formatWildTreatmentRows,
   formatMoveDetailSections,
   formatMoveDetails,
   formatMoveName,
@@ -634,7 +636,7 @@ describe('battle UI helpers', () => {
     });
   });
 
-  it('builds battle pokedex details from the current opponent', () => {
+  it('shows treatments effective against a wild opponent in the pokedex move list', () => {
     const enemy = createMonster({
       name: '간실질 잠입',
       category: '흡충',
@@ -643,6 +645,10 @@ describe('battle UI helpers', () => {
       attack: 14,
       defense: 8,
       moveset: ['coagulase', 'hyaluronidase', 'enterotoxin', 'streptokinase'],
+      countermeasures: {
+        direct: ['프라지콴텔'],
+        symptomTags: ['복통'],
+      },
     });
 
     const summary = battleDexSummary(enemy);
@@ -650,8 +656,11 @@ describe('battle UI helpers', () => {
     expect(summary.opponentName).toBe('간실질 잠입');
     expect(summary.typeLine).toBe('타입: 흡충');
     expect(summary.statLine).toBe('HP 31/80 · 공격 14 · 방어 8');
-    expect(summary.moveRows.map((row) => row.name)).toEqual(['코아굴라제', '조직융해', '장독소', '혈전융해']);
-    expect(summary.moveRows.map((row) => row.name)).not.toContain('알파독소');
+    expect(summary.moveRows).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: '구충제 투약', multiplier: 4, matchReason: '프라지콴텔' }),
+      expect.objectContaining({ name: '진통제', multiplier: 2, matchReason: '복통' }),
+    ]));
+    expect(summary.moveRows.map((row) => row.name)).not.toContain('코아굴라제');
   });
   it('summarizes attack and defense advice for the current battle matchup', () => {
     const player = createMonster({ ability: 'large_resistance', tags: { pathway: 'gut', wall: 'nematode', location: 'intestinal_lumen', size: 'large' } });
@@ -716,6 +725,78 @@ describe('battle UI helpers', () => {
     expect(rows[0].multiplier).toBe(4);
     // defender 없으면 정렬·배율 없음(하위 호환).
     expect(formatBossAttackMatchupRows(boss)[0].multiplier).toBeUndefined();
+  });
+
+  it('filters a human opponent move list to treatments effective against the active pathimon', () => {
+    const trainer = createMonster({
+      isTrainer: true,
+      moveset: ['m_phago', 'm_cell_wall_inhibitor', 'm_rehydration'],
+    });
+    const defender = createMonster({
+      countermeasures: {
+        direct: ['페니실린'],
+        symptomTags: ['탈수'],
+      },
+    });
+
+    const summary = battleDexSummary(trainer, defender);
+
+    expect(summary.moveRows.map((row) => [row.name, row.multiplier])).toEqual([
+      ['세포벽 억제제 투약', 4],
+      ['수액요법', 2],
+    ]);
+    expect(summary.moveRows.map((row) => row.matchReason)).toEqual(['페니실린', '탈수']);
+  });
+
+  it('compares every party member with the currently announced enemy treatments', () => {
+    const trainer = createMonster({
+      name: '감염 순찰대원',
+      isTrainer: true,
+      moveset: ['m_cell_wall_inhibitor', 'm_rehydration'],
+      plannedMoveIds: ['m_cell_wall_inhibitor', 'm_rehydration'],
+    });
+    const bacterium = createMonster({
+      name: '세균몬',
+      countermeasures: { direct: ['페니실린'], symptomTags: [] },
+    });
+    const dehydrated = createMonster({
+      name: '탈수몬',
+      countermeasures: { direct: [], symptomTags: ['탈수'] },
+    });
+
+    const groups = formatAnnouncedTreatmentMatchups(trainer, [bacterium, dehydrated]);
+
+    expect(groups).toEqual([
+      expect.objectContaining({
+        attackName: '세포벽 억제제 투약',
+        party: [
+          { monsterName: '세균몬', multiplier: 4 },
+          { monsterName: '탈수몬', multiplier: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        attackName: '수액요법',
+        party: [
+          { monsterName: '세균몬', multiplier: 1 },
+          { monsterName: '탈수몬', multiplier: 2 },
+        ],
+      }),
+    ]);
+  });
+
+  it('groups direct and indirect treatments for a wild pathimon', () => {
+    const wild = createMonster({
+      countermeasures: {
+        direct: ['프라지콴텔'],
+        symptomTags: ['복통'],
+      },
+    });
+
+    const rows = formatWildTreatmentRows(wild);
+
+    expect(rows.some((row) => row.attackName === '구충제 투약' && row.multiplier === 4)).toBe(true);
+    expect(rows.some((row) => row.attackName === '진통제' && row.multiplier === 2)).toBe(true);
+    expect(rows.every((row) => (row.multiplier ?? 1) > 1)).toBe(true);
   });
 
   it('lets a prep move be used once per battle like a signature', () => {

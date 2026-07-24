@@ -20,10 +20,12 @@ describe('ModeSelectScene copy', () => {
     expect(modeSelectSceneSource).toContain('this.optionCursor');
   });
 
-  it('uses large run-mode cards and compact visual-style controls', () => {
+  it('aligns the visual-style controls with the run-mode cards', () => {
     expect(modeSelectSceneSource).toContain('private createModeButton');
     expect(modeSelectSceneSource).toContain('private createStyleButton');
+    expect(modeSelectSceneSource).toContain('const STYLE_BUTTON_WIDTH = MODE_BUTTON_WIDTH;');
     expect(modeSelectSceneSource).toContain('const STYLE_BUTTON_HEIGHT = 54;');
+    expect(modeSelectSceneSource).toContain('this.createStyleButton(142 + index * 390, 402');
     expect(modeSelectSceneSource).toContain("'01  진행 방식'");
     expect(modeSelectSceneSource).toContain("'02  디자인'");
   });

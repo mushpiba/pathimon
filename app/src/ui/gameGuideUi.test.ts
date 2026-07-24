@@ -21,6 +21,10 @@ describe('game guide UI content', () => {
     expect(text).toContain('상대가 예고한 처치와 내 패시몬을 비교하여 교체 타이밍을 잡는 것이 중요합니다.');
     expect(text).not.toContain('대처 기술');
     expect(text).not.toContain('봉인');
+
+    const statusSection = content.sections.find((section) => section.title === '상태와 증상');
+    expect(statusSection?.lines[statusSection.lines.length - 2]).toBe('');
+    expect(statusSection?.lines[statusSection.lines.length - 1]).toBe('상태이상을 누적시켜 전투를 승리로 이끌어보세요!');
   });
 
   it('reserves fixed non-overlapping boxes for wrapped guide lines', () => {
