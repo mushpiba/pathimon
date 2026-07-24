@@ -3,7 +3,7 @@ import { createBossRosterIds } from '../data/bosses';
 import { APP_WIDTH, APP_HEIGHT, COLORS } from '../game/constants';
 import { addLabel } from '../ui/draw';
 import { keyboardCommand } from '../ui/keyboard';
-import { titleLogoStyle, titleScreenContent } from '../ui/titleUi';
+import { titleCharacterDisplaySize, titleLogoStyle, titleScreenContent } from '../ui/titleUi';
 import type { TitleLogoChunk, TitleLogoDecoration, TitleLogoStyle, TitleScreenContent } from '../ui/titleUi';
 
 export class TitleScene extends Phaser.Scene {
@@ -117,9 +117,11 @@ export class TitleScene extends Phaser.Scene {
 
     sprites.forEach((path, index) => {
       const placement = placements[index % placements.length];
-      this.add.image(placement.x, placement.y, path)
+      const image = this.add.image(placement.x, placement.y, path);
+      const display = titleCharacterDisplaySize(image.width, image.height, placement.size);
+      image
         .setOrigin(0.5)
-        .setDisplaySize(placement.size, placement.size)
+        .setDisplaySize(display.width, display.height)
         .setAlpha(placement.alpha);
     });
   }

@@ -93,6 +93,13 @@ export function titleScreenContent(options: TitleScreenContentOptions = {}): Tit
   };
 }
 
+export function titleCharacterDisplaySize(sourceWidth: number, sourceHeight: number, targetHeight: number): { height: number; width: number } {
+  return {
+    width: Math.round(targetHeight * sourceWidth / sourceHeight),
+    height: targetHeight,
+  };
+}
+
 export function titleLogoStyle(title: string): TitleLogoStyle {
   const chunks = title === '감염과 면역'
     ? [

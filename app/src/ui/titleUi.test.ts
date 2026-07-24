@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { titleLogoStyle, titleScreenContent } from './titleUi';
+import { titleCharacterDisplaySize, titleLogoStyle, titleScreenContent } from './titleUi';
 
 describe('title UI content', () => {
   it('uses the infection and immunity title with sprite-backed sides', () => {
@@ -58,5 +58,10 @@ describe('title UI content', () => {
     expect(logo.chunks[1].x - logo.chunks[0].x).toBeLessThanOrEqual(108);
     expect(logo.outline.glow).toBe('#91ffe8');
     expect(logo.decorations.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('preserves trainer sprite proportions while normalizing their height', () => {
+    expect(titleCharacterDisplaySize(31, 77, 154)).toEqual({ width: 62, height: 154 });
+    expect(titleCharacterDisplaySize(80, 80, 140)).toEqual({ width: 140, height: 140 });
   });
 });

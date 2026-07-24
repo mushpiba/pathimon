@@ -20,4 +20,10 @@ describe('TitleScene rendering', () => {
     expect(titleSceneSource).toContain("this.input.keyboard?.on('keydown'");
     expect(titleSceneSource).toContain("command === 'confirm'");
   });
+
+  it('fits boss sprites by height without stretching their source proportions', () => {
+    expect(titleSceneSource).toContain('titleCharacterDisplaySize');
+    expect(titleSceneSource).toContain('const display = titleCharacterDisplaySize(image.width, image.height, placement.size);');
+    expect(titleSceneSource).toContain('.setDisplaySize(display.width, display.height)');
+  });
 });
