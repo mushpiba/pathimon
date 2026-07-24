@@ -789,6 +789,31 @@ describe('battle engine', () => {
     expect(result.lastLog).not.toContain('효과가 굉장했다.');
   });
 
+  it('doubles the next enemy status stacks after 독소벼림 empower, then consumes it', () => {
+    const user = createMonster({ effects: [{ kind: 'empower_status', multiplier: 2, turns: 99 }] });
+    const enemy = createMonster({ name: '적' });
+
+    applyEffects(user, enemy, [{ kind: 'condition', condition: 'necrosis', chance: 1, target: 'enemy', stacks: 2 }]);
+    expect(enemy.statusConditions?.necrosis).toBe(4); // 2 → 2배
+    expect(user.effects.some((effect) => effect.kind === 'empower_status')).toBe(false); // 소모
+
+    applyEffects(user, enemy, [{ kind: 'condition', condition: 'necrosis', chance: 1, target: 'enemy', stacks: 1 }]);
+    expect(enemy.statusConditions?.necrosis).toBe(5); // 다음 공격은 배수 없음(4+1)
+  });
+
+  it('does not empower the same prep turn that sets empower_status', () => {
+    const user = createMonster();
+    const enemy = createMonster({ name: '적' });
+
+    applyEffects(user, enemy, [
+      { kind: 'empower_status', multiplier: 2, turns: 99, target: 'self' },
+      { kind: 'condition', condition: 'necrosis', chance: 1, target: 'enemy' },
+    ]);
+
+    expect(enemy.statusConditions?.necrosis).toBe(1); // 같은 턴에 건 건 2배 안 됨
+    expect(user.effects.some((effect) => effect.kind === 'empower_status')).toBe(true); // 다음 턴용으로 남음
+  });
+
   it('does not add an effectiveness message for unrelated countermeasures', () => {
     const battle = createBattleState({
       party: [createMonster({

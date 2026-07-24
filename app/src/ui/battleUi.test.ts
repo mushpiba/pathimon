@@ -690,6 +690,28 @@ describe('battle UI helpers', () => {
       targetTags: expect.stringContaining('베타락탐'),
     });
   });
+
+  it('marks the vaccine treatment with a (백신) label in the boss attack list', () => {
+    const boss = createMonster({
+      isBoss: true,
+      isTrainer: true,
+      moveset: ['m_vaccination', 'm_phago'],
+    });
+
+    const rows = formatBossAttackMatchupRows(boss);
+
+    expect(rows[0].attackName).toBe('백신·항체 접종 (백신)');
+    expect(rows[1].attackName).not.toContain('(백신)');
+  });
+
+  it('lets a prep move be used once per battle like a signature', () => {
+    const fresh = createMonster({ moveset: ['spore_germination'] });
+    expect(canUseBattleMove(fresh, 'spore_germination')).toBe(true);
+
+    const used = createMonster({ moveset: ['spore_germination'], usedSignatureMoveIds: ['spore_germination'] });
+    expect(canUseBattleMove(used, 'spore_germination')).toBe(false);
+    expect(battleMoveUnavailableReason(used, 'spore_germination')).toContain('준비기');
+  });
   it('chooses BGM by encounter playlist with fixed late-floor overrides', () => {
     const assets = battleBgmAssetPaths();
 

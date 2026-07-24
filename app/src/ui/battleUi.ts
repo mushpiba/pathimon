@@ -554,13 +554,21 @@ export function formatBattleMatchupSections(player: RuntimeMonster, enemy: Runti
   };
 }
 
+// 백신은 감염 전 예방이라 학습상 (백신)으로 명시한다(치료약과 구분). ×4 판정은 동일하다.
+const VACCINE_MOVE_IDS = new Set<MoveId>(['m_vaccination']);
+
+function bossAttackDisplayName(move: MoveData, enemy: RuntimeMonster): string {
+  const name = currentMoveName(move, enemy);
+  return VACCINE_MOVE_IDS.has(move.id) ? `${name} (백신)` : name;
+}
+
 export function formatBossAttackMatchupRows(enemy: RuntimeMonster): BossAttackMatchupRow[] {
   const moveIds = battleMoveSlots(enemy).filter((moveId): moveId is MoveId => Boolean(moveId));
   return moveIds
     .map((moveId) => MOVES[moveId])
     .filter((move): move is MoveData => Boolean(move))
     .map((move) => ({
-      attackName: currentMoveName(move, enemy),
+      attackName: bossAttackDisplayName(move, enemy),
       attackType: ATTACK_TYPE_LABELS[move.type],
       targetTags: move.targetTags?.length ? move.targetTags.join(', ') : '없음',
     }));
@@ -874,14 +882,30 @@ export function hasUsedSignatureMove(monster: RuntimeMonster, moveId: MoveId): b
   return isSignatureMove(moveId) && Boolean(monster.usedSignatureMoveIds?.includes(moveId));
 }
 
+// 준비기도 전투당 1회(전용기와 동일 이력). 해금 게이트는 없다.
+function isPrepMove(moveId: MoveId): boolean {
+  return MOVES[moveId]?.kind === 'prep';
+}
+
+function hasUsedPrepMove(monster: RuntimeMonster, moveId: MoveId): boolean {
+  return isPrepMove(moveId) && Boolean(monster.usedSignatureMoveIds?.includes(moveId));
+}
+
 export function canUseBattleMove(monster: RuntimeMonster, moveId: MoveId): boolean {
-  return !isSignatureMove(moveId) || (monster.signatureUnlocked === true && !hasUsedSignatureMove(monster, moveId));
+  if (isSignatureMove(moveId)) return monster.signatureUnlocked === true && !hasUsedSignatureMove(monster, moveId);
+  if (isPrepMove(moveId)) return !hasUsedPrepMove(monster, moveId);
+  return true;
 }
 
 export function battleMoveUnavailableReason(monster: RuntimeMonster, moveId: MoveId): string {
-  if (!isSignatureMove(moveId)) return '';
-  if (monster.signatureUnlocked !== true) return '전용기가 아직 해금되지 않았습니다.';
-  if (hasUsedSignatureMove(monster, moveId)) return '전용기는 전투당 한 번만 사용할 수 있습니다.';
+  if (isSignatureMove(moveId)) {
+    if (monster.signatureUnlocked !== true) return '전용기가 아직 해금되지 않았습니다.';
+    if (hasUsedSignatureMove(monster, moveId)) return '전용기는 전투당 한 번만 사용할 수 있습니다.';
+    return '';
+  }
+  if (isPrepMove(moveId) && hasUsedPrepMove(monster, moveId)) {
+    return '준비기는 전투당 한 번만 사용할 수 있습니다.';
+  }
   return '';
 }
 

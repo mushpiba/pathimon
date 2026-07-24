@@ -1,5 +1,6 @@
 import firstWaveSelections from './pathimon-notes/drafts/NAME_SELECTIONS.json';
 import { buildPathimonFromNote } from './pathimonNoteParser';
+import { assignPrepArchetype, PREP_ARCHETYPE_EFFECTS, TOXIN_NOTE_MOVE_TYPES } from './prepArchetypes';
 import type { MonsterData, MoveData, MoveId } from '../types/game';
 import type { PathimonNoteBuildOptions } from './pathimonNoteParser';
 
@@ -128,6 +129,28 @@ const BUILT_NOTE_ENTRIES: BuiltNoteEntry[] = FIRST_WAVE_SELECTIONS.map((selectio
 });
 
 const BUILT_NOTE_DATA = BUILT_NOTE_ENTRIES.map((entry) => entry.built);
+
+// 준비기에 아키타입 메리트를 주입한다. 이름/서술/증상(감염경로)은 유지하고 기계 효과만 교체.
+// 독소벼림 판정은 파서가 효소도 'toxin'으로 뭉개므로, 노트 원문의 기술 타입(독소·초항원·효소독소·신경)으로 본다.
+const TOXIN_MOVE_TYPE_PATTERN = new RegExp(`^\\s*타입:\\s*(?:${TOXIN_NOTE_MOVE_TYPES.join('|')})\\s*$`, 'm');
+
+function injectPrepArchetype(entry: BuiltNoteEntry): void {
+  const built = entry.built;
+  const prepId = built.monster.prep;
+  if (!prepId) return;
+  const prepMove = built.moves[prepId];
+  if (!prepMove || prepMove.kind !== 'prep') return;
+
+  const isToxinProducer = TOXIN_MOVE_TYPE_PATTERN.test(entry.noteText);
+  const effects = PREP_ARCHETYPE_EFFECTS[assignPrepArchetype(built.monster, { isToxinProducer })];
+  const clone = () => effects.map((effect) => ({ ...effect }));
+
+  prepMove.effects = clone();
+  if (prepMove.outcomes) prepMove.outcomes = prepMove.outcomes.map((outcome) => ({ ...outcome, effects: clone() }));
+  if (prepMove.stageCycle) prepMove.stageCycle = prepMove.stageCycle.map((stage) => ({ ...stage, effects: clone() }));
+}
+
+BUILT_NOTE_ENTRIES.forEach(injectPrepArchetype);
 
 function requireBuiltNote(id: string): (typeof BUILT_NOTE_DATA)[number] {
   const built = BUILT_NOTE_DATA.find((note) => note.monster.id === id);

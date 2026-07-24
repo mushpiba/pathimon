@@ -255,7 +255,7 @@ describe('pathimon note parser v2 schema', () => {
     }), baseOptions('test_effects'));
 
     expect(built.moves.test_effects_move_1?.effects).toContainEqual({
-      kind: 'buff', stat: 'attack', rank: 2, pct: 300, turns: 99, target: 'self',
+      kind: 'buff', stat: 'attack', rank: 2, pct: 125, turns: 99, target: 'self',
     });
     expect(built.moves.test_effects_move_2?.effects).toEqual(expect.arrayContaining([
       { kind: 'invuln', turns: 3, target: 'self' },
@@ -268,7 +268,7 @@ describe('pathimon note parser v2 schema', () => {
     const built = buildPathimonFromNote(v2Note({ signatureEffect: '증식(2)' }), baseOptions('test_proliferation'));
 
     expect(built.moves.test_proliferation_move_2?.effects).toContainEqual({
-      kind: 'buff', stat: 'attack', rank: 1, pct: 100, turns: 99, target: 'self',
+      kind: 'buff', stat: 'attack', rank: 1, pct: 50, turns: 99, target: 'self',
     });
   });
 
@@ -317,7 +317,7 @@ describe('pathimon note parser v2 schema', () => {
     expect(built.monster.countermeasures?.direct).toEqual(['반코마이신']);
     expect(built.monster.attack).toBe(50);
     expect(built.moves.test_v1_move_1?.effects).toContainEqual({
-      kind: 'buff', stat: 'attack', rank: 1, pct: 100, turns: 99, target: 'self',
+      kind: 'buff', stat: 'attack', rank: 1, pct: 50, turns: 99, target: 'self',
     });
   });
 });

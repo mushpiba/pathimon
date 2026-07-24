@@ -743,13 +743,15 @@ function rankEffect(effect: string): EffectPrimitive | undefined {
   const stat = match[1] === '공격' ? 'attack' : 'defense';
   const sign = match[2] === '-' ? -1 : 1;
   const rank = Number(match[3]);
-  const magnitude = (2 ** rank - 1) * 100;
+  // 1랭크 = ×1.5(+50%). 이전엔 ×2(+100%)라 과했다. rank n = ×1.5^n.
+  const RANK_BASE = 1.5;
+  const magnitude = Math.round((RANK_BASE ** rank - 1) * 100);
 
   return {
     kind: 'buff',
     stat,
     rank: sign * rank,
-    pct: sign > 0 ? magnitude : -((1 - 2 ** -rank) * 100),
+    pct: sign > 0 ? magnitude : -Math.round((1 - RANK_BASE ** -rank) * 100),
     turns: 99,
     target: sign > 0 ? 'self' : 'enemy',
   };
@@ -789,7 +791,8 @@ function damageHalvingEffect(effect: string): EffectPrimitive | undefined {
 function proliferationEffect(effect: string): EffectPrimitive | undefined {
   if (!/증식\(\d+\)/.test(effect)) return undefined;
 
-  return { kind: 'buff', stat: 'attack', rank: 1, pct: 100, turns: 99, target: 'self' };
+  // 1랭크 = ×1.5(+50%)로 통일(rankEffect와 동일 스케일).
+  return { kind: 'buff', stat: 'attack', rank: 1, pct: 50, turns: 99, target: 'self' };
 }
 
 function removeNonSignatureInvulnerabilityText(effect: string, kind?: MoveData['kind']): string {

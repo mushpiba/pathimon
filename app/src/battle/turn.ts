@@ -257,15 +257,25 @@ function isSignatureMoveId(moveId: MoveId): boolean {
   return Boolean(move?.signature || move?.kind === 'signature');
 }
 
+// 준비기도 전용기처럼 전투당 1회. 단 해금 게이트는 없다. 사용 이력은 usedSignatureMoveIds를 공용으로 쓴다.
+function isPrepMoveId(moveId: MoveId): boolean {
+  return MOVES[moveId]?.kind === 'prep';
+}
+
 function signatureMoveUnavailableMessage(monster: RuntimeMonster, moveId: MoveId): string {
-  if (!isSignatureMoveId(moveId)) return '';
-  if (monster.signatureUnlocked !== true) return '전용기가 아직 해금되지 않았습니다.';
-  if (monster.usedSignatureMoveIds?.includes(moveId)) return '전용기는 전투당 한 번만 사용할 수 있습니다.';
+  if (isSignatureMoveId(moveId)) {
+    if (monster.signatureUnlocked !== true) return '전용기가 아직 해금되지 않았습니다.';
+    if (monster.usedSignatureMoveIds?.includes(moveId)) return '전용기는 전투당 한 번만 사용할 수 있습니다.';
+    return '';
+  }
+  if (isPrepMoveId(moveId) && monster.usedSignatureMoveIds?.includes(moveId)) {
+    return '준비기는 전투당 한 번만 사용할 수 있습니다.';
+  }
   return '';
 }
 
 function markSignatureMoveUsed(monster: RuntimeMonster, moveId: MoveId): void {
-  if (!isSignatureMoveId(moveId)) return;
+  if (!isSignatureMoveId(moveId) && !isPrepMoveId(moveId)) return;
   const used = monster.usedSignatureMoveIds ?? [];
   monster.usedSignatureMoveIds = used.includes(moveId) ? used : [...used, moveId];
 }

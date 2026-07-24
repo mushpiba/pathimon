@@ -154,7 +154,9 @@ export type EffectPrimitive =
   | { kind: 'field'; side: 'incoming'; factor: number; turns: number; target: 'self' | 'enemy'; stacks?: number }
   | { kind: 'dot'; power: number; turns: number; target: 'self' | 'enemy'; stacks?: number }
   | { kind: 'convert'; power: number; target: 'self' | 'enemy'; stacks?: number }
-  | { kind: 'heal'; pct: number; target: 'self' | 'enemy'; stacks?: number };
+  | { kind: 'heal'; pct: number; target: 'self' | 'enemy'; stacks?: number }
+  // 준비기 독소벼림: 다음에 적에게 부여하는 상태이상 스택을 multiplier배로 키운다(1회 소모).
+  | { kind: 'empower_status'; multiplier: number; turns?: number; target: 'self'; stacks?: number };
 
 export type MoveSlot = MoveId | null;
 
@@ -265,6 +267,7 @@ export interface ActiveEffect {
   factor?: number;
   power?: number;
   turns?: number;
+  multiplier?: number;
 }
 
 export interface RuntimeMonster {

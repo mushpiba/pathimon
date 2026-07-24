@@ -543,9 +543,10 @@ describe('Pathimon data', () => {
     }
   });
 
-  it('limits invulnerability primitives to once-per-battle signature moves', () => {
+  it('limits invulnerability primitives to once-per-battle signature and prep moves', () => {
+    // 준비기도 전투당 1회 제한이라(휴면버스트 아키타입이 무적을 쓴다) 전용기와 함께 허용한다.
     const unrestrictedInvulnerabilityMoves = Object.values(MOVES)
-      .filter((move) => move.kind !== 'signature' && hasInvulnerabilityPrimitive(move))
+      .filter((move) => move.kind !== 'signature' && move.kind !== 'prep' && hasInvulnerabilityPrimitive(move))
       .map((move) => move.name);
 
     expect(unrestrictedInvulnerabilityMoves).toEqual([]);
@@ -559,7 +560,11 @@ describe('Pathimon data', () => {
     expect(MOVES.spore_germination.kind).toBe('prep');
     expect(MOVES.spore_germination.typeLabel).toBe('준비');
     expect(MOVES.spore_germination.description).toBe('{name}이 아포를 발아시켜 감염을 준비한다.');
-    expect(MOVES.spore_germination.outcomes?.[0]?.effects).toEqual([{ kind: 'buff', stat: 'attack', rank: 1, pct: 100, turns: 99, target: 'self' }]);
+    // 준비기 효과는 아키타입으로 주입된다(이름/서술은 노트 유지). 탄저=독소벼림(외독소 기술 보유).
+    expect(MOVES.spore_germination.outcomes?.[0]?.effects).toEqual([
+      { kind: 'empower_status', multiplier: 2, turns: 99, target: 'self' },
+      { kind: 'buff', stat: 'attack', rank: 1, pct: 50, turns: 99, target: 'self' },
+    ]);
     expect(MOVES.capsule_formation.effects).toEqual([{ kind: 'invuln', turns: 3, target: 'self' }]);
     expect(MOVES.capsule_formation.symptom).toBeUndefined();
     expect(MOVES.cereus_emetic_toxin.effects).toEqual([{ kind: 'condition', condition: 'vomiting', chance: 1, target: 'enemy' }]);

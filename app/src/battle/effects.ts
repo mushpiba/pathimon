@@ -41,10 +41,22 @@ export function applyEffects(user: RuntimeMonster, enemy: RuntimeMonster, effect
     return;
   }
 
+  // 독소벼림: 이번 공격 전에 이미 걸려 있던 empower_status가 있으면, 이 공격이 적에게 거는 상태이상 스택을 키운다.
+  // (prep이 지금 막 추가하는 empower는 여기 안 잡히므로 자기 자신은 증폭하지 않는다.)
+  const empower = user.effects.find((effect) => effect.kind === 'empower_status');
+  let empowerConsumed = false;
+
   for (const effect of effects) {
     const target = getTarget(user, enemy, effect.target);
 
     switch (effect.kind) {
+      case 'empower_status':
+        pushEffect(target, {
+          kind: 'empower_status',
+          multiplier: effect.multiplier,
+          turns: effect.turns ?? 99,
+        });
+        break;
       case 'buff':
         pushEffect(target, {
           kind: 'buff',
@@ -101,16 +113,27 @@ export function applyEffects(user: RuntimeMonster, enemy: RuntimeMonster, effect
 
         target.stunned = true;
         break;
-      case 'condition':
+      case 'condition': {
         if (Math.random() > adjustedStatusChance(target, effect.chance)) {
           break;
         }
 
-        addStatusCondition(target, effect.condition, effect.stacks ?? 1);
+        let stacks = effect.stacks ?? 1;
+        if (empower && effect.target === 'enemy') {
+          stacks = Math.max(1, Math.round(stacks * (empower.multiplier ?? 2)));
+          empowerConsumed = true;
+        }
+        addStatusCondition(target, effect.condition, stacks);
         break;
+      }
       default:
         break;
     }
+  }
+
+  // 다음 공격 1회에만 적용 — 적에게 상태이상을 실제로 걸었으면 소모한다.
+  if (empowerConsumed && empower) {
+    user.effects = user.effects.filter((effect) => effect !== empower);
   }
 }
 
