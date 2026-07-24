@@ -20,4 +20,12 @@ export const BOSS_ATTACK_MOVE_IDS: MoveId[] = [
   'm_antiprotozoal',
   'm_rehydration',
   'm_surgery_drainage',
+  // ×2 대증(증상 완화) 기술 — 증상/상태이상 태그를 겨눈다.
+  'm_antipyretic',
+  'm_analgesic',
+  'm_antidiarrheal',
+  'm_antitussive',
+  'm_antiemetic',
+  // ×4 백신·항체.
+  'm_vaccination',
 ];

@@ -395,7 +395,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.9,
     description: '포식세포가 병원체를 직접 삼켜 공격한다.',
     learnText: '면역계가 병원체를 집어삼키는 기본 대응이다.',
-    targetTags: ['대식세포 포식', '포식', '세포외', '미세병원체'],
+    targetTags: ['대식세포 포식', '포식', '선천면역'],
   },
   m_opsonin: {
     id: 'm_opsonin',
@@ -405,7 +405,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.88,
     description: '표식을 남겨 병원체를 더 잘 잡히게 만든다.',
     learnText: '항체와 보조 인자가 표적화를 강화한다.',
-    targetTags: ['옵소닌', '항체', '협막', '세포외'],
+    targetTags: ['옵소닌', '항체', '선천면역', '백신·항체'],
   },
   m_antibody: {
     id: 'm_antibody',
@@ -415,7 +415,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.9,
     description: '항체가 병원체와 독소를 중화한다.',
     learnText: '정밀한 결합으로 위협을 무디게 만든다.',
-    targetTags: ['항체', '항독소', '독소', '세포외'],
+    targetTags: ['항체', '항독소', '독소', '백신·항체'],
   },
   m_complement: {
     id: 'm_complement',
@@ -425,7 +425,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.88,
     description: '보체 막공격복합체가 외막을 관통한다.',
     learnText: '연쇄 활성화된 보체가 막에 구멍을 낸다.',
-    targetTags: ['보체', 'MAC', '그람음성', '세포외'],
+    targetTags: ['보체', 'MAC', '선천면역'],
   },
   m_ctl: {
     id: 'm_ctl',
@@ -435,7 +435,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.85,
     description: '감염된 세포를 골라 강하게 제거한다.',
     learnText: '세포독성 T세포가 숙주 내부 감염을 노린다.',
-    targetTags: ['CTL', '세포독성 T세포', '세포내', '바이러스'],
+    targetTags: ['CTL', '세포독성 T세포', '세포성면역'],
   },
   m_th1: {
     id: 'm_th1',
@@ -445,7 +445,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.85,
     description: '대식세포 반응을 끌어올려 면역 화력을 강화한다.',
     learnText: '세포성 면역을 깨워 다음 공격을 더 아프게 만든다.',
-    targetTags: ['Th1', '대식세포 활성화', '세포내', '항산성', '결핵'],
+    targetTags: ['Th1', '대식세포 활성화', '세포성면역'],
     effects: [{ kind: 'buff', stat: 'attack', pct: 30, turns: 3, target: 'self' }],
   },
   m_th2: {
@@ -467,7 +467,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.92,
     description: '항바이러스 신호를 퍼뜨려 병원체를 압박한다.',
     learnText: '주변 세포에 경보를 내려 방어 상태를 높인다.',
-    targetTags: ['인터페론', '항바이러스', '바이러스', '세포내'],
+    targetTags: ['인터페론', '선천면역'],
   },
   m_oxidative_burst: {
     id: 'm_oxidative_burst',
@@ -477,7 +477,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.87,
     description: '활성산소가 병원체를 태우듯 압박한다.',
     learnText: '포식세포의 ROS 공격은 카탈라아제나 포자, 바이오필름에 막힐 수 있다.',
-    targetTags: ['산화폭발', '활성산소', '세균', '진균', '세포외'],
+    targetTags: ['산화폭발', '활성산소', '선천면역'],
   },
   m_cell_wall_inhibitor: {
     id: 'm_cell_wall_inhibitor',
@@ -487,7 +487,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.9,
     description: '세포벽 합성을 방해해 병원체를 무너뜨린다.',
     learnText: '베타락탐 계열처럼 세균 세포벽을 노리는 치료 대응이다.',
-    targetTags: ['세포벽 억제제', '베타락탐', '페니실린', '암피실린', '나프실린', '세파졸린', '세프트리악손', '세팔로스포린', '반코마이신', '카바페넴', '피페라실린-타조박탐', '그람양성', '그람음성', '세균'],
+    targetTags: ['세포벽 억제제', '베타락탐', '페니실린', '암피실린', '나프실린', '세파졸린', '세프트리악손', '세포탁심', '세프타지딤', '세팔로스포린', '세폭시틴', '세포테탄', '반코마이신', '카바페넴', '메로페넴', '피페라실린-타조박탐', '그람양성', '그람음성', '세균'],
   },
   m_protein_synthesis_inhibitor: {
     id: 'm_protein_synthesis_inhibitor',
@@ -497,7 +497,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.88,
     description: '단백질 생산을 끊어 증식을 둔화시킨다.',
     learnText: '세균 리보솜을 표적으로 삼는 항균제 대응이다.',
-    targetTags: ['단백합성 억제제', '독시사이클린', '테트라사이클린', '마크로라이드', '아지스로마이신', '에리스로마이신', '클린다마이신', '아미노글리코사이드', '겐타마이신', '스트렙토마이신', '아미카신', '리네졸리드', '세균'],
+    targetTags: ['단백합성 억제제', '독시사이클린', '테트라사이클린', '마크로라이드', '아지스로마이신', '에리스로마이신', '에리트로마이신', '클린다마이신', '아미노글리코사이드', '겐타마이신', '젠타마이신', '토브라마이신', '파로모마이신', '스트렙토마이신', '아미카신', '리네졸리드', '세균'],
   },
   m_targeted_antibacterial: {
     id: 'm_targeted_antibacterial',
@@ -507,7 +507,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.88,
     description: '균의 특성과 내성 양상에 맞춘 항균 치료로 압박한다.',
     learnText: '세균 치료는 그람염색만이 아니라 감염 부위, 독소, 내성, 세포내 위치까지 함께 본다.',
-    targetTags: ['표적 항균요법', '항균제', '플루오로퀴놀론', '시프로플록사신', '레보플록사신', '메트로니다졸', '트리메토프림-설파메톡사졸', 'TMP-SMX', '피닥소마이신', '분변미생물 이식', '니트로푸란토인', '리팍시민', '리팜핀', '이소니아지드', '피라진아미드', '에탐부톨', '항결핵제', '세프타지딤-아비박탐', '메로페넴-바보박탐', '세피데로콜', '폴리믹신', '이미페넴'],
+    targetTags: ['표적 항균요법', '항균제', '플루오로퀴놀론', '시프로플록사신', '레보플록사신', '메트로니다졸', '티니다졸', '트리메토프림-설파메톡사졸', 'TMP-SMX', '피닥소마이신', '분변미생물 이식', '니트로푸란토인', '리팍시민', '리팜핀', '이소니아지드', '피라진아미드', '에탐부톨', '항결핵제', '세프타지딤-아비박탐', '메로페넴-바보박탐', '세피데로콜', '폴리믹신', '이미페넴'],
   },
   m_antifungal_membrane: {
     id: 'm_antifungal_membrane',
@@ -527,7 +527,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.86,
     description: '큰 기생충의 운동성을 마비시켜 몰아붙인다.',
     learnText: '구충제는 연충의 신경근 기능을 표적으로 삼을 수 있다.',
-    targetTags: ['구충제', '알벤다졸', '메벤다졸', '이버멕틴', '프라지콴텔', '트리클라벤다졸', '디에틸카바마진', 'DEC', '피란텔', '니클로사마이드', '선충', '흡충', '조충', '기생충', '장관기생'],
+    targetTags: ['구충제', '알벤다졸', '메벤다졸', '티아벤다졸', '이버멕틴', '프라지콴텔', '트리클라벤다졸', '디에틸카바마진', 'DEC', '피란텔', '피란텔 파모산염', '니클로사마이드', '비티오놀', '옥삼니퀸', '선충', '흡충', '조충', '기생충', '장관기생'],
   },
   m_antitoxin_therapy: {
     id: 'm_antitoxin_therapy',
@@ -537,7 +537,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.92,
     description: '독소를 중화해 병원체의 주 공격축을 꺾는다.',
     learnText: '독소 매개 질환에서는 병원체 자체보다 독소 중화가 중요한 대응이 된다.',
-    targetTags: ['항독소', '독소', '탄저 항독소', '보툴리눔 항독소', '디프테리아 항독소', '파상풍 면역글로불린', 'TIG', 'DAT', '보툴리눔', '파상풍', '디프테리아'],
+    targetTags: ['항독소', '독소', '탄저 항독소', '보툴리눔 항독소', '디프테리아 항독소', '파상풍 면역글로불린', 'TIG', 'DAT', '수두대상포진 IgG', '보툴리눔', '파상풍', '디프테리아'],
   },
   m_antiviral_replication: {
     id: 'm_antiviral_replication',
@@ -547,7 +547,7 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.9,
     description: '바이러스 복제 과정을 차단한다.',
     learnText: '항바이러스제는 숙주 세포 안에서 복제하는 바이러스의 생활사를 노린다.',
-    targetTags: ['항바이러스제', '항레트로바이러스제', 'ART', '복제차단', '뉴클레오시드', '바이러스', '레트로바이러스'],
+    targetTags: ['항바이러스제', '항레트로바이러스제', 'ART', '복제차단', '뉴클레오시드', '아시클로버', '발라시클로버', '비다라빈', '간시클로버', '포스카넷', '레트로바이러스'],
   },
   m_antiprotozoal: {
     id: 'm_antiprotozoal',
@@ -577,7 +577,69 @@ const BASE_MOVES: Partial<Record<MoveId, MoveData>> = {
     accuracy: 0.82,
     description: '농양, 괴사, 폐색처럼 물리적 처치가 필요한 병변을 제거한다.',
     learnText: '약물만으로 부족한 병소는 배농이나 수술적 처치가 필요할 수 있다.',
-    targetTags: ['수술', '배농', '농양', '괴사', '폐색', '조직손상', '상처 처치', '괴사조직 제거', '내시경 제거', '수술적 제거', '물리적 제거', '충체 제거', '결절절제'],
+    targetTags: ['물리제거', '수술', '배농', '농양', '괴사', '폐색', '조직손상', '상처 처치', '괴사조직 제거', '내시경 제거', '수술적 제거', '물리적 제거', '충체 제거', '결절절제'],
+  },
+  // 증상 완화(대증) 기술 — 약물명이 아니라 기능명으로 두고 증상/상태이상 태그를 겨눈다. 증상 태그가 걸리면 ×2(간접).
+  m_antipyretic: {
+    id: 'm_antipyretic',
+    name: '해열제',
+    type: 'special',
+    power: 10,
+    accuracy: 0.95,
+    description: '오른 체온을 낮춰 병세를 눅인다.',
+    learnText: '해열제는 병원체를 없애지 않고 발열 증상만 다스리는 대증 요법이다.',
+    targetTags: ['발열', '고열'],
+  },
+  m_analgesic: {
+    id: 'm_analgesic',
+    name: '진통제',
+    type: 'special',
+    power: 10,
+    accuracy: 0.95,
+    description: '통증을 눌러 버티는 힘을 준다.',
+    learnText: '진통제는 통증을 완화하는 대증 요법으로, 병원체 자체는 남는다.',
+    targetTags: ['통증', '두통', '복통'],
+  },
+  m_antidiarrheal: {
+    id: 'm_antidiarrheal',
+    name: '지사제',
+    type: 'special',
+    power: 10,
+    accuracy: 0.95,
+    description: '설사를 다스려 탈수를 늦춘다.',
+    learnText: '지사제는 배설 증상을 줄이는 대증 요법이다. 침습성 장염에는 오히려 주의한다.',
+    targetTags: ['설사', '배설 이상'],
+  },
+  m_antitussive: {
+    id: 'm_antitussive',
+    name: '진해제',
+    type: 'special',
+    power: 10,
+    accuracy: 0.95,
+    description: '기침을 가라앉힌다.',
+    learnText: '진해제는 기침 증상을 완화하는 대증 요법이다.',
+    targetTags: ['기침'],
+  },
+  m_antiemetic: {
+    id: 'm_antiemetic',
+    name: '제토제',
+    type: 'special',
+    power: 10,
+    accuracy: 0.95,
+    description: '구역·구토를 멎게 한다.',
+    learnText: '제토제는 구토 증상을 줄이는 대증 요법이다.',
+    targetTags: ['구토'],
+  },
+  // 백신·항체 계열 → ×4(직접). 백신은 감염 전 예방이지만 병원체를 직접 겨누므로 학습상 ×4로 두고 표시에 (백신)을 명시한다.
+  m_vaccination: {
+    id: 'm_vaccination',
+    name: '백신·항체 접종',
+    type: 'antibody',
+    power: 15,
+    accuracy: 0.9,
+    description: '해당 병원체를 겨눈 백신·항체로 직접 대응한다.',
+    learnText: '백신·항체는 특정 병원체를 직접 표적하는 능동·수동 면역이다.',
+    targetTags: ['백신·항체'],
   },
 };
 

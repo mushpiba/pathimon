@@ -490,7 +490,8 @@ function uniqueTerms(terms: string[]): string[] {
 }
 
 function splitCountermeasureList(value: string): string[] {
-  return uniqueTerms(value.split(/[,/]/).map((token) => token.trim()));
+  // `·`(가운뎃점)도 나열 구분자로 본다 → "이소니아지드·리팜핀·에탐부톨" 같은 복합 처방을 개별 약물로 분해한다.
+  return uniqueTerms(value.split(/[,/·]/).map((token) => token.trim()));
 }
 
 function expandSymptomTerm(value: string): string[] {
@@ -510,34 +511,86 @@ function countermeasureField(lines: string[], key: string): string {
 }
 
 // v2 대처법은 `- 1차: 시프로플록사신 | 계열: 핵산합성억제 | 기전: … | 표적 태그: …` 구조다(TEMPLATE-v2).
-// 보스 상성은 약제명 문자열로 판정하므로(battle/bossMatchup.ts) 첫 칸의 약제명만 direct로 모은다.
-// `무효/금기:` 줄은 안 통하는 약이므로 제외한다.
+// `계열:`로 배율 범주를 가른다(설계: docs/pathimon-treatment-coverage-audit-2026-07-24.md):
+//   ×4(직접) = 항균제·항바이러스제·구충제·항진균제·항원충제·항독소 + 면역(선천/세포성/백신·항체) → direct
+//   ×2(간접) = 물리제거·수술 → symptomTags에 '물리제거' 마커(계열 매칭). 지지요법(대증)은 증상 태그가 이미 ×2를 만든다
+//   무관 = 환경차단(예방·위생) → 드롭
+// `무효/금기:` 줄은 안 통하는 약이라 1차/2차/보조만 읽어 자동 제외한다.
 const V2_COUNTERMEASURE_KEYS = ['1차', '2차', '보조'];
 
-function parseV2Countermeasures(lines: string[]): string[] {
-  const drugs: string[] = [];
+// 약물명 단위로 ×4를 판정하는 계열 (VOCAB.md §6 중 병원체를 직접 잡는 약). 어떤 약이냐가 학습이라 정밀 매칭한다.
+const X4_DRUG_CLASSES = new Set([
+  '세포벽억제', '단백합성억제', '핵산합성억제', '엽산대사억제', '세포막공격',
+  '항결핵제', '항바이러스제', '항기생충제', '항진균제', '항원충제', '항독소',
+]);
+// 면역·백신은 계열 자체로 ×4를 판정한다. 노트가 계열을 처치로 적고(선천/세포성), 백신은 병원체별로 하나뿐이라 계열 매칭이 과하지 않다.
+// direct에 개별 약물명 대신 계열 문자열을 넣어, 계열을 대표하는 면역/백신 기술(선천면역·세포성면역·백신·항체 태그)이 매칭된다.
+const IMMUNE_VACCINE_CLASSES = new Set(['선천면역', '세포성면역', '백신·항체']);
+const PHYSICAL_COUNTERMEASURE_CLASS = '물리제거';
+const PHYSICAL_REMOVAL_TAG = '물리제거';
+
+// "이소니아지드·리팜핀·에탐부톨·피라진아마이드 4제", "프라지콴텔 고용량", "고용량 페니실린", "리팜핀 유지요법"처럼
+// 용량·요법 수식어가 붙어도 약물명 코어가 기술 targetTags와 매칭되게 다듬는다(splitCountermeasureList가 `·`로 이미 쪼갠다).
+function stripRegimenSuffix(drug: string): string {
+  return drug
+    .replace(/\s*\d+제$/, '')
+    .replace(/\s*(고용량|저용량|고단위|유지요법)$/, '')
+    .replace(/^(고용량|저용량|고단위)\s+/, '')
+    .trim();
+}
+
+interface ParsedV2Countermeasures {
+  direct: string[];
+  physical: boolean;
+  sawV2: boolean;
+}
+
+function parseV2Countermeasures(lines: string[]): ParsedV2Countermeasures {
+  const direct: string[] = [];
+  let physical = false;
+  let sawV2 = false;
 
   for (const line of lines) {
     const normalized = line.trimStart().replace(/^-\s*/, '');
     const key = V2_COUNTERMEASURE_KEYS.find((candidate) => normalized.startsWith(`${candidate}:`));
     if (!key) continue;
+    sawV2 = true;
 
-    const value = normalized.slice(key.length + 1).split('|')[0];
-    drugs.push(...splitCountermeasureList(value).filter((drug) => drug !== '—' && drug !== '없음'));
+    const cells = normalized.slice(key.length + 1).split('|');
+    const classCell = cells.find((cell) => cell.trim().startsWith('계열:'));
+    const cls = classCell ? normalizeTerm(classCell.replace(/.*계열:/, '')) : '';
+
+    if (cls === PHYSICAL_COUNTERMEASURE_CLASS) {
+      physical = true;
+      continue;
+    }
+    // 면역·백신은 계열 문자열 자체를 direct로 → 특정 약물명 없이 계열 매칭(선천/세포성/백신·항체).
+    if (IMMUNE_VACCINE_CLASSES.has(cls)) {
+      direct.push(cls);
+      continue;
+    }
+    // 계열이 적혀 있고 ×4 약물 계열이 아니면(지지요법·환경차단 등) 드롭. 계열 미기재는 v1 호환으로 direct에 넣는다.
+    if (cls && !X4_DRUG_CLASSES.has(cls)) continue;
+
+    const drugs = splitCountermeasureList(cells[0] ?? '')
+      .map(stripRegimenSuffix)
+      .filter((drug) => drug && drug !== '—' && drug !== '없음');
+    direct.push(...drugs);
   }
 
-  return uniqueTerms(drugs);
+  return { direct: uniqueTerms(direct), physical, sawV2 };
 }
 
 function parseCountermeasures(lines: string[], moves: NoteMove[]): CountermeasureProfile {
-  const v2Direct = parseV2Countermeasures(lines);
-  const direct = v2Direct.length > 0 ? v2Direct : splitCountermeasureList(countermeasureField(lines, '직접'));
+  const v2 = parseV2Countermeasures(lines);
+  const direct = v2.sawV2 ? v2.direct : splitCountermeasureList(countermeasureField(lines, '직접'));
   const manualSymptomTags = splitCountermeasureList(countermeasureField(lines, '증상/태그'));
   const moveSymptoms = moves.flatMap((move) => move.results.flatMap((result) => expandSymptomTerm(result.symptom ?? '')));
+  const physicalTag = v2.physical ? [PHYSICAL_REMOVAL_TAG] : [];
 
   return {
     direct,
-    symptomTags: uniqueTerms([...manualSymptomTags, ...moveSymptoms]),
+    symptomTags: uniqueTerms([...manualSymptomTags, ...moveSymptoms, ...physicalTag]),
   };
 }
 

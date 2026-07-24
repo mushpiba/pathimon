@@ -10,7 +10,8 @@ import { BOSS_CHARACTER_ASSETS, TRAINER_CHARACTER_ASSETS } from './characterAsse
 import { buildLoadout, buildMoveSlots } from '../battle/loadout';
 import { MOVES } from './moves';
 import { NOTE_MONSTERS } from './pathimonNoteData';
-import { createBossInstance, createTrainerInstance } from '../state/factory';
+import { createBossInstance, createMonsterInstance, createTrainerInstance } from '../state/factory';
+import { bossMoveEffectiveness, createBossDefenseProfile } from '../battle/bossMatchup';
 
 const pathimonAssets = import.meta.glob('/public/images/pathimon/*.png', {
   eager: true,
@@ -128,6 +129,47 @@ describe('Pathimon data', () => {
     const anthrax = NOTE_MONSTERS.find((monster) => monster.id === 'anthrax');
     expect(anthrax?.countermeasures?.direct).toEqual(expect.arrayContaining(['시프로플록사신', '독시사이클린', '탄저 항독소']));
     expect(anthrax?.countermeasures?.symptomTags).toEqual(expect.arrayContaining(['피부탄저', '흡입탄저', '발열', '기침', '피로']));
+  });
+
+  // ×4 커버리지 가드 — 적 기술 풀에서 각 패시몬에 ×4/×2가 실제로 뜨는지 검사한다.
+  // 참고: docs/pathimon-treatment-coverage-audit-2026-07-24.md. 새 노트가 계열만 제대로 쓰면 이 검사를 자동 통과한다.
+  describe('treatment coverage', () => {
+    // ×4를 만드는 직접 처치약이 현실에 없어 ×2(물리제거·대증)만 있는 종. 이것 자체가 학습 내용이다.
+    //  아니사키·눈물안충·스파르강 = 수술로만 제거 / 시가콜리(EHEC) = 항생제 금기, 지지요법만.
+    const X2_ONLY_IDS = new Set([
+      'anisakis_simplex',
+      'thelazia_callipaeda',
+      'sparganum_spirometra_spp',
+      'ehec_stec_e_coli_o157_h7',
+    ]);
+
+    function bestMultiplier(monster: (typeof NOTE_MONSTERS)[number]): number {
+      const runtime = createMonsterInstance(monster);
+      const profile = createBossDefenseProfile(runtime);
+      let best = 1;
+      for (const moveId of BOSS_ATTACK_MOVE_IDS) {
+        const move = MOVES[moveId];
+        if (!move) continue;
+        best = Math.max(best, bossMoveEffectiveness(move, profile).multiplier);
+      }
+      return best;
+    }
+
+    it('gives every pathimon a working ×4 direct treatment, except documented ×2-only cases', () => {
+      const missingX4 = NOTE_MONSTERS
+        .filter((monster) => bestMultiplier(monster) < 4)
+        .map((monster) => monster.id);
+
+      // ×4가 없는 종은 문서화된 ×2-only 목록과 정확히 일치해야 한다(새 구멍 조기 발견).
+      expect(new Set(missingX4)).toEqual(X2_ONLY_IDS);
+    });
+
+    it('still gives the ×2-only pathimon a working ×2 indirect treatment', () => {
+      for (const monster of NOTE_MONSTERS) {
+        if (!X2_ONLY_IDS.has(monster.id)) continue;
+        expect(bestMultiplier(monster), `${monster.id} needs a working ×2`).toBeGreaterThanOrEqual(2);
+      }
+    });
   });
 
 

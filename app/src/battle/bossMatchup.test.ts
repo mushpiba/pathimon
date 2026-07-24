@@ -73,16 +73,17 @@ describe('boss attack matchup', () => {
   });
 
   it('splits move selection evenly between 4x, 2x, and 1x groups', () => {
+    // 알벤다졸=×4(구충제), 발열=×2(해열제 대증), m_antibody=×1(무관). 세 그룹을 1/3씩 뽑는다.
     const profile = createBossDefenseProfile(createMonster({
       countermeasures: {
         direct: ['알벤다졸'],
-        symptomTags: ['바이러스'],
+        symptomTags: ['발열'],
       },
     } as Partial<RuntimeMonster>));
-    const moveIds = ['m_anthelmintic', 'm_interferon', 'm_antibody'] as const;
+    const moveIds = ['m_anthelmintic', 'm_antipyretic', 'm_antibody'] as const;
 
     expect(chooseBossMove([...moveIds], profile, [], () => 0.1)).toBe('m_anthelmintic');
-    expect(chooseBossMove([...moveIds], profile, [], () => 0.4)).toBe('m_interferon');
+    expect(chooseBossMove([...moveIds], profile, [], () => 0.4)).toBe('m_antipyretic');
     expect(chooseBossMove([...moveIds], profile, [], () => 0.9)).toBe('m_antibody');
   });
 });

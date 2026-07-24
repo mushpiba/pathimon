@@ -682,7 +682,7 @@ describe('battle UI helpers', () => {
     expect(rows[0]).toMatchObject({
       attackName: '대식세포 포식',
       attackType: '포식소화',
-      targetTags: '대식세포 포식, 포식, 세포외, 미세병원체',
+      targetTags: '대식세포 포식, 포식, 선천면역',
     });
     expect(rows[2]).toMatchObject({
       attackName: '세포벽 억제제 투약',

@@ -141,8 +141,111 @@ describe('pathimon note parser v2 schema', () => {
       'L2 [치료] 항생제와 항독소를 함께 쓴다.',
     ]);
 
-    // 대처법 4요소 구조에서 약제명만 추출, 무효/금기는 제외
-    expect(monster.countermeasures?.direct).toEqual(['시프로플록사신', '독시사이클린', '고압증기멸균']);
+    // 대처법: ×4 계열(핵산합성억제·단백합성억제)만 direct로. 환경차단(고압증기멸균)은 예방이라 드롭, 무효/금기도 제외.
+    expect(monster.countermeasures?.direct).toEqual(['시프로플록사신', '독시사이클린']);
+  });
+
+  it('routes 대처법 by 계열: ×4 to direct, 물리제거 to a ×2 marker, 지지·환경차단 dropped', () => {
+    const note = `이름: 라우팅몬
+학명: 라우팅균(Routing pathogen)
+타입: 기생충
+태그:
+- structure: 선충
+- location: 장관
+- pathway: 소화기
+
+학습포인트:
+- L1 [감별점] 라우팅 테스트다.
+- L2 [치료] 계열 라우팅을 확인한다.
+
+대처법:
+- 1차: 알벤다졸 | 계열: 항기생충제 | 기전: 미세소관 | 표적 태그: 선충
+- 보조: 외과적 적출 | 계열: 물리제거 | 기전: 물리 제거 | 표적 태그: 장관
+- 보조: 수액 요법 | 계열: 지지요법 | 기전: 전해질 보정 | 표적 태그: 탈수
+- 보조: 손씻기 | 계열: 환경차단 | 기전: 감염 예방 | 표적 태그: 없음
+증상/태그: 선충, 복통
+
+능력치:
+- 공격: 50   # 밴드: 3   근거: 테스트
+- 방어: 50   # 밴드: 3   근거: 테스트
+- HP: 80     # 밴드: 3   근거: 테스트
+
+기술:
+- 이름: 정착
+  종류: 준비기
+  타입: 준비
+  위력: 0
+  명중: 100%
+  effect: —
+  description: {name}이 정착한다.
+  learnText: 정착을 배운다.
+  결과:
+    - 확률: 100%
+      단계: —
+      위력: —
+      효과: 공격 +1랭크
+      상태이상: —
+      증상: —
+      effect: —
+      description: {name}이 정착했다.
+      learnText: 정착했다.
+`;
+    const built = buildPathimonFromNote(note, baseOptions('test_routing'));
+    // ×4 계열만 direct. 물리제거·지지요법·환경차단은 direct에서 빠진다.
+    expect(built.monster.countermeasures?.direct).toEqual(['알벤다졸']);
+    // 물리제거 계열이 있으면 ×2 마커 '물리제거'가 symptomTags로 들어간다(계열 매칭).
+    expect(built.monster.countermeasures?.symptomTags).toContain('물리제거');
+    // 지지요법 약물명(수액 요법)·환경차단(손씻기)은 어느 버킷에도 들어가지 않는다.
+    expect(built.monster.countermeasures?.direct).not.toContain('수액 요법');
+    expect(built.monster.countermeasures?.symptomTags).not.toContain('손씻기');
+  });
+
+  it('splits ·-joined regimens and strips the N제 suffix so each drug matches', () => {
+    const note = `이름: 결핵테스트
+학명: 결핵테스트균(Tuberculosis test)
+타입: 세균
+태그:
+- structure: 항산성
+- location: 세포내
+- pathway: 호흡기
+
+학습포인트:
+- L1 [감별점] 4제 분해 테스트다.
+- L2 [치료] 개별 약물로 쪼개진다.
+
+대처법:
+- 1차: 이소니아지드·리팜핀·에탐부톨·피라진아마이드 4제 | 계열: 항결핵제 | 기전: 다제요법 | 표적 태그: 항산성
+증상/태그: 세균, 발열
+
+능력치:
+- 공격: 50   # 밴드: 3   근거: 테스트
+- 방어: 50   # 밴드: 3   근거: 테스트
+- HP: 80     # 밴드: 3   근거: 테스트
+
+기술:
+- 이름: 정착
+  종류: 준비기
+  타입: 준비
+  위력: 0
+  명중: 100%
+  effect: —
+  description: {name}이 정착한다.
+  learnText: 정착을 배운다.
+  결과:
+    - 확률: 100%
+      단계: —
+      위력: —
+      효과: 공격 +1랭크
+      상태이상: —
+      증상: —
+      effect: —
+      description: {name}이 정착했다.
+      learnText: 정착했다.
+`;
+    const built = buildPathimonFromNote(note, baseOptions('test_regimen'));
+    expect(built.monster.countermeasures?.direct).toEqual([
+      '이소니아지드', '리팜핀', '에탐부톨', '피라진아마이드',
+    ]);
   });
 
   it('parses VOCAB §4 effect notations that the v1 parser dropped', () => {

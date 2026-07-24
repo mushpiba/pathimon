@@ -767,14 +767,14 @@ describe('battle engine', () => {
       party: [createMonster({
         hp: 500,
         maxHp: 500,
-        countermeasures: { direct: [], symptomTags: ['바이러스'] },
+        countermeasures: { direct: [], symptomTags: ['발열'] },
       })],
       enemy: createMonster({
         name: '면역챔피언',
         category: '보스 사람',
-        moveset: ['m_interferon'],
-        moveSlots: ['m_interferon', null, null, null],
-        plannedMoveId: 'm_interferon',
+        moveset: ['m_antipyretic'],
+        moveSlots: ['m_antipyretic', null, null, null],
+        plannedMoveId: 'm_antipyretic',
         isBoss: true,
         isTrainer: true,
         attack: 12,
